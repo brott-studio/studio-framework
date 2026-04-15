@@ -50,3 +50,14 @@ Pipeline updates go to a **dedicated Discord thread per sprint** (e.g., "Sprint 
 - **Sprint thread:** Agent completions, PR updates, verification results, audit reports
 - **Main channel:** CD ↔ EP conversation, direction, playtest feedback, escalations
 - **Ping main channel only for:** playtest-ready builds, decisions needed, critical issues
+
+## Pipeline Completion Rule
+
+**Never notify the CD for playtesting until the FULL pipeline has completed:**
+1. Build ✅
+2. Review ✅
+3. Verify ✅ (including Optic vision check)
+4. Deploy ✅
+5. Audit ✅ (Specc)
+
+Only after ALL stages pass → ping CD for playtest. No shortcuts, no "build is ready but audit pending."
