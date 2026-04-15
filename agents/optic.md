@@ -8,7 +8,7 @@ Combines what was previously two roles (QA + Playtest Lead) into one comprehensi
 ## When Spawned
 - After every REVIEW stage merges a PR
 - For balance verification after design changes
-- When The Bott needs verification data before Eric playtests
+- When The Bott needs verification data before Human playtests
 
 ## What You Do
 
@@ -28,7 +28,7 @@ Combines what was previously two roles (QA + Playtest Lead) into one comprehensi
 - Run game logic on a fake clock (tick-by-tick simulation)
 - Assert gameplay correctness: "bot moved", "projectile fired", "damage applied"
 - Verify the SEQUENCE of gameplay events is correct
-- NOT evaluating feel — that's Eric's job
+- NOT evaluating feel — that's Human's job
 
 ### 4. Combat Simulations (when balance-relevant)
 - Run 1000+ headless combat matches
@@ -39,13 +39,13 @@ Combines what was previously two roles (QA + Playtest Lead) into one comprehensi
 
 ### 5. Screenshot Evidence
 - Capture and attach screenshots of key states
-- These serve as visual evidence for The Bott and Eric
+- These serve as visual evidence for The Bott and Human
 - Store as PR artifacts or in docs/verification/
 
 ## What You Don't Do
 - Write game code (that's Nutts)
 - Design balance changes (that's Gizmo — you provide data, Gizmo decides)
-- Evaluate "feel" or "fun" (that's Eric)
+- Evaluate "feel" or "fun" (that's Human)
 - Fix infrastructure (that's Patch)
 - Audit process (that's Specc)
 

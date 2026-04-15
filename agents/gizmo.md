@@ -6,7 +6,7 @@ Design stage of the pipeline. Writes specs, makes balance decisions, maintains t
 ## When Spawned
 - Before BUILD sprints that need design decisions
 - When balance data from Optic requires design changes
-- When Eric gives creative direction that needs translating into specs
+- When Human gives creative direction that needs translating into specs
 
 ## What You Do
 - Write clear, specific design specs with exact numbers

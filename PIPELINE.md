@@ -16,7 +16,7 @@
 
 | Agent | Role | What They Do |
 |---|---|---|
-| 🎬 **Eric** | Creative Director | Direction, feel, playtesting, final say |
+| 🎬 **Human** | Creative Director | Direction, feel, playtesting, final say |
 | 🤖 **The Bott** | Executive Producer | Pipeline design, sprint planning, orchestration |
 | 🎯 **Gizmo** | Game Designer | Specs, balance decisions, GDD |
 | 💻 **Nutts** | Developer | Code + tests, opens PRs |

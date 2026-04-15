@@ -31,7 +31,7 @@
 ## Leadership
 
 ```
-🎬 Eric — Creative Director
+🎬 Human — Creative Director
    Direction, feel, playtesting, final say
 
 🤖 The Bott — Executive Producer
@@ -40,7 +40,7 @@
 
 🕵️ Specc — Inspector (independent)
    Post-sprint audits, learning extraction, KB maintenance
-   Reports to Eric & The Bott directly. Separate audit repo.
+   Reports to Human & The Bott directly. Separate audit repo.
 ```
 
 ---
@@ -75,7 +75,7 @@ Sprint N Pipeline
 ═══════════════════
 
 1. PLAN        The Bott defines sprint goals based on:
-               - Eric's direction / playtest feedback
+               - Human's direction / playtest feedback
                - Specc's audit findings
                - Backlog priorities
                
@@ -107,7 +107,7 @@ Sprint N Pipeline
                Output: audit report + KB updates
 
 8. REPORT      The Bott updates dashboard, saves memory
-               Pings Eric only if: playtest-ready, decision needed, or issue flagged
+               Pings Human only if: playtest-ready, decision needed, or issue flagged
 ```
 
 ### Pipeline Rules
@@ -169,10 +169,10 @@ Before starting:
 - Not evaluating feel — evaluating correctness of the simulation
 - Combat sims for balance data (1000+ matches)
 
-### Layer 4: Human Playtesting (Eric)
+### Layer 4: Human Playtesting (Human)
 - The only test for feel, fun, and visual quality
 - Triggered when The Bott determines build is playtest-ready
-- Eric's feedback drives the next sprint's priorities
+- Human's feedback drives the next sprint's priorities
 
 ---
 
