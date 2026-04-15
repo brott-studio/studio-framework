@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Brott Studio</title>
+<title>Brott Studio — 100100 Productions</title>
 <link rel="icon" type="image/png" href="favicon.png">
 <style>
   :root {
@@ -14,17 +14,19 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); padding: 1rem; max-width: 960px; margin: 0 auto; line-height: 1.5; }
   
-  /* Header */
-  .header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.2rem; }
+  .header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.15rem; }
   .header img { width: 40px; height: 40px; border-radius: 6px; }
   h1 { font-size: 1.4rem; }
-  h2 { font-size: 1.05rem; color: var(--accent); margin: 1.2rem 0 0.5rem; border-bottom: 1px solid var(--border); padding-bottom: 0.25rem; }
-  .subtitle { color: var(--muted); font-size: 0.8rem; margin-bottom: 0.75rem; }
-  .links { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.75rem; }
-  .links a { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 0.3rem 0.6rem; color: var(--accent); text-decoration: none; font-size: 0.8rem; }
-  .links a:hover { border-color: var(--accent); }
+  .brand { color: var(--muted); font-size: 0.75rem; margin-bottom: 0.1rem; }
+  .subtitle { color: var(--muted); font-size: 0.8rem; margin-bottom: 0.15rem; }
+  .mission { color: var(--accent); font-size: 0.8rem; font-style: italic; margin-bottom: 0.75rem; }
+  
+  .section-header { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 0.25rem; margin: 1.2rem 0 0.5rem; }
+  .section-header h2 { font-size: 1.05rem; color: var(--accent); margin: 0; border: none; padding: 0; }
+  .section-links { display: flex; gap: 0.3rem; }
+  .section-links a { color: var(--muted); font-size: 0.7rem; text-decoration: none; padding: 0.15rem 0.4rem; border: 1px solid var(--border); border-radius: 3px; }
+  .section-links a:hover { color: var(--accent); border-color: var(--accent); }
 
-  /* Collapsible */
   details { margin-bottom: 0.5rem; }
   details summary { cursor: pointer; background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 0.4rem 0.7rem; font-size: 0.85rem; font-weight: 600; color: var(--accent); list-style: none; display: flex; align-items: center; gap: 0.4rem; }
   details summary::-webkit-details-marker { display: none; }
@@ -32,7 +34,6 @@
   details[open] summary::before { transform: rotate(90deg); }
   details .inner { background: var(--surface); border: 1px solid var(--border); border-top: none; border-radius: 0 0 4px 4px; padding: 0.6rem; overflow-x: auto; }
 
-  /* Markdown rendered content */
   .md-content { font-size: 0.82rem; line-height: 1.6; }
   .md-content h1, .md-content h2, .md-content h3 { color: var(--accent); margin: 0.6rem 0 0.25rem; }
   .md-content h1 { font-size: 1.05rem; } .md-content h2 { font-size: 0.92rem; } .md-content h3 { font-size: 0.84rem; }
@@ -47,16 +48,14 @@
   .md-content hr { border: none; border-top: 1px solid var(--border); margin: 0.5rem 0; }
   .md-content strong { color: var(--text); }
   .md-content em { color: var(--muted); }
-  .md-content blockquote { border-left: 3px solid var(--accent); padding-left: 0.6rem; color: var(--muted); margin: 0.4rem 0; }
+  .md-content blockquote { border-left: 3px solid var(--accent); padding: 0.3rem 0.6rem; color: var(--muted); margin: 0.4rem 0; background: rgba(88,166,255,0.05); border-radius: 0 4px 4px 0; }
   .md-content a { color: var(--accent); }
 
-  /* Pipeline */
   .pipeline { display: flex; flex-wrap: wrap; align-items: center; gap: 0.2rem; font-size: 0.8rem; margin-bottom: 0.4rem; }
   .pipe-step { background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: 0.2rem 0.5rem; white-space: nowrap; }
   .pipe-arrow { color: var(--muted); font-size: 0.7rem; }
   .role { font-size: 0.8rem; padding: 0.15rem 0; }
 
-  /* PRs */
   .pr { padding: 0.3rem 0; border-bottom: 1px solid var(--border); font-size: 0.8rem; }
   .pr:last-child { border-bottom: none; }
   .pr a { color: var(--text); text-decoration: none; }
@@ -66,13 +65,11 @@
   .pr-merged { color: var(--green); } .pr-open { color: var(--yellow); } .pr-closed { color: var(--red); }
   .scroll { max-height: 500px; overflow-y: auto; }
 
-  /* Audit cards */
   .audit-card { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; margin-bottom: 0.5rem; overflow: hidden; }
   .audit-header { padding: 0.6rem 0.75rem; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
   .audit-header:hover { background: #1c2129; }
   .audit-left { display: flex; flex-direction: column; gap: 0.1rem; flex: 1; min-width: 0; }
   .audit-name { font-size: 0.95rem; font-weight: 600; }
-  .audit-desc { font-size: 0.8rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .audit-meta { font-size: 0.72rem; color: var(--muted); }
   .audit-grade { font-size: 1.1rem; font-weight: 700; padding: 0.15rem 0.5rem; border-radius: 4px; flex-shrink: 0; margin-left: 0.5rem; }
   .grade-a { background: #0d2818; color: var(--green); border: 1px solid var(--green); }
@@ -94,17 +91,18 @@
   <img src="icon.png" alt="Brott Studio">
   <h1>Brott Studio</h1>
 </div>
-<p class="subtitle">AI Agent Game Dev Studio</p>
-
-<div class="links">
-  <a href="" id="link-game" target="_blank">🎮 Play Game</a>
-  <a href="" id="link-repo" target="_blank">💻 Project Repo</a>
-  <a href="https://github.com/brott-studio/studio-framework" target="_blank">🏭 Framework Repo</a>
-  <a href="https://github.com/brott-studio/studio-audits" target="_blank">🕵️ Audits Repo</a>
-</div>
+<p class="brand">100100 Productions</p>
+<p class="subtitle">AI Agentic Studio</p>
+<p class="mission">Mission: Quality over speed. Ship it right, not just fast.</p>
 
 <!-- SECTION: Studio -->
-<h2>🏭 Studio</h2>
+<div class="section-header">
+  <h2>🏭 Studio</h2>
+  <div class="section-links">
+    <a href="https://github.com/brott-studio/studio-framework" target="_blank">repo</a>
+    <a href="https://github.com/brott-studio/studio-framework/blob/main/PIPELINE.md" target="_blank">pipeline</a>
+  </div>
+</div>
 
 <details>
   <summary>📖 Framework</summary>
@@ -132,7 +130,14 @@
 </details>
 
 <!-- SECTION: Project -->
-<h2>📊 Project</h2>
+<div class="section-header">
+  <h2>📊 Project</h2>
+  <div class="section-links">
+    <a href="" id="link-repo" target="_blank">repo</a>
+    <a href="" id="link-game" target="_blank">play</a>
+    <a href="https://github.com/brott-studio/studio-audits" target="_blank">audits</a>
+  </div>
+</div>
 
 <details>
   <summary>📄 Game Design Document</summary>
@@ -148,7 +153,7 @@
   </div>
 </details>
 
-<h2>🕵️ Sprint Audits</h2>
+<h3 style="font-size:0.95rem;color:var(--accent);margin:0.8rem 0 0.4rem">🕵️ Sprint Audits</h3>
 <div id="audit-list">
   <p class="loading">Loading audits...</p>
 </div>
@@ -166,18 +171,26 @@ document.getElementById('link-game').href = `https://${ORG}.github.io/${PROJECT}
 document.getElementById('link-repo').href = `https://github.com/${ORG}/${PROJECT}`;
 
 function md2html(md) {
-  // Handle code blocks first (preserve content)
   let codeBlocks = [];
   md = md.replace(/```(\w*)\n([\s\S]*?)```/g, (m, lang, code) => {
     codeBlocks.push(`<pre><code>${code.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</code></pre>`);
-    return `%%CODEBLOCK${codeBlocks.length-1}%%`;
+    return `%%CB${codeBlocks.length-1}%%`;
   });
+  
+  // Handle multi-line blockquotes: merge consecutive > lines
+  md = md.replace(/^>\s*$/gm, '%%BQBREAK%%');
+  md = md.replace(/^> (.+)$/gm, '%%BQ%%$1');
+  // Group consecutive blockquote lines
+  md = md.replace(/(%%BQ%%.*(\n|%%BQBREAK%%\n?)*)+/g, (match) => {
+    const content = match.replace(/%%BQ%%/g, '').replace(/%%BQBREAK%%/g, '<br>').trim();
+    return `<blockquote>${content}</blockquote>`;
+  });
+  md = md.replace(/%%BQBREAK%%/g, '');
   
   let html = md
     .replace(/^### (.+)$/gm, '<h3>$1</h3>')
     .replace(/^## (.+)$/gm, '<h2>$1</h2>')
     .replace(/^# (.+)$/gm, '<h1>$1</h1>')
-    .replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>')
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
     .replace(/\*(.+?)\*/g, '<em>$1</em>')
     .replace(/`([^`]+)`/g, '<code>$1</code>')
@@ -192,13 +205,10 @@ function md2html(md) {
     .replace(/(<li>.*<\/li>\n?)+/g, (m) => `<ul>${m}</ul>`)
     .replace(/(<tr>.*<\/tr>\n?)+/g, (m) => `<table>${m}</table>`)
     .replace(/^---$/gm, '<hr>')
-    .replace(/^(?!<[hultrobp\-]|%%CODE|$)(.+)$/gm, '<p>$1</p>')
+    .replace(/^(?!<[hultrobp\-]|%%CB|$)(.+)$/gm, '<p>$1</p>')
     .replace(/<p>\s*<\/p>/g, '');
   
-  // Restore code blocks
-  codeBlocks.forEach((block, i) => { html = html.replace(`%%CODEBLOCK${i}%%`, block); });
-  // Clean up any remaining placeholder paragraphs
-  html = html.replace(/<p>(%%CODEBLOCK\d+%%)<\/p>/g, '$1');
+  codeBlocks.forEach((block, i) => { html = html.replace(`<p>%%CB${i}%%</p>`, block).replace(`%%CB${i}%%`, block); });
   return html;
 }
 
@@ -231,8 +241,15 @@ function gradeClass(g) {
 
 function formatAuditName(filename) {
   let name = filename.replace('.md','').replace(/^v2-/, '');
-  return 'Sprint ' + name.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
-    .replace('Sprint Sprint', 'Sprint').replace('Sprint V2 ', 'Sprint ');
+  // Extract sprint number if present
+  const sprintMatch = name.match(/sprint[- ]?(\d+)/i);
+  if (sprintMatch) {
+    const num = sprintMatch[1];
+    const rest = name.replace(/sprint[- ]?\d+[- ]?/i, '').trim();
+    const suffix = rest.split('-').filter(w=>w).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+    return `Sprint ${num}${suffix ? ' — ' + suffix : ''}`;
+  }
+  return name.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 }
 
 async function loadFramework() {
@@ -286,14 +303,15 @@ async function loadAudits() {
         const r = await fetch(a.download_url);
         const md = await r.text();
         const grade = extractGrade(md);
-        const sprintName = formatAuditName(a.name);
+        const name = formatAuditName(a.name);
         const title = extractTitle(md);
         const date = extractDate(md);
         const dateStr = date ? new Date(date).toLocaleString() : '';
+        const displayName = title ? `${name} — ${title}` : name;
         return `<div class="audit-card">
           <div class="audit-header" onclick="toggleAudit(${i})">
             <div class="audit-left">
-              <div class="audit-name">${sprintName}${title ? ' — ' + title : ''}</div>
+              <div class="audit-name">${displayName}</div>
               <div class="audit-meta">${dateStr}</div>
             </div>
             ${grade ? `<span class="audit-grade ${gradeClass(grade)}">${grade}</span>` : ''}
@@ -312,7 +330,6 @@ function toggleAudit(i) {
   document.getElementById(`audit-${i}`).classList.toggle('open');
 }
 
-// Lazy load on expand
 document.querySelectorAll('details').forEach((d, i) => {
   d.addEventListener('toggle', function() {
     if (!this.open || this.dataset.loaded) return;
