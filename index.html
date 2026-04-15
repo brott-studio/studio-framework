@@ -17,15 +17,13 @@
   .header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.15rem; }
   .header img { width: 40px; height: 40px; border-radius: 6px; }
   h1 { font-size: 1.4rem; }
-  .brand { color: var(--muted); font-size: 0.75rem; margin-bottom: 0.1rem; }
-  .subtitle { color: var(--muted); font-size: 0.8rem; margin-bottom: 0.15rem; }
   .mission { color: var(--accent); font-size: 0.8rem; font-style: italic; margin-bottom: 0.75rem; }
   
   .section-header { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 0.25rem; margin: 1.2rem 0 0.5rem; }
   .section-header h2 { font-size: 1.05rem; color: var(--accent); margin: 0; border: none; padding: 0; }
   .section-links { display: flex; gap: 0.3rem; }
-  .section-links a { color: var(--muted); font-size: 0.7rem; text-decoration: none; padding: 0.15rem 0.4rem; border: 1px solid var(--border); border-radius: 3px; }
-  .section-links a:hover { color: var(--accent); border-color: var(--accent); }
+  .section-links a { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 0.25rem 0.5rem; color: var(--accent); text-decoration: none; font-size: 0.75rem; }
+  .section-links a:hover { border-color: var(--accent); background: #1c2129; }
 
   details { margin-bottom: 0.5rem; }
   details summary { cursor: pointer; background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 0.4rem 0.7rem; font-size: 0.85rem; font-weight: 600; color: var(--accent); list-style: none; display: flex; align-items: center; gap: 0.4rem; }
@@ -91,8 +89,8 @@
   <img src="icon.png" alt="Brott Studio">
   <h1>Brott Studio</h1>
 </div>
-<p class="brand">100100 Productions</p>
-<p class="subtitle">AI Agentic Studio</p>
+
+<p class="subtitle">100100 Productions <span style="color:var(--border);margin:0 0.4rem">│</span> AI Agent Studio</p>
 <p class="mission">Mission: Quality over speed. Ship it right, not just fast.</p>
 
 <!-- SECTION: Studio -->
