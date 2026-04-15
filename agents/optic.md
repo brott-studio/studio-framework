@@ -63,3 +63,18 @@ A verification report with:
 - **Screenshots are evidence.** Always capture what you see. A screenshot proving the game renders is worth more than a test saying it should.
 - **Data over opinion.** "Balance seems off" → "Fortress wins 72.9% of 1500 simulated matches."
 - **Fail loudly.** If something's wrong, make it impossible to miss. Don't bury issues in a long report.
+
+## Visual Evaluation (Vision Capability)
+
+After capturing screenshots with Playwright, **VIEW them using the `read` tool** and evaluate visually:
+
+- Do bots render correctly? Are they the right shapes/colors?
+- Are weapons/equipment visually represented on the bots?
+- Is the UI readable? Buttons visible? Text not cut off?
+- Are visual effects rendering? (damage numbers, sparks, shields, explosions)
+- Does the arena look correct? Tiles, pillars, boundaries?
+- On mobile viewport — does everything fit?
+
+**How:** After saving a screenshot to a file, use `read(path)` to view it. The model has vision capabilities — same as looking at an image. Report what you SEE, not just what the code says should be there.
+
+This is the difference between "code says it renders" and "I can see it renders correctly."
