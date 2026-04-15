@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Brott Studio Dashboard</title>
+<style>
+  :root {
+    --bg: #0d1117; --surface: #161b22; --border: #30363d;
+    --text: #e6edf3; --muted: #8b949e; --accent: #58a6ff;
+    --green: #3fb950; --yellow: #d29922; --red: #f85149;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); padding: 1rem; max-width: 960px; margin: 0 auto; line-height: 1.5; }
+  h1 { font-size: 1.5rem; margin-bottom: 0.25rem; }
+  h2 { font-size: 1.1rem; color: var(--accent); margin: 1.5rem 0 0.5rem; border-bottom: 1px solid var(--border); padding-bottom: 0.25rem; }
+  .subtitle { color: var(--muted); font-size: 0.85rem; margin-bottom: 1rem; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 0.75rem; margin-bottom: 0.75rem; }
+  .links { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem; }
+  .links a { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 0.35rem 0.7rem; color: var(--accent); text-decoration: none; font-size: 0.85rem; }
+  .links a:hover { border-color: var(--accent); }
+  .pr { padding: 0.4rem 0; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
+  .pr:last-child { border-bottom: none; }
+  .pr-num { color: var(--muted); }
+  .pr-date { color: var(--muted); font-size: 0.75rem; float: right; }
+  .pr-merged { color: var(--green); }
+  .pr-open { color: var(--yellow); }
+  .pr-closed { color: var(--red); }
+  .audit { padding: 0.4rem 0; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
+  .audit:last-child { border-bottom: none; }
+  .audit a { color: var(--accent); text-decoration: none; }
+  .audit a:hover { text-decoration: underline; }
+  .audit-date { color: var(--muted); font-size: 0.75rem; }
+  .pipeline-step { display: flex; align-items: center; gap: 0.5rem; padding: 0.3rem 0; font-size: 0.85rem; }
+  .step-num { background: var(--accent); color: var(--bg); border-radius: 50%; width: 1.4rem; height: 1.4rem; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: bold; flex-shrink: 0; }
+  .role { display: flex; align-items: center; gap: 0.5rem; padding: 0.25rem 0; font-size: 0.85rem; }
+  .loading { color: var(--muted); font-style: italic; font-size: 0.85rem; }
+  .error { color: var(--red); font-size: 0.85rem; }
+  .scroll { max-height: 400px; overflow-y: auto; }
+  @media (max-width: 600px) { body { padding: 0.5rem; } h1 { font-size: 1.2rem; } }
+</style>
+</head>
+<body>
+
+<h1>🤖⚔️ Brott Studio</h1>
+<p class="subtitle">AI Agent Game Dev Studio — Dashboard</p>
+
+<div class="links">
+  <a href="https://github.com/brott-studio/studio-framework/blob/main/PIPELINE.md">📋 Pipeline</a>
+  <a href="https://github.com/brott-studio/studio-framework/blob/main/FRAMEWORK.md">📖 Framework</a>
+  <a href="https://github.com/brott-studio/studio-audits">🕵️ Audits</a>
+  <a href="" id="link-gdd">📄 GDD</a>
+  <a href="" id="link-game">🎮 Play Game</a>
+  <a href="" id="link-repo">💻 Project Repo</a>
+</div>
+
+<h2>📋 Pipeline</h2>
+<div class="card" id="pipeline">
+  <div class="pipeline-step"><span class="step-num">1</span> <strong>PLAN</strong> — The Bott defines sprint goals</div>
+  <div class="pipeline-step"><span class="step-num">2</span> <strong>DESIGN</strong> — Gizmo writes specs</div>
+  <div class="pipeline-step"><span class="step-num">3</span> <strong>BUILD</strong> — Nutts implements + tests</div>
+  <div class="pipeline-step"><span class="step-num">4</span> <strong>REVIEW</strong> — Boltz reviews PR</div>
+  <div class="pipeline-step"><span class="step-num">5</span> <strong>VERIFY</strong> — Optic tests + screenshots</div>
+  <div class="pipeline-step"><span class="step-num">6</span> <strong>DEPLOY</strong> — CI/CD auto-deploys</div>
+  <div class="pipeline-step"><span class="step-num">7</span> <strong>AUDIT</strong> — Specc audits + KB</div>
+</div>
+
+<h2>👥 Roles</h2>
+<div class="card">
+  <div class="role">🎬 <strong>Eric</strong> — Creative Director</div>
+  <div class="role">🤖 <strong>The Bott</strong> — Executive Producer</div>
+  <div class="role">🎯 <strong>Gizmo</strong> — Game Designer</div>
+  <div class="role">💻 <strong>Nutts</strong> — Developer</div>
+  <div class="role">👨‍💻 <strong>Boltz</strong> — Lead Dev (PR Review)</div>
+  <div class="role">🎮 <strong>Optic</strong> — Verifier</div>
+  <div class="role">🕵️ <strong>Specc</strong> — Inspector</div>
+  <div class="role">🔧 <strong>Patch</strong> — DevOps (on-demand)</div>
+</div>
+
+<h2>🔀 Pull Requests <span id="pr-count" style="font-weight:normal;color:var(--muted);font-size:0.85rem"></span></h2>
+<div class="card scroll" id="pr-list">
+  <p class="loading">Loading PRs...</p>
+</div>
+
+<h2>🕵️ Audit History</h2>
+<div class="card scroll" id="audit-list">
+  <p class="loading">Loading audits...</p>
+</div>
+
+<script>
+const ORG = 'brott-studio';
+const AUDIT_REPO = 'studio-audits';
+const API = 'https://api.github.com';
+
+// Detect project repo from URL param or default
+const params = new URLSearchParams(window.location.search);
+const PROJECT = params.get('project') || 'battlebrotts-v2';
+const AUDIT_FOLDER = params.get('audit_folder') || PROJECT;
+
+// Update links
+document.getElementById('link-gdd').href = `https://github.com/${ORG}/${PROJECT}/blob/main/docs/gdd.md`;
+document.getElementById('link-game').href = `https://${ORG}.github.io/${PROJECT}/game/`;
+document.getElementById('link-repo').href = `https://github.com/${ORG}/${PROJECT}`;
+
+// Fetch PRs
+async function loadPRs() {
+  const el = document.getElementById('pr-list');
+  const countEl = document.getElementById('pr-count');
+  try {
+    const res = await fetch(`${API}/repos/${ORG}/${PROJECT}/pulls?state=all&sort=created&direction=desc&per_page=100`);
+    const prs = await res.json();
+    if (!Array.isArray(prs)) throw new Error(prs.message || 'API error');
+    countEl.textContent = `(${prs.length})`;
+    if (prs.length === 0) { el.innerHTML = '<p class="muted" style="font-size:0.85rem">No PRs yet</p>'; return; }
+    el.innerHTML = prs.map(pr => {
+      const state = pr.merged_at ? 'merged' : pr.state;
+      const stateClass = state === 'merged' ? 'pr-merged' : state === 'open' ? 'pr-open' : 'pr-closed';
+      const stateLabel = state === 'merged' ? '✅' : state === 'open' ? '🟡' : '❌';
+      const date = new Date(pr.merged_at || pr.closed_at || pr.created_at).toLocaleDateString();
+      return `<div class="pr"><span class="pr-num">#${pr.number}</span> <span class="${stateClass}">${stateLabel}</span> <a href="${pr.html_url}" style="color:var(--text);text-decoration:none">${pr.title}</a> <span class="pr-date">${date}</span></div>`;
+    }).join('');
+  } catch(e) { el.innerHTML = `<p class="error">Failed to load: ${e.message}</p>`; }
+}
+
+// Fetch audits
+async function loadAudits() {
+  const el = document.getElementById('audit-list');
+  try {
+    const res = await fetch(`${API}/repos/${ORG}/${AUDIT_REPO}/contents/audits/${AUDIT_FOLDER}`);
+    const files = await res.json();
+    if (!Array.isArray(files)) throw new Error(files.message || 'No audits found');
+    const audits = files.filter(f => f.name.endsWith('.md')).reverse();
+    if (audits.length === 0) { el.innerHTML = '<p style="color:var(--muted);font-size:0.85rem">No audits yet</p>'; return; }
+    el.innerHTML = audits.map(a => {
+      const name = a.name.replace('.md','').replace(/-/g,' ');
+      return `<div class="audit"><a href="${a.html_url}">${name}</a></div>`;
+    }).join('');
+  } catch(e) { el.innerHTML = `<p class="error">Failed to load: ${e.message}</p>`; }
+}
+
+loadPRs();
+loadAudits();
+</script>
+
+</body>
+</html>
