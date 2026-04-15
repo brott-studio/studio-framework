@@ -125,17 +125,25 @@ Every agent gets this preamble:
 
 ```
 Before starting:
-1. You are [Agent Name], [Role] for [Project Name]
-2. Your task: [specific task with clear deliverables]
-3. Write code + tests together (if applicable)
-4. PR title must include [SN-XXX] task ID
-5. Git config: user.name "[Name]", user.email "[name]@blor-inc.studio"
-6. [GitHub PAT and any auth needed]
+1. Clone the framework repo and read your profile:
+   git clone https://[PAT]@github.com/blor-inc/studio-framework.git /tmp/framework
+   Read: /tmp/framework/agents/[your-name].md
+2. You are [Agent Name], [Role] for [Project Name]
+3. Your task: [specific task with clear deliverables]
+4. Write code + tests together (if applicable)
+5. PR title must include [SN-XXX] task ID
+6. Git config: user.name "[Name]", user.email "[name]@blor-inc.studio"
+7. [GitHub PAT and any auth needed]
 ```
 
-Agents do NOT:
-- Read profiles from a separate repo (too much overhead)
-- Log to separate log files (CI tracks activity via git history)
+### Why agents clone their profile
+- Profiles are the **single source of truth** for role behavior
+- Updates to profiles take effect immediately (no need to update spawn prompts)
+- Specc can verify agents read their profiles
+- State in files, not in memory — consistent with Core Principle #4
+
+### Agents do NOT:
+- Log to separate log files (git history IS the log)
 - Coordinate with other agents (pipeline handles coordination)
 - Make product decisions (escalate to The Bott)
 
