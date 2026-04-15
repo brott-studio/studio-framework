@@ -17,5 +17,5 @@ A project-agnostic framework for running an AI agent studio. Designed for AI age
 - **Learning extraction** — Inspector reads agent transcripts and writes KB entries
 
 ## History
-This is v2, built on lessons from [v1](https://github.com/blor-inc/game-dev-studio) (archived).
+This is v2, built on lessons from [v1](https://github.com/brott-studio/game-dev-studio) (archived).
 See v1's `KEY_LEARNINGS.md` for the 11 foundational lessons.

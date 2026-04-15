@@ -126,13 +126,13 @@ Every agent gets this preamble:
 ```
 Before starting:
 1. Clone the framework repo and read your profile:
-   git clone https://[PAT]@github.com/blor-inc/studio-framework.git /tmp/framework
+   git clone https://[PAT]@github.com/brott-studio/studio-framework.git /tmp/framework
    Read: /tmp/framework/agents/[your-name].md
 2. You are [Agent Name], [Role] for [Project Name]
 3. Your task: [specific task with clear deliverables]
 4. Write code + tests together (if applicable)
 5. PR title must include [SN-XXX] task ID
-6. Git config: user.name "[Name]", user.email "[name]@blor-inc.studio"
+6. Git config: user.name "[Name]", user.email "[name]@brott-studio.studio"
 7. [GitHub PAT and any auth needed]
 ```
 
@@ -249,7 +249,7 @@ kb/
 
 ## Lessons From v1
 
-See [archived game-dev-studio repo](https://github.com/blor-inc/game-dev-studio) for:
+See [archived game-dev-studio repo](https://github.com/brott-studio/game-dev-studio) for:
 - `KEY_LEARNINGS.md` — 11 deep learnings from 16 sprints
 - `FRAMEWORK.md` — v1 framework (human-org-chart model)
 - Full sprint history and evolution
