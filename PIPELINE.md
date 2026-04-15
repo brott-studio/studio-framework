@@ -42,3 +42,11 @@
 5. **Design for agents, not humans**
 
 *Full details: [FRAMEWORK.md](FRAMEWORK.md)*
+
+## Sprint Communication
+
+Pipeline updates go to a **dedicated Discord thread per sprint** (e.g., "Sprint 4 Pipeline"). The main channel stays clean for leadership conversation.
+
+- **Sprint thread:** Agent completions, PR updates, verification results, audit reports
+- **Main channel:** CD ↔ EP conversation, direction, playtest feedback, escalations
+- **Ping main channel only for:** playtest-ready builds, decisions needed, critical issues
