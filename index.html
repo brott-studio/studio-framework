@@ -152,6 +152,13 @@
   </div>
 </details>
 
+<details>
+  <summary>⚙️ CI/CD Runs <span id="ci-count" style="font-weight:normal;color:var(--muted);font-size:0.8rem;margin-left:0.3rem"></span></summary>
+  <div class="inner scroll" id="ci-list">
+    <p class="loading">Loading runs...</p>
+  </div>
+</details>
+
 <h3 style="font-size:0.95rem;color:var(--accent);margin:0.8rem 0 0.4rem">🕵️ Sprint Audits</h3>
 <div id="audit-list">
   <p class="loading">Loading audits...</p>
@@ -240,6 +247,27 @@ async function loadGDD() {
   } catch(e) { el.innerHTML = `<p class="error">Failed to load</p>`; }
 }
 
+
+async function loadCI() {
+  const el = document.getElementById('ci-list');
+  const countEl = document.getElementById('ci-count');
+  try {
+    const res = await fetch(`${API}/repos/${ORG}/${PROJECT}/actions/runs?per_page=50`);
+    const data = await res.json();
+    const runs = data.workflow_runs;
+    if (!Array.isArray(runs)) throw new Error(data.message || 'API error');
+    countEl.textContent = `(${runs.length})`;
+    if (runs.length === 0) { el.innerHTML = '<p style="color:var(--muted)">No CI runs yet</p>'; return; }
+    el.innerHTML = runs.map(r => {
+      const icon = r.conclusion === 'success' ? '✅' : r.conclusion === 'failure' ? '❌' : r.status === 'in_progress' ? '🔄' : r.conclusion === 'skipped' ? '⏭️' : '⚪';
+      const d = new Date(r.created_at);
+      const date = `${d.getMonth()+1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}`;
+      const name = r.name.length > 30 ? r.name.substring(0,30) + '…' : r.name;
+      return `<div class="pr"><span class="pr-date" style="float:none;margin-right:0.4rem">${date}</span>${icon} <a href="${r.html_url}" target="_blank">${name}</a></div>`;
+    }).join('');
+  } catch(e) { el.innerHTML = `<p class="error">${e.message}</p>`; }
+}
+
 async function loadPRs() {
   const el = document.getElementById('pr-list');
   const countEl = document.getElementById('pr-count');
@@ -312,6 +340,7 @@ document.querySelectorAll('details').forEach((d, i) => {
 });
 
 loadPRs();
+loadCI();
 loadAudits();
 </script>
 
