@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Brott Studio Dashboard</title>
+<title>Brott Studio</title>
+<link rel="icon" type="image/png" href="favicon.png">
 <style>
   :root {
     --bg: #0d1117; --surface: #161b22; --border: #30363d;
@@ -12,54 +13,64 @@
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); padding: 1rem; max-width: 960px; margin: 0 auto; line-height: 1.5; }
-  h1 { font-size: 1.4rem; margin-bottom: 0.2rem; }
-  h2 { font-size: 1.05rem; color: var(--accent); margin: 1rem 0 0.4rem; }
+  
+  /* Header */
+  .header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.2rem; }
+  .header img { width: 40px; height: 40px; border-radius: 6px; }
+  h1 { font-size: 1.4rem; }
+  h2 { font-size: 1.05rem; color: var(--accent); margin: 1.2rem 0 0.5rem; border-bottom: 1px solid var(--border); padding-bottom: 0.25rem; }
   .subtitle { color: var(--muted); font-size: 0.8rem; margin-bottom: 0.75rem; }
   .links { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.75rem; }
   .links a { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 0.3rem 0.6rem; color: var(--accent); text-decoration: none; font-size: 0.8rem; }
   .links a:hover { border-color: var(--accent); }
 
+  /* Collapsible */
   details { margin-bottom: 0.5rem; }
   details summary { cursor: pointer; background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 0.4rem 0.7rem; font-size: 0.85rem; font-weight: 600; color: var(--accent); list-style: none; display: flex; align-items: center; gap: 0.4rem; }
   details summary::-webkit-details-marker { display: none; }
   details summary::before { content: '▶'; font-size: 0.6rem; transition: transform 0.2s; }
   details[open] summary::before { transform: rotate(90deg); }
   details .inner { background: var(--surface); border: 1px solid var(--border); border-top: none; border-radius: 0 0 4px 4px; padding: 0.6rem; overflow-x: auto; }
-  /* Markdown rendered inside collapsible */
+
+  /* Markdown rendered content */
   .md-content { font-size: 0.82rem; line-height: 1.6; }
   .md-content h1, .md-content h2, .md-content h3 { color: var(--accent); margin: 0.6rem 0 0.25rem; }
   .md-content h1 { font-size: 1.05rem; } .md-content h2 { font-size: 0.92rem; } .md-content h3 { font-size: 0.84rem; }
   .md-content p { margin-bottom: 0.4rem; }
   .md-content ul, .md-content ol { margin: 0.25rem 0 0.4rem 1.2rem; }
+  .md-content li { margin-bottom: 0.15rem; }
   .md-content table { border-collapse: collapse; width: 100%; margin: 0.4rem 0; font-size: 0.75rem; }
   .md-content th, .md-content td { border: 1px solid var(--border); padding: 0.2rem 0.4rem; text-align: left; }
-  .md-content th { background: var(--surface); }
+  .md-content th { background: var(--surface); font-weight: 600; }
   .md-content code { background: var(--bg); padding: 0.1rem 0.3rem; border-radius: 3px; font-size: 0.8em; }
-  .md-content pre { background: var(--bg); padding: 0.5rem; border-radius: 4px; overflow-x: auto; font-size: 0.78rem; margin: 0.4rem 0; }
+  .md-content pre { background: var(--bg); padding: 0.5rem; border-radius: 4px; overflow-x: auto; font-size: 0.78rem; margin: 0.4rem 0; white-space: pre-wrap; }
   .md-content hr { border: none; border-top: 1px solid var(--border); margin: 0.5rem 0; }
   .md-content strong { color: var(--text); }
+  .md-content em { color: var(--muted); }
   .md-content blockquote { border-left: 3px solid var(--accent); padding-left: 0.6rem; color: var(--muted); margin: 0.4rem 0; }
+  .md-content a { color: var(--accent); }
 
+  /* Pipeline */
   .pipeline { display: flex; flex-wrap: wrap; align-items: center; gap: 0.2rem; font-size: 0.8rem; margin-bottom: 0.4rem; }
   .pipe-step { background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: 0.2rem 0.5rem; white-space: nowrap; }
   .pipe-arrow { color: var(--muted); font-size: 0.7rem; }
   .role { font-size: 0.8rem; padding: 0.15rem 0; }
 
+  /* PRs */
   .pr { padding: 0.3rem 0; border-bottom: 1px solid var(--border); font-size: 0.8rem; }
   .pr:last-child { border-bottom: none; }
   .pr a { color: var(--text); text-decoration: none; }
   .pr a:hover { color: var(--accent); }
   .pr-num { color: var(--muted); margin-right: 0.3rem; }
   .pr-date { color: var(--muted); font-size: 0.7rem; }
-  .pr-merged { color: var(--green); }
-  .pr-open { color: var(--yellow); }
-  .pr-closed { color: var(--red); }
+  .pr-merged { color: var(--green); } .pr-open { color: var(--yellow); } .pr-closed { color: var(--red); }
   .scroll { max-height: 500px; overflow-y: auto; }
 
+  /* Audit cards */
   .audit-card { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; margin-bottom: 0.5rem; overflow: hidden; }
   .audit-header { padding: 0.6rem 0.75rem; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
   .audit-header:hover { background: #1c2129; }
-  .audit-left { display: flex; flex-direction: column; gap: 0.15rem; flex: 1; min-width: 0; }
+  .audit-left { display: flex; flex-direction: column; gap: 0.1rem; flex: 1; min-width: 0; }
   .audit-name { font-size: 0.95rem; font-weight: 600; }
   .audit-desc { font-size: 0.8rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .audit-meta { font-size: 0.72rem; color: var(--muted); }
@@ -69,17 +80,9 @@
   .grade-c { background: #2a1a04; color: #e3b341; border: 1px solid #e3b341; }
   .grade-d { background: #2d0b0b; color: var(--red); border: 1px solid var(--red); }
   .grade-unknown { background: var(--surface); color: var(--muted); border: 1px solid var(--border); }
-  .audit-body { display: none; padding: 0.75rem; border-top: 1px solid var(--border); background: var(--bg); font-size: 0.8rem; line-height: 1.6; overflow-x: auto; }
+  .audit-body { display: none; border-top: 1px solid var(--border); }
   .audit-body.open { display: block; }
-  .audit-body h1, .audit-body h2, .audit-body h3 { color: var(--accent); margin: 0.6rem 0 0.25rem; }
-  .audit-body h1 { font-size: 1.05rem; } .audit-body h2 { font-size: 0.9rem; } .audit-body h3 { font-size: 0.82rem; }
-  .audit-body p { margin-bottom: 0.4rem; }
-  .audit-body ul, .audit-body ol { margin: 0.25rem 0 0.4rem 1.2rem; }
-  .audit-body table { border-collapse: collapse; width: 100%; margin: 0.4rem 0; font-size: 0.75rem; }
-  .audit-body th, .audit-body td { border: 1px solid var(--border); padding: 0.2rem 0.4rem; text-align: left; }
-  .audit-body th { background: var(--surface); }
-  .audit-body code { background: var(--surface); padding: 0.1rem 0.3rem; border-radius: 3px; font-size: 0.8em; }
-  .audit-body hr { border: none; border-top: 1px solid var(--border); margin: 0.5rem 0; }
+  .audit-body .md-content { padding: 0.75rem; background: var(--bg); }
 
   .loading { color: var(--muted); font-style: italic; font-size: 0.8rem; }
   .error { color: var(--red); font-size: 0.8rem; }
@@ -87,7 +90,10 @@
 </head>
 <body>
 
-<h1>🤖⚔️ Brott Studio</h1>
+<div class="header">
+  <img src="icon.png" alt="Brott Studio">
+  <h1>Brott Studio</h1>
+</div>
 <p class="subtitle">AI Agent Game Dev Studio</p>
 
 <div class="links">
@@ -96,6 +102,9 @@
   <a href="https://github.com/brott-studio/studio-framework" target="_blank">🏭 Framework Repo</a>
   <a href="https://github.com/brott-studio/studio-audits" target="_blank">🕵️ Audits Repo</a>
 </div>
+
+<!-- SECTION: Studio -->
+<h2>🏭 Studio</h2>
 
 <details>
   <summary>📖 Framework</summary>
@@ -121,6 +130,9 @@
     <div class="role">🎮 <strong>Optic</strong> — Verifier &nbsp;|&nbsp; 🕵️ <strong>Specc</strong> — Inspector &nbsp;|&nbsp; 🔧 <strong>Patch</strong> — DevOps</div>
   </div>
 </details>
+
+<!-- SECTION: Project -->
+<h2>📊 Project</h2>
 
 <details>
   <summary>📄 Game Design Document</summary>
@@ -154,28 +166,40 @@ document.getElementById('link-game').href = `https://${ORG}.github.io/${PROJECT}
 document.getElementById('link-repo').href = `https://github.com/${ORG}/${PROJECT}`;
 
 function md2html(md) {
-  return md
+  // Handle code blocks first (preserve content)
+  let codeBlocks = [];
+  md = md.replace(/```(\w*)\n([\s\S]*?)```/g, (m, lang, code) => {
+    codeBlocks.push(`<pre><code>${code.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</code></pre>`);
+    return `%%CODEBLOCK${codeBlocks.length-1}%%`;
+  });
+  
+  let html = md
     .replace(/^### (.+)$/gm, '<h3>$1</h3>')
     .replace(/^## (.+)$/gm, '<h2>$1</h2>')
     .replace(/^# (.+)$/gm, '<h1>$1</h1>')
     .replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>')
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
     .replace(/\*(.+?)\*/g, '<em>$1</em>')
-    .replace(/`(.+?)`/g, '<code>$1</code>')
-    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" style="color:var(--accent)">$1</a>')
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>')
     .replace(/^\|[-| :]+\|$/gm, '')
     .replace(/^\| (.+)$/gm, (match) => {
       const cells = match.split('|').filter(c => c.trim()).map(c => `<td>${c.trim()}</td>`);
       return `<tr>${cells.join('')}</tr>`;
     })
-    .replace(/^- (.+)$/gm, '<li>$1</li>')
     .replace(/^(\d+)\. (.+)$/gm, '<li>$2</li>')
+    .replace(/^- (.+)$/gm, '<li>$1</li>')
     .replace(/(<li>.*<\/li>\n?)+/g, (m) => `<ul>${m}</ul>`)
     .replace(/(<tr>.*<\/tr>\n?)+/g, (m) => `<table>${m}</table>`)
     .replace(/^---$/gm, '<hr>')
-    .replace(/```[\s\S]*?```/g, (m) => `<pre>${m.replace(/```\w*\n?/g,'').replace(/```/g,'')}</pre>`)
-    .replace(/^(?!<[hultrobp\-]|$)(.+)$/gm, '<p>$1</p>')
+    .replace(/^(?!<[hultrobp\-]|%%CODE|$)(.+)$/gm, '<p>$1</p>')
     .replace(/<p>\s*<\/p>/g, '');
+  
+  // Restore code blocks
+  codeBlocks.forEach((block, i) => { html = html.replace(`%%CODEBLOCK${i}%%`, block); });
+  // Clean up any remaining placeholder paragraphs
+  html = html.replace(/<p>(%%CODEBLOCK\d+%%)<\/p>/g, '$1');
+  return html;
 }
 
 function extractGrade(text) {
@@ -184,11 +208,10 @@ function extractGrade(text) {
 }
 
 function extractTitle(text) {
-  // Look for the first h1 or h2 with descriptive content
   const m = text.match(/^#+\s+(.+)/m);
   if (m) {
-    let title = m[1].replace(/^Sprint \d+\s*/i, '').replace(/^Audit[:\s—-]*/i, '').replace(/^\(v2\)\s*/i,'').trim();
-    if (title && title.length > 3) return title;
+    let t = m[1].replace(/^Sprint \d+\s*/i, '').replace(/^Audit[:\s—-]*/i, '').replace(/^\(v2\)\s*/i,'').trim();
+    if (t && t.length > 3) return t;
   }
   return null;
 }
@@ -207,27 +230,24 @@ function gradeClass(g) {
 }
 
 function formatAuditName(filename) {
-  return filename.replace('.md','').replace(/^v2-/, '')
-    .split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+  let name = filename.replace('.md','').replace(/^v2-/, '');
+  return 'Sprint ' + name.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+    .replace('Sprint Sprint', 'Sprint').replace('Sprint V2 ', 'Sprint ');
 }
 
-// Load Framework.md
 async function loadFramework() {
   const el = document.getElementById('framework-content');
   try {
-    const res = await fetch(`https://raw.githubusercontent.com/${ORG}/${FRAMEWORK_REPO}/main/FRAMEWORK.md`);
-    const md = await res.text();
-    el.innerHTML = md2html(md);
+    const r = await fetch(`https://raw.githubusercontent.com/${ORG}/${FRAMEWORK_REPO}/main/FRAMEWORK.md`);
+    el.innerHTML = md2html(await r.text());
   } catch(e) { el.innerHTML = `<p class="error">Failed to load</p>`; }
 }
 
-// Load GDD
 async function loadGDD() {
   const el = document.getElementById('gdd-content');
   try {
-    const res = await fetch(`https://raw.githubusercontent.com/${ORG}/${PROJECT}/main/docs/gdd.md`);
-    const md = await res.text();
-    el.innerHTML = md2html(md);
+    const r = await fetch(`https://raw.githubusercontent.com/${ORG}/${PROJECT}/main/docs/gdd.md`);
+    el.innerHTML = md2html(await r.text());
   } catch(e) { el.innerHTML = `<p class="error">Failed to load</p>`; }
 }
 
@@ -273,13 +293,12 @@ async function loadAudits() {
         return `<div class="audit-card">
           <div class="audit-header" onclick="toggleAudit(${i})">
             <div class="audit-left">
-              <div class="audit-name">${sprintName}</div>
-              ${title ? `<div class="audit-desc">${title}</div>` : ''}
+              <div class="audit-name">${sprintName}${title ? ' — ' + title : ''}</div>
               <div class="audit-meta">${dateStr}</div>
             </div>
             ${grade ? `<span class="audit-grade ${gradeClass(grade)}">${grade}</span>` : ''}
           </div>
-          <div class="audit-body" id="audit-${i}">${md2html(md)}</div>
+          <div class="audit-body" id="audit-${i}"><div class="md-content">${md2html(md)}</div></div>
         </div>`;
       } catch(e) {
         return `<div class="audit-card"><div class="audit-header"><div class="audit-name">${a.name}</div></div></div>`;
@@ -293,9 +312,15 @@ function toggleAudit(i) {
   document.getElementById(`audit-${i}`).classList.toggle('open');
 }
 
-// Lazy-load Framework and GDD only when expanded
-document.querySelector('details:nth-of-type(1)').addEventListener('toggle', function() { if (this.open && !this.dataset.loaded) { loadFramework(); this.dataset.loaded='1'; }});
-document.querySelector('details:nth-of-type(3)').addEventListener('toggle', function() { if (this.open && !this.dataset.loaded) { loadGDD(); this.dataset.loaded='1'; }});
+// Lazy load on expand
+document.querySelectorAll('details').forEach((d, i) => {
+  d.addEventListener('toggle', function() {
+    if (!this.open || this.dataset.loaded) return;
+    this.dataset.loaded = '1';
+    if (i === 0) loadFramework();
+    if (i === 2) loadGDD();
+  });
+});
 
 loadPRs();
 loadAudits();
