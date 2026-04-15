@@ -82,6 +82,7 @@
   .loading { color: var(--muted); font-style: italic; font-size: 0.8rem; }
   .error { color: var(--red); font-size: 0.8rem; }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
 
@@ -169,45 +170,18 @@ document.getElementById('link-game').href = `https://${ORG}.github.io/${PROJECT}
 document.getElementById('link-repo').href = `https://github.com/${ORG}/${PROJECT}`;
 
 function md2html(md) {
-  let codeBlocks = [];
-  md = md.replace(/```(\w*)\n([\s\S]*?)```/g, (m, lang, code) => {
-    codeBlocks.push(`<pre><code>${code.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</code></pre>`);
-    return `%%CB${codeBlocks.length-1}%%`;
-  });
-  
-  // Handle multi-line blockquotes: merge consecutive > lines
-  md = md.replace(/^>\s*$/gm, '%%BQBREAK%%');
-  md = md.replace(/^> (.+)$/gm, '%%BQ%%$1');
-  // Group consecutive blockquote lines
-  md = md.replace(/(%%BQ%%.*(\n|%%BQBREAK%%\n?)*)+/g, (match) => {
-    const content = match.replace(/%%BQ%%/g, '').replace(/%%BQBREAK%%/g, '<br>').trim();
-    return `<blockquote>${content}</blockquote>`;
-  });
-  md = md.replace(/%%BQBREAK%%/g, '');
-  
-  let html = md
-    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
-    .replace(/^## (.+)$/gm, '<h2>$1</h2>')
-    .replace(/^# (.+)$/gm, '<h1>$1</h1>')
-    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*(.+?)\*/g, '<em>$1</em>')
-    .replace(/`([^`]+)`/g, '<code>$1</code>')
-    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>')
-    .replace(/^\|[-| :]+\|$/gm, '')
-    .replace(/^\| (.+)$/gm, (match) => {
-      const cells = match.split('|').filter(c => c.trim()).map(c => `<td>${c.trim()}</td>`);
-      return `<tr>${cells.join('')}</tr>`;
-    })
-    .replace(/^(\d+)\. (.+)$/gm, '<li>$2</li>')
-    .replace(/^- (.+)$/gm, '<li>$1</li>')
-    .replace(/(<li>.*<\/li>\n?)+/g, (m) => `<ul>${m}</ul>`)
-    .replace(/(<tr>.*<\/tr>\n?)+/g, (m) => `<table>${m}</table>`)
-    .replace(/^---$/gm, '<hr>')
-    .replace(/^(?!<[hultrobp\-]|%%CB|$)(.+)$/gm, '<p>$1</p>')
-    .replace(/<p>\s*<\/p>/g, '');
-  
-  codeBlocks.forEach((block, i) => { html = html.replace(`<p>%%CB${i}%%</p>`, block).replace(`%%CB${i}%%`, block); });
-  return html;
+  const renderer = new marked.Renderer();
+  const origLink = renderer.link.bind(renderer);
+  renderer.link = function(href, title, text) {
+    // Handle both old and new marked.js API
+    if (typeof href === 'object') {
+      const token = href;
+      return `<a href="${token.href}" target="_blank"${token.title ? ' title="'+token.title+'"' : ''}>${token.text}</a>`;
+    }
+    return `<a href="${href}" target="_blank"${title ? ' title="'+title+'"' : ''}>${text}</a>`;
+  };
+  marked.setOptions({ breaks: false, gfm: true, headerIds: false, mangle: false, renderer: renderer });
+  return marked.parse(md);
 }
 
 function extractGrade(text) {
