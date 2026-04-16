@@ -68,6 +68,26 @@ Loop:
 When Ett is NOT included:
 - Execute pipeline as before (single sprint, return results to The Bott)
 
+## Agent Output Checks
+
+Between each pipeline stage, perform these quick presence checks before proceeding. Not deep review — just "did the agent do what it was supposed to?"
+
+### After Gizmo (Step 1)
+- Did Gizmo propose design changes? If yes → did output include a GDD update? If no GDD update → re-spawn Gizmo with instruction to "include GDD update"
+- Did Gizmo's output include a clear spec for Nutts? If not → re-spawn Gizmo with instruction to "include implementation spec for Nutts"
+- If no design changes and no drift → proceed (no re-spawn needed)
+
+### After Nutts (Step 2 / Step 3a)
+- Did Nutts open a PR? If no PR number in output → flag and re-spawn Nutts
+- Did the PR include tests? If no tests mentioned → re-spawn Nutts with instruction to "include tests"
+
+### After Boltz (Step 3)
+- Was the PR merged? If changes were requested → route back to Nutts fix loop (Step 3a)
+- Were review comments substantive? If Boltz approved with zero comments on a non-trivial PR → log a note but proceed
+
+### After Optic (Step 4)
+- Did verification PASS? If FAIL → escalate to The Bott immediately (do not continue to Specc)
+
 ## What You Don't Do
 - Plan sprints (The Bott does that)
 - Write code (Nutts does that)
