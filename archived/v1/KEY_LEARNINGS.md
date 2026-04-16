@@ -162,3 +162,23 @@ The studio went from "agents writing code" to "a system that produces verified s
 ---
 
 *Next: Apply these learnings to the business idea (custom personalized games). The framework should make that scalable.*
+
+---
+
+## 12. Before Concluding a Design Doesn't Work, Verify the Infrastructure Supports It
+
+In v1, we concluded that agents can't orchestrate other agents and redesigned the entire studio around hub-and-spoke (EP manages everything directly). We retired the orchestrator role (Rivett) and built a v2 framework without it.
+
+**The actual problem:** `maxSpawnDepth` was set to 1 (default), which meant depth-1 agents didn't have `sessions_spawn`. The orchestrator literally couldn't spawn agents — not because orchestration doesn't work, but because the tool wasn't available.
+
+Setting `maxSpawnDepth=5` in config gave depth-1 agents `sessions_spawn`, and suddenly the orchestrator pattern works exactly as designed.
+
+**The cost of the false conclusion:**
+- Retired a working role design
+- Redesigned the entire framework
+- Built v2 around a constraint that didn't exist
+- Spent multiple sprints on pipeline ordering problems that an orchestrator would have prevented
+
+**The lesson:** When a design fails, ask "does the infrastructure support this design?" before asking "is this the wrong design?" Check tool availability, configuration, and permissions before making architectural changes. Debugging > redesigning.
+
+*This may be the most expensive lesson of the project.*
