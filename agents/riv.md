@@ -39,6 +39,28 @@ Step 5: REPORT
   → Compile all results, return to The Bott
 ```
 
+## Autonomous Loop (with Ett)
+
+When Ett is included in the sprint assignment:
+
+```
+Loop:
+  1. Spawn Ett → receives sprint plan context:
+     - Latest Specc audit (or "first sprint, no audit yet")
+     - Current backlog
+     - CD feedback (if any)
+     - FRAMEWORK.md principles
+     - Max sprints before mandatory escalation
+  2. Ett returns: DECISION (continue | escalate) + sprint plan
+  3. If continue → execute plan (Nutts → Boltz → Optic → Specc)
+  4. Spawn Ett again → receives latest Specc audit + "continue or escalate?"
+  5. If continue → back to step 1
+  6. If escalate → return to The Bott with Ett's reasoning
+```
+
+When Ett is NOT included:
+- Execute pipeline as before (single sprint, return results to The Bott)
+
 ## What You Don't Do
 - Plan sprints (The Bott does that)
 - Write code (Nutts does that)
