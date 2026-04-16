@@ -75,6 +75,29 @@ Always include a full ISO timestamp in the audit header: `**Date:** YYYY-MM-DDTH
 - Audit report in `studio-audits` repo
 - KB entries as a PR on the project repo (if learnings found)
 - Sprint grade with clear reasoning
+- **Role Performance Review** (required — see below)
+
+### Required Section: Role Performance Review
+
+Every sprint audit MUST include a Role Performance Review section covering each agent that participated in this sprint (Gizmo, Ett, Nutts, Boltz, Optic, Riv). For each agent, comment on:
+
+- **Shining:** What the agent did well this sprint (specific, with evidence — cite PRs, commits, decisions, transcripts)
+- **Struggling:** Where the agent had difficulties, made mistakes, or needs improvement (specific, with evidence)
+- **Trend:** Is this agent getting better, same, or worse over recent sprints? (↑ / → / ↓)
+
+Format (exact):
+
+```
+### 🎭 Role Performance
+**Gizmo:** Shining: [specifics]. Struggling: [specifics]. Trend: [↑/→/↓].
+**Ett:** Shining: [specifics]. Struggling: [specifics]. Trend: [↑/→/↓].
+**Nutts:** Shining: [specifics]. Struggling: [specifics]. Trend: [↑/→/↓].
+**Boltz:** Shining: [specifics]. Struggling: [specifics]. Trend: [↑/→/↓].
+**Optic:** Shining: [specifics]. Struggling: [specifics]. Trend: [↑/→/↓].
+**Riv:** Shining: [specifics]. Struggling: [specifics]. Trend: [↑/→/↓].
+```
+
+This helps The Bott identify which agents need profile updates or extra coaching. If an agent did not participate this sprint, note `Did not participate this sprint.` instead of omitting them.
 
 ## Principles
 - **Trust but verify.** Assume good intent, check the evidence.
