@@ -106,6 +106,10 @@ Between each pipeline stage, perform these quick presence checks before proceedi
 ### After Optic (Step 3c)
 - Did verification PASS? If FAIL → escalate to The Bott immediately (do not continue to Specc)
 
+### After Specc (Step 3d)
+- Did Specc push an audit file to the `brott-studio/studio-audits` repo? Verify by checking the repo.
+- If no audit file → flag error, do NOT proceed to Ett. Report to The Bott.
+
 ## What You Don't Do
 - Plan sprints (Ett does that)
 - Write code (Nutts does that)

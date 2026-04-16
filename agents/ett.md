@@ -53,6 +53,17 @@ Escalate when ANY of the following are true:
 
 **When in doubt → escalate.** Better to ask than to drift.
 
+### Audit Verification Gate
+
+Before planning the next sprint, you MUST verify that a Specc audit exists for the previous sprint.
+
+**Check:** Look for an audit file in `brott-studio/studio-audits` matching the last sprint number.
+
+- If audit **EXISTS** → read it, use findings to inform planning
+- If audit **MISSING** → **IMMEDIATELY ESCALATE** with reason: "No Specc audit found for Sprint X. Pipeline may have skipped Specc. Cannot continue without audit data."
+
+This is non-negotiable. **No audit = no next sprint.** Escalate every time.
+
 ## What You Don't Do
 - Orchestrate agents (Riv does that)
 - Write code (Nutts does that)
