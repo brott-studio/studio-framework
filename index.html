@@ -164,6 +164,11 @@
   <p class="loading">Loading audits...</p>
 </div>
 
+<h3 style="font-size:0.95rem;color:var(--accent);margin:0.8rem 0 0.4rem">📚 Knowledge Base</h3>
+<div id="kb-list">
+  <p class="loading">Loading KB entries...</p>
+</div>
+
 <script>
 const ORG = 'brott-studio';
 const AUDIT_REPO = 'studio-audits';
@@ -266,6 +271,68 @@ async function loadCI() {
       return `<div class="pr"><span class="pr-date" style="float:none;margin-right:0.4rem">${date}</span>${icon} <a href="${r.html_url}" target="_blank">${name}</a></div>`;
     }).join('');
   } catch(e) { el.innerHTML = `<p class="error">${e.message}</p>`; }
+}
+
+
+async function loadKB() {
+  const el = document.getElementById('kb-list');
+  try {
+    // Fetch all KB subdirectories
+    const dirs = ['patterns', 'troubleshooting', 'postmortems', 'decisions'];
+    let allEntries = [];
+    
+    for (const dir of dirs) {
+      try {
+        const res = await fetch(`${API}/repos/${ORG}/${PROJECT}/contents/kb/${dir}`);
+        const files = await res.json();
+        if (Array.isArray(files)) {
+          for (const f of files) {
+            if (f.name.endsWith('.md') && f.name !== '.gitkeep') {
+              allEntries.push({ name: f.name, dir: dir, url: f.html_url, download: f.download_url });
+            }
+          }
+        }
+      } catch(e) { /* dir might not exist */ }
+    }
+    
+    if (allEntries.length === 0) {
+      el.innerHTML = '<p style="color:var(--muted);font-size:0.8rem">No KB entries yet</p>';
+      return;
+    }
+    
+    el.innerHTML = allEntries.map((entry, i) => {
+      const icon = entry.dir === 'patterns' ? '🔄' : entry.dir === 'troubleshooting' ? '🔧' : entry.dir === 'postmortems' ? '📋' : '🎯';
+      const category = entry.dir.charAt(0).toUpperCase() + entry.dir.slice(1);
+      const name = entry.name.replace('.md','').split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+      return `<div class="audit-card">
+        <div class="audit-header" onclick="toggleKB(${i})">
+          <div class="audit-left">
+            <div class="audit-name">${icon} ${name}</div>
+            <div class="audit-meta">${category}</div>
+          </div>
+        </div>
+        <div class="audit-body" id="kb-${i}"></div>
+      </div>`;
+    }).join('');
+    
+    // Store download URLs for lazy loading
+    window._kbEntries = allEntries;
+  } catch(e) { el.innerHTML = `<p class="error">${e.message}</p>`; }
+}
+
+async function toggleKB(i) {
+  const el = document.getElementById(`kb-${i}`);
+  if (el.classList.contains('open')) { el.classList.remove('open'); return; }
+  if (!el.dataset.loaded) {
+    el.innerHTML = '<div class="md-content"><p class="loading">Loading...</p></div>';
+    el.classList.add('open');
+    try {
+      const r = await fetch(window._kbEntries[i].download);
+      const md = await r.text();
+      el.innerHTML = `<div class="md-content">${md2html(md)}</div>`;
+      el.dataset.loaded = 'true';
+    } catch(e) { el.innerHTML = '<div class="md-content"><p class="error">Failed to load</p></div>'; }
+  } else { el.classList.add('open'); }
 }
 
 async function loadPRs() {
