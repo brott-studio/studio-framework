@@ -112,24 +112,8 @@
 
 <details>
   <summary>📋 Pipeline & Roles</summary>
-  <div class="inner">
-    <div style="font-size:0.75rem;color:var(--muted);margin-bottom:0.3rem">Orchestrated by Riv:</div>
-    <div class="pipeline">
-      <span class="pipe-step">🎯 DESIGN</span><span class="pipe-arrow">→</span>
-      <span class="pipe-step">💻 BUILD</span><span class="pipe-arrow">→</span>
-      <span class="pipe-step">👨‍💻 REVIEW</span><span class="pipe-arrow">→</span>
-      <span class="pipe-step">🔄 FIX?</span><span class="pipe-arrow">→</span>
-      <span class="pipe-step">🎮 VERIFY</span><span class="pipe-arrow">→</span>
-      <span class="pipe-step">⚙️ DEPLOY</span><span class="pipe-arrow">→</span>
-      <span class="pipe-step">🕵️ AUDIT</span>
-    </div>
-    <div style="font-size:0.75rem;margin-top:0.4rem;color:var(--muted);border-top:1px solid var(--border);padding-top:0.4rem">Leadership</div>
-    <div class="role">🎬 <strong>Human</strong> — Creative Director &nbsp;|&nbsp; 🤖 <strong>The Bott</strong> — Executive Producer</div>
-    <div style="font-size:0.75rem;margin-top:0.3rem;color:var(--muted)">Orchestration</div>
-    <div class="role">📋 <strong>Riv</strong> — Lead Orchestrator &nbsp;|&nbsp; 📋 <strong>Ett</strong> — Technical PM <span style="color:var(--muted);font-size:0.7rem">(inactive)</span></div>
-    <div style="font-size:0.75rem;margin-top:0.3rem;color:var(--muted)">Pipeline Agents</div>
-    <div class="role">🎯 <strong>Gizmo</strong> — Designer &nbsp;|&nbsp; 💻 <strong>Nutts</strong> — Dev &nbsp;|&nbsp; 👨‍💻 <strong>Boltz</strong> — Lead Dev</div>
-    <div class="role">🎮 <strong>Optic</strong> — Verifier &nbsp;|&nbsp; 🕵️ <strong>Specc</strong> — Inspector &nbsp;|&nbsp; 🔧 <strong>Patch</strong> — DevOps</div>
+  <div class="inner md-content" id="pipeline-content">
+    <p class="loading">Loading...</p>
   </div>
 </details>
 
@@ -237,6 +221,14 @@ async function loadFramework() {
   const el = document.getElementById('framework-content');
   try {
     const r = await fetch(`https://raw.githubusercontent.com/${ORG}/${FRAMEWORK_REPO}/main/FRAMEWORK.md`);
+    el.innerHTML = md2html(await r.text());
+  } catch(e) { el.innerHTML = `<p class="error">Failed to load</p>`; }
+}
+
+async function loadPipeline() {
+  const el = document.getElementById('pipeline-content');
+  try {
+    const r = await fetch(`https://raw.githubusercontent.com/${ORG}/${FRAMEWORK_REPO}/main/PIPELINE.md`);
     el.innerHTML = md2html(await r.text());
   } catch(e) { el.innerHTML = `<p class="error">Failed to load</p>`; }
 }
@@ -419,6 +411,7 @@ document.querySelectorAll('details').forEach((d, i) => {
     if (!this.open || this.dataset.loaded) return;
     this.dataset.loaded = '1';
     if (i === 0) loadFramework();
+    if (i === 1) loadPipeline();
     if (i === 2) loadGDD();
   });
 });
