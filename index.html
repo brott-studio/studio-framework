@@ -230,10 +230,10 @@ function gradeClass(g) {
 function formatAuditName(filename) {
   let name = filename.replace('.md','').replace(/^v2-/, '');
   // Extract sprint number if present
-  const sprintMatch = name.match(/sprint[- ]?(\d+)/i);
+  const sprintMatch = name.match(/sprint[- ]?(\d+(?:\.\d+)?)/i);
   if (sprintMatch) {
     const num = sprintMatch[1];
-    const rest = name.replace(/sprint[- ]?\d+[- ]?/i, '').trim();
+    const rest = name.replace(/sprint[- ]?\d+(?:\.\d+)?[- ]?/i, '').trim();
     const suffix = rest.split('-').filter(w=>w).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
     return `Sprint ${num}${suffix ? ' — ' + suffix : ''}`;
   }
@@ -365,7 +365,12 @@ async function loadAudits() {
     const res = await fetch(`${API}/repos/${ORG}/${AUDIT_REPO}/contents/audits/${AUDIT_FOLDER}`);
     const files = await res.json();
     if (!Array.isArray(files)) throw new Error(files.message || 'No audits');
-    const audits = files.filter(f => f.name.endsWith('.md')).reverse();
+    const audits = files.filter(f => f.name.endsWith('.md')).sort((a, b) => {
+      const numA = (a.name.match(/sprint[- ]?(\d+(?:\.\d+)?)/i) || [])[1];
+      const numB = (b.name.match(/sprint[- ]?(\d+(?:\.\d+)?)/i) || [])[1];
+      if (numA && numB) return parseFloat(numB) - parseFloat(numA);
+      return b.name.localeCompare(a.name);
+    });
     if (audits.length === 0) { el.innerHTML = '<p style="color:var(--muted)">No audits yet</p>'; return; }
     
     el.innerHTML = '<p class="loading">Loading audit details...</p>';
