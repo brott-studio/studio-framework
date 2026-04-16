@@ -163,6 +163,27 @@ const ORG = 'brott-studio';
 const AUDIT_REPO = 'studio-audits';
 const FRAMEWORK_REPO = 'studio-framework';
 const API = 'https://api.github.com';
+const CACHE_TTL = 30 * 60 * 1000; // 30 minutes
+
+function cachedFetch(url, opts) {
+  const key = 'ghcache:' + url;
+  try {
+    const cached = localStorage.getItem(key);
+    if (cached) {
+      const { ts, data } = JSON.parse(cached);
+      if (Date.now() - ts < CACHE_TTL) return Promise.resolve({ ok: true, json: () => Promise.resolve(data), text: () => Promise.resolve(data) });
+    }
+  } catch(e) {}
+  return fetch(url, opts).then(res => {
+    if (!res.ok) return res;
+    const ct = res.headers.get('content-type') || '';
+    const isJson = ct.includes('json');
+    return (isJson ? res.json() : res.text()).then(body => {
+      try { localStorage.setItem(key, JSON.stringify({ ts: Date.now(), data: body })); } catch(e) {}
+      return { ok: true, json: () => Promise.resolve(body), text: () => Promise.resolve(body) };
+    });
+  });
+}
 const params = new URLSearchParams(window.location.search);
 const PROJECT = params.get('project') || 'battlebrotts-v2';
 const AUDIT_FOLDER = params.get('audit_folder') || PROJECT;
@@ -246,7 +267,7 @@ async function loadCI() {
   const el = document.getElementById('ci-list');
   const countEl = document.getElementById('ci-count');
   try {
-    const res = await fetch(`${API}/repos/${ORG}/${PROJECT}/actions/runs?per_page=50`);
+    const res = await cachedFetch(`${API}/repos/${ORG}/${PROJECT}/actions/runs?per_page=50`);
     const data = await res.json();
     const runs = data.workflow_runs;
     if (!Array.isArray(runs)) throw new Error(data.message || 'API error');
@@ -272,7 +293,7 @@ async function loadKB() {
     
     for (const dir of dirs) {
       try {
-        const res = await fetch(`${API}/repos/${ORG}/${PROJECT}/contents/kb/${dir}`);
+        const res = await cachedFetch(`${API}/repos/${ORG}/${PROJECT}/contents/kb/${dir}`);
         if (!res.ok) continue;
         const files = await res.json();
         if (!Array.isArray(files)) continue;
@@ -328,7 +349,7 @@ async function loadPRs() {
   const el = document.getElementById('pr-list');
   const countEl = document.getElementById('pr-count');
   try {
-    const res = await fetch(`${API}/repos/${ORG}/${PROJECT}/pulls?state=all&sort=created&direction=desc&per_page=100`);
+    const res = await cachedFetch(`${API}/repos/${ORG}/${PROJECT}/pulls?state=all&sort=created&direction=desc&per_page=100`);
     const prs = await res.json();
     if (!Array.isArray(prs)) throw new Error(prs.message || 'API error');
     countEl.textContent = `(${prs.length})`;
@@ -347,7 +368,7 @@ async function loadPRs() {
 async function loadAudits() {
   const el = document.getElementById('audit-list');
   try {
-    const res = await fetch(`${API}/repos/${ORG}/${AUDIT_REPO}/contents/audits/${AUDIT_FOLDER}`);
+    const res = await cachedFetch(`${API}/repos/${ORG}/${AUDIT_REPO}/contents/audits/${AUDIT_FOLDER}`);
     const files = await res.json();
     if (!Array.isArray(files)) throw new Error(files.message || 'No audits');
     const audits = files.filter(f => f.name.endsWith('.md'));
@@ -355,20 +376,39 @@ async function loadAudits() {
 
     el.innerHTML = '<p class="loading">Loading audit details...</p>';
 
-    // Fetch git commit dates sequentially to avoid GitHub API rate limits.
-    // Each call is made one at a time so we don't burst 12 parallel requests.
+    // Single API call: fetch recent commits for the audit directory, match to files by message/path
     const commitDates = {};
-    for (const a of audits) {
-      try {
-        const commitRes = await fetch(`${API}/repos/${ORG}/${AUDIT_REPO}/commits?path=audits/${AUDIT_FOLDER}/${a.name}&per_page=1`);
-        if (commitRes.ok) {
-          const commits = await commitRes.json();
-          if (Array.isArray(commits) && commits.length > 0) {
-            commitDates[a.name] = commits[0].commit.author.date;
+    try {
+      const commitRes = await cachedFetch(`${API}/repos/${ORG}/${AUDIT_REPO}/commits?path=audits/${AUDIT_FOLDER}&per_page=100`);
+      if (commitRes.ok) {
+        const allCommits = await commitRes.json();
+        if (Array.isArray(allCommits)) {
+          // Commits are newest-first. Match each audit filename against commit messages.
+          // For any unmatched files, use the most recent directory commit as fallback.
+          const auditNames = audits.map(a => a.name);
+          const matched = new Set();
+          for (const c of allCommits) {
+            const msg = (c.commit.message || '').toLowerCase();
+            for (const name of auditNames) {
+              if (matched.has(name)) continue;
+              const base = name.replace('.md', '').toLowerCase();
+              // Match filename or base name in commit message
+              if (msg.includes(name.toLowerCase()) || msg.includes(base)) {
+                commitDates[name] = c.commit.author.date;
+                matched.add(name);
+              }
+            }
+          }
+          // Fallback: unmatched files get the most recent commit date for the directory
+          if (allCommits.length > 0) {
+            const fallbackDate = allCommits[0].commit.author.date;
+            for (const name of auditNames) {
+              if (!commitDates[name]) commitDates[name] = fallbackDate;
+            }
           }
         }
-      } catch(e) {}
-    }
+      }
+    } catch(e) {}
 
     // Fetch all audit content in parallel (these hit raw.githubusercontent.com, no rate limit)
     let cardData = await Promise.all(audits.map(async (a) => {
