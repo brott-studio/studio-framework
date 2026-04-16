@@ -90,6 +90,25 @@
   details.section-group > .section-body { margin-top: 0.5rem; }
   .section-count { font-weight: normal; color: var(--muted); font-size: 0.8rem; }
   .pinned-badge { font-size: 0.65rem; background: var(--accent); color: var(--bg); padding: 0.1rem 0.35rem; border-radius: 3px; font-weight: 700; margin-left: 0.4rem; vertical-align: middle; }
+
+  /* Project Pulse */
+  .pulse { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 0.55rem 0.75rem; margin: 0.75rem 0 0.5rem; display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem 1.1rem; font-size: 0.8rem; }
+  .pulse-title { font-weight: 700; color: var(--accent); font-size: 0.85rem; margin-right: 0.2rem; white-space: nowrap; }
+  .pulse-item { display: flex; align-items: center; gap: 0.35rem; white-space: nowrap; }
+  .pulse-label { color: var(--muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.03em; }
+  .pulse-value { color: var(--text); font-weight: 600; }
+  .pulse-dim { color: var(--muted); font-weight: 400; }
+  .pulse-trend { display: inline-flex; gap: 0.2rem; align-items: center; }
+  .pulse-pill { display: inline-block; min-width: 1.4rem; text-align: center; padding: 0.05rem 0.3rem; border-radius: 3px; font-size: 0.7rem; font-weight: 700; border: 1px solid transparent; line-height: 1.2; }
+  .pulse-pill.p-green  { background: #0d2818; color: var(--green);   border-color: var(--green); }
+  .pulse-pill.p-lime   { background: #152611; color: #8ddb5a;         border-color: #8ddb5a; }
+  .pulse-pill.p-yellow { background: #1a1d04; color: var(--yellow);  border-color: var(--yellow); }
+  .pulse-pill.p-orange { background: #2a1a04; color: #e3a341;         border-color: #e3a341; }
+  .pulse-pill.p-red    { background: #2d0b0b; color: var(--red);     border-color: var(--red); }
+  .pulse-pill.p-unknown{ background: var(--bg); color: var(--muted);  border-color: var(--border); }
+  .pulse-commit-msg { color: var(--text); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.75rem; max-width: 32ch; overflow: hidden; text-overflow: ellipsis; }
+  .pulse-loading { color: var(--muted); font-style: italic; }
+  @media (max-width: 640px) { .pulse-commit-msg { max-width: 20ch; } }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
@@ -102,6 +121,12 @@
 
 <p class="subtitle">100100 Productions <span style="color:var(--border);margin:0 0.4rem">│</span> AI Agent Studio</p>
 <p class="mission">Mission: Quality over speed. Ship it right, not just fast.</p>
+
+<!-- Project Pulse: at-a-glance executive summary -->
+<div class="pulse" id="project-pulse">
+  <span class="pulse-title">📊 Project Pulse</span>
+  <span class="pulse-loading" id="pulse-loading">Loading…</span>
+</div>
 
 <!-- SECTION: Studio -->
 <div class="section-header">
@@ -593,6 +618,140 @@ loadCI();
 loadAudits();
 loadKB();
 loadDesignDocs();
+loadProjectPulse();
+
+// ---------- Project Pulse ----------
+function relTime(iso) {
+  if (!iso) return '\u2014';
+  const then = new Date(iso).getTime();
+  if (!then) return '\u2014';
+  const diff = Math.max(0, Date.now() - then);
+  const s = Math.floor(diff / 1000);
+  if (s < 45) return 'just now';
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  const d = Math.floor(h / 24);
+  return `${d}d ago`;
+}
+
+function pulseGradeClass(g) {
+  if (!g) return 'p-unknown';
+  const up = g.toUpperCase();
+  if (up === 'A' || up === 'A+') return 'p-green';
+  if (up === 'A-' || up === 'B+') return 'p-lime';
+  if (up === 'B' || up === 'B-') return 'p-yellow';
+  if (up.startsWith('C')) return 'p-orange';
+  if (up.startsWith('D') || up.startsWith('F')) return 'p-red';
+  return 'p-unknown';
+}
+
+function extractSprintLabel(name) {
+  // e.g. sprint-13.3-audit.md -> "Sprint 13.3"
+  const m = name.match(/sprint[- ]?(\d+(?:\.\d+)?)/i);
+  return m ? `Sprint ${m[1]}` : name.replace(/\.md$/,'');
+}
+
+async function loadProjectPulse() {
+  const root = document.getElementById('project-pulse');
+  const loadingEl = document.getElementById('pulse-loading');
+  try {
+    // 1) Audit list (reuses cachedFetch → same cache key as loadAudits)
+    const auditsRes = await cachedFetch(`${API}/repos/${ORG}/${AUDIT_REPO}/contents/audits/${AUDIT_FOLDER}`);
+    const auditFiles = await auditsRes.json();
+    const audits = Array.isArray(auditFiles) ? auditFiles.filter(f => f.name.endsWith('.md')) : [];
+
+    // Sort by sprint number desc
+    const sortedAudits = audits.slice().sort((a, b) => {
+      const na = (a.name.match(/sprint[- ]?(\d+(?:\.\d+)?)/i) || [0,0])[1];
+      const nb = (b.name.match(/sprint[- ]?(\d+(?:\.\d+)?)/i) || [0,0])[1];
+      return parseFloat(nb) - parseFloat(na);
+    });
+
+    // 2) Latest audit: parse grade from its content
+    let latestSprintLabel = '\u2014';
+    let latestGrade = null;
+    if (sortedAudits[0]) {
+      latestSprintLabel = extractSprintLabel(sortedAudits[0].name);
+      try {
+        const md = await (await fetch(sortedAudits[0].download_url)).text();
+        latestGrade = extractGrade(md);
+      } catch(e) {}
+    }
+
+    // 3) Grade trend: last 5 audits (most recent first → reverse so oldest-left, newest-right)
+    const trendSource = sortedAudits.slice(0, 5);
+    const trendGrades = await Promise.all(trendSource.map(async a => {
+      try {
+        const md = await (await fetch(a.download_url)).text();
+        return extractGrade(md);
+      } catch(e) { return null; }
+    }));
+    const trendOrdered = trendGrades.slice().reverse(); // left = oldest, right = newest
+
+    // 4) Last commit on project repo (default branch)
+    let projCommit = null;
+    try {
+      const r = await cachedFetch(`${API}/repos/${ORG}/${PROJECT}/commits?per_page=1`);
+      const j = await r.json();
+      if (Array.isArray(j) && j[0]) projCommit = j[0];
+    } catch(e) {}
+
+    // 5) Last audit commit (most recent commit touching audits/<project>/)
+    let auditCommit = null;
+    try {
+      const r = await cachedFetch(`${API}/repos/${ORG}/${AUDIT_REPO}/commits?path=audits/${AUDIT_FOLDER}&per_page=1`);
+      const j = await r.json();
+      if (Array.isArray(j) && j[0]) auditCommit = j[0];
+    } catch(e) {}
+
+    // --- Render ---
+    const parts = [];
+
+    // Latest Sprint
+    const gradeHtml = latestGrade
+      ? ` <span class="pulse-pill ${pulseGradeClass(latestGrade)}">${latestGrade}</span>`
+      : '';
+    parts.push(`<span class="pulse-item"><span class="pulse-label">Latest</span><span class="pulse-value">${latestSprintLabel}</span>${gradeHtml}</span>`);
+
+    // Audits complete
+    parts.push(`<span class="pulse-item"><span class="pulse-label">Audits</span><span class="pulse-value">${audits.length} sprint${audits.length===1?'':'s'}</span></span>`);
+
+    // Trend
+    if (trendOrdered.length) {
+      const pills = trendOrdered.map(g => `<span class="pulse-pill ${pulseGradeClass(g)}">${g || '\u2014'}</span>`).join('');
+      parts.push(`<span class="pulse-item"><span class="pulse-label">Trend</span><span class="pulse-trend">${pills}</span></span>`);
+    }
+
+    // Last commit
+    if (projCommit) {
+      const when = relTime(projCommit.commit && projCommit.commit.author && projCommit.commit.author.date);
+      let msg = (projCommit.commit && projCommit.commit.message || '').split('\n')[0];
+      if (msg.length > 60) msg = msg.slice(0, 57) + '…';
+      const url = projCommit.html_url || '#';
+      const esc = msg.replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      parts.push(`<span class="pulse-item"><span class="pulse-label">Commit</span><span class="pulse-value">${when}</span><span class="pulse-dim">·</span><a href="${url}" target="_blank" class="pulse-commit-msg" title="${esc}">${esc}</a></span>`);
+    } else {
+      parts.push(`<span class="pulse-item"><span class="pulse-label">Commit</span><span class="pulse-dim">\u2014</span></span>`);
+    }
+
+    // Last audit
+    if (auditCommit) {
+      const when = relTime(auditCommit.commit && auditCommit.commit.author && auditCommit.commit.author.date);
+      const url = auditCommit.html_url || '#';
+      parts.push(`<span class="pulse-item"><span class="pulse-label">Audit</span><a href="${url}" target="_blank" class="pulse-value" style="text-decoration:none;color:var(--text)">${when}</a></span>`);
+    } else {
+      parts.push(`<span class="pulse-item"><span class="pulse-label">Audit</span><span class="pulse-dim">\u2014</span></span>`);
+    }
+
+    if (loadingEl) loadingEl.remove();
+    // Preserve title, replace rest
+    root.innerHTML = `<span class="pulse-title">📊 Project Pulse</span>` + parts.join('');
+  } catch(e) {
+    if (loadingEl) loadingEl.innerHTML = `<span class="error">Pulse failed: ${e.message}</span>`;
+  }
+}
 </script>
 
 </body>
