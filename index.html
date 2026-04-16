@@ -213,7 +213,10 @@ function md2html(md) {
 }
 
 function extractGrade(text) {
-  const m = text.match(/Grade[:\s*]*([A-F][+-]?)/i) || text.match(/Overall[^A-F\n]*([A-F][+-]?)/i);
+  // Normalize unicode minus (U+2212) and en-dash (U+2013) to ASCII hyphen
+  // so audits written with "A−" (typographic minus) parse correctly.
+  const norm = text.replace(/[\u2212\u2013]/g, '-');
+  const m = norm.match(/Grade[:\s*]*([A-F][+-]?)/i) || norm.match(/Overall[^A-F\n]*([A-F][+-]?)/i);
   return m ? m[1].toUpperCase() : null;
 }
 
