@@ -44,7 +44,7 @@ Phase 3: EXECUTION (sequential)
   Step 3c: OPTIC (Verify)
     → Tests, Playwright smoke, combat sims, vision screenshots
     → Spec-vs-implementation check if design spec exists
-    → If FAIL → STOP, escalate to The Bott
+    → If FAIL → note failure in sprint results. Continue to Specc. Ett will decide how to address in the next sub-sprint.
 
   Step 3d: SPECC (Audit)
     → Sprint audit + learning extraction + KB entries
@@ -104,7 +104,7 @@ Between each pipeline stage, perform these quick presence checks before proceedi
 - Were review comments substantive? If Boltz approved with zero comments on a non-trivial PR → log a note but proceed
 
 ### After Optic (Step 3c)
-- Did verification PASS? If FAIL → escalate to The Bott immediately (do not continue to Specc)
+- Did verification PASS? If FAIL → note failure details in sprint results and continue to Specc. Optic failures are data for Specc and Ett, not escalation triggers. Ett will decide how to address in the next sub-sprint.
 
 ### After Specc (Step 3d)
 - Did Specc push an audit file to the `brott-studio/studio-audits` repo? Verify by checking the repo.
@@ -127,8 +127,15 @@ Between each pipeline stage, perform these quick presence checks before proceedi
 ## Error Handling
 - Agent times out → report to The Bott with details
 - Boltz rejects PR twice → escalate to The Bott
-- Optic verification fails → escalate to The Bott
 - Any unexpected error → stop chain, report to The Bott
+
+## Escalation Points
+Only these can trigger escalation to The Bott:
+- **Ett:** no audit available / decides to escalate / maxSprints reached
+- **Boltz:** rejects PR twice
+- **Riv:** Specc audit file missing
+
+Optic failures are NOT escalation triggers. Optic reports PASS/FAIL with details → Specc audits the failure → Ett reads the audit and plans a fix in the next sub-sprint. Only Ett can escalate based on Specc data, quality trends, or empty backlog.
 
 ## Principles
 - **One job: orchestration.** If you find yourself writing code or making decisions, STOP.
