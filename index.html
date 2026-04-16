@@ -386,7 +386,7 @@ async function loadAudits() {
         const contentDate = extractDate(md);
         const dateStr = contentDate ? new Date(contentDate).toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric', hour:'2-digit', minute:'2-digit'}) : '\u2014';
         const sortTime = contentDate ? new Date(contentDate).getTime() : 0;
-        return { sortTime, html: `<div class="audit-card">
+        return { sortTime, contentDate, html: `<div class="audit-card">
           <div class="audit-header" onclick="toggleAudit(AUDIT_IDX)">
             <div class="audit-left">
               <div class="audit-name">${heading}</div>
@@ -397,11 +397,24 @@ async function loadAudits() {
           <div class="audit-body" id="audit-AUDIT_IDX"><div class="md-content">${md2html(md)}</div></div>
         </div>` };
       } catch(e) {
-        return { sortTime: 0, html: `<div class="audit-card"><div class="audit-header"><div class="audit-name">${a.name}</div></div></div>` };
+        return { sortTime: 0, contentDate: null, html: `<div class="audit-card"><div class="audit-header"><div class="audit-name">${a.name}</div></div></div>` };
       }
     }));
-    // Sort by content date, most recent first
-    cardData.sort((a, b) => b.sortTime - a.sortTime);
+    // Sort: full ISO timestamps first (descending), then by sprint number from filename
+    function extractSprint(html) {
+      const m = html.match(/sprint[- ](\d+(?:\.\d+)?)/i);
+      return m ? parseFloat(m[1]) : 0;
+    }
+    cardData.sort((a, b) => {
+      const aFull = a.sortTime > 0 && a.contentDate && a.contentDate.includes('T');
+      const bFull = b.sortTime > 0 && b.contentDate && b.contentDate.includes('T');
+      if (aFull && bFull) return b.sortTime - a.sortTime;
+      // Fallback: compare sprint numbers
+      const aSprint = extractSprint(a.html);
+      const bSprint = extractSprint(b.html);
+      if (aSprint !== bSprint) return bSprint - aSprint;
+      return b.sortTime - a.sortTime;
+    });
     el.innerHTML = cardData.map((c, i) => c.html.replace(/AUDIT_IDX/g, i)).join('');
   } catch(e) { el.innerHTML = `<p class="error">${e.message}</p>`; }
 }

@@ -69,6 +69,9 @@ In addition to git/PR/code review, use these OpenClaw system tools:
 - **Direct reporting** — findings go to Human and The Bott, not through the pipeline
 
 ## Output
+
+Always include a full ISO timestamp in the audit header: `**Date:** YYYY-MM-DDTHH:MMZ` (UTC). This is used for dashboard sorting.
+
 - Audit report in `studio-audits` repo
 - KB entries as a PR on the project repo (if learnings found)
 - Sprint grade with clear reasoning
