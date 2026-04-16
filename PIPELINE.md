@@ -1,15 +1,24 @@
 # Pipeline & Roles
 
-## Sprint Pipeline
+## Sprint Pipeline (Orchestrated by Riv)
 
 ```
-1. PLAN      → The Bott defines sprint goals
-2. DESIGN    → Gizmo writes specs (if needed)
-3. BUILD     → Nutts implements code + tests, opens PR
-4. REVIEW    → Boltz reviews PR, approves + merges
-5. VERIFY    → Optic runs tests, Playwright, sims, screenshots
-6. DEPLOY    → CI/CD auto-builds and deploys
-7. AUDIT     → Specc audits sprint, extracts learnings, writes KB
+The Bott (EP) → spawns Riv with sprint tasks
+  │
+  Riv (Lead Orchestrator) → executes pipeline sequentially:
+  │
+  ├─ Step 1: NUTTS (Build) → code + tests → PR
+  │
+  ├─ Step 2: BOLTZ (Review) → approve/merge or request changes
+  │    └─ If changes needed → NUTTS (Fix) → BOLTZ (Re-review)
+  │    └─ If rejected twice → escalate to The Bott
+  │
+  ├─ Step 3: OPTIC (Verify) → tests + Playwright + sims + vision
+  │    └─ If FAIL → escalate to The Bott
+  │
+  ├─ Step 4: SPECC (Audit) → audit + KB entries
+  │
+  └─ Step 5: REPORT → results back to The Bott
 ```
 
 ## Roles
@@ -17,11 +26,13 @@
 | Agent | Role | What They Do |
 |---|---|---|
 | 🎬 **Human** | Creative Director | Direction, feel, playtesting, final say |
-| 🤖 **The Bott** | Executive Producer | Pipeline design, sprint planning, orchestration |
+| 🤖 **The Bott** | Executive Producer | Sprint planning, product vision, framework |
+| 📋 **Riv** | Lead Orchestrator | Executes pipeline, handles review loops |
+| 📋 **Ett** | Technical PM | Sprint planning, task breakdown (inactive — future) |
 | 🎯 **Gizmo** | Game Designer | Specs, balance decisions, GDD |
 | 💻 **Nutts** | Developer | Code + tests, opens PRs |
 | 👨‍💻 **Boltz** | Lead Dev | PR review, sole merger |
-| 🎮 **Optic** | Verifier | Tests, Playwright, sims, screenshots |
+| 🎮 **Optic** | Verifier | Tests, Playwright, sims, vision screenshots |
 | 🕵️ **Specc** | Inspector | Audits, learning extraction, KB |
 | 🔧 **Patch** | DevOps | Infrastructure (on-demand) |
 
@@ -39,25 +50,17 @@
 2. **Verification over trust** — "done" means verified working
 3. **Process quality → Product quality → Speed**
 4. **Player experience first**
-5. **Design for agents, not humans**
-
-*Full details: [FRAMEWORK.md](FRAMEWORK.md)*
+5. **Single responsibility per agent**
+6. **Before concluding a design doesn't work, verify the infrastructure supports it**
 
 ## Sprint Communication
 
-Pipeline updates go to a **dedicated Discord thread per sprint** (e.g., "Sprint 4 Pipeline"). The main channel stays clean for leadership conversation.
-
-- **Sprint thread:** Agent completions, PR updates, verification results, audit reports
-- **Main channel:** CD ↔ EP conversation, direction, playtest feedback, escalations
-- **Ping main channel only for:** playtest-ready builds, decisions needed, critical issues
+- Pipeline updates stay within Riv's orchestration (not in main channel)
+- The Bott receives Riv's final report only
+- CD gets pinged only for: playtest-ready builds, decisions needed, critical issues
 
 ## Pipeline Completion Rule
 
-**Never notify the CD for playtesting until the FULL pipeline has completed:**
-1. Build ✅
-2. Review ✅
-3. Verify ✅ (including Optic vision check)
-4. Deploy ✅
-5. Audit ✅ (Specc)
+Never notify CD for playtesting until the FULL pipeline has completed (Build → Review → Verify → Deploy → Audit). No shortcuts.
 
-Only after ALL stages pass → ping CD for playtest. No shortcuts, no "build is ready but audit pending."
+*Full details: [FRAMEWORK.md](FRAMEWORK.md)*
