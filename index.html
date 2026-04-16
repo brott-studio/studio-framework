@@ -376,52 +376,16 @@ async function loadAudits() {
 
     el.innerHTML = '<p class="loading">Loading audit details...</p>';
 
-    // Single API call: fetch recent commits for the audit directory, match to files by message/path
-    const commitDates = {};
-    try {
-      const commitRes = await cachedFetch(`${API}/repos/${ORG}/${AUDIT_REPO}/commits?path=audits/${AUDIT_FOLDER}&per_page=100`);
-      if (commitRes.ok) {
-        const allCommits = await commitRes.json();
-        if (Array.isArray(allCommits)) {
-          // Commits are newest-first. Match each audit filename against commit messages.
-          // For any unmatched files, use the most recent directory commit as fallback.
-          const auditNames = audits.map(a => a.name);
-          const matched = new Set();
-          for (const c of allCommits) {
-            const msg = (c.commit.message || '').toLowerCase();
-            for (const name of auditNames) {
-              if (matched.has(name)) continue;
-              const base = name.replace('.md', '').toLowerCase();
-              // Match filename or base name in commit message
-              if (msg.includes(name.toLowerCase()) || msg.includes(base)) {
-                commitDates[name] = c.commit.author.date;
-                matched.add(name);
-              }
-            }
-          }
-          // Fallback: unmatched files get the most recent commit date for the directory
-          if (allCommits.length > 0) {
-            const fallbackDate = allCommits[0].commit.author.date;
-            for (const name of auditNames) {
-              if (!commitDates[name]) commitDates[name] = fallbackDate;
-            }
-          }
-        }
-      }
-    } catch(e) {}
-
-    // Fetch all audit content in parallel (these hit raw.githubusercontent.com, no rate limit)
+    // Use dates from markdown content only — no git API calls needed
     let cardData = await Promise.all(audits.map(async (a) => {
       try {
         const r = await fetch(a.download_url);
         const md = await r.text();
         const grade = extractGrade(md);
         const heading = extractHeading(md) || a.name.replace('.md','');
-        const gitDate = commitDates[a.name] || null;
         const contentDate = extractDate(md);
-        const finalDate = gitDate || contentDate;
-        const dateStr = finalDate ? new Date(finalDate).toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric', hour:'2-digit', minute:'2-digit'}) : '\u2014';
-        const sortTime = finalDate ? new Date(finalDate).getTime() : 0;
+        const dateStr = contentDate ? new Date(contentDate).toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric', hour:'2-digit', minute:'2-digit'}) : '\u2014';
+        const sortTime = contentDate ? new Date(contentDate).getTime() : 0;
         return { sortTime, html: `<div class="audit-card">
           <div class="audit-header" onclick="toggleAudit(AUDIT_IDX)">
             <div class="audit-left">
@@ -436,7 +400,7 @@ async function loadAudits() {
         return { sortTime: 0, html: `<div class="audit-card"><div class="audit-header"><div class="audit-name">${a.name}</div></div></div>` };
       }
     }));
-    // Sort by git commit date, most recent first
+    // Sort by content date, most recent first
     cardData.sort((a, b) => b.sortTime - a.sortTime);
     el.innerHTML = cardData.map((c, i) => c.html.replace(/AUDIT_IDX/g, i)).join('');
   } catch(e) { el.innerHTML = `<p class="error">${e.message}</p>`; }
