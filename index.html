@@ -435,7 +435,7 @@ async function loadAudits() {
         const contentDate = extractDate(md);
         const dateStr = contentDate ? new Date(contentDate).toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'}) : '\u2014';
         const sortTime = contentDate ? new Date(contentDate).getTime() : 0;
-        return { sortTime, contentDate, html: `<div class="audit-card">
+        return { sortTime, contentDate, name: a.name, html: `<div class="audit-card">
           <div class="audit-header" onclick="toggleAudit(AUDIT_IDX)">
             <div class="audit-left">
               <div class="audit-name">${heading}</div>
@@ -446,15 +446,38 @@ async function loadAudits() {
           <div class="audit-body" id="audit-AUDIT_IDX"><div class="md-content">${md2html(md)}</div></div>
         </div>` };
       } catch(e) {
-        return { sortTime: 0, contentDate: null, html: `<div class="audit-card"><div class="audit-header"><div class="audit-name">${a.name}</div></div></div>` };
+        return { sortTime: 0, contentDate: null, name: a.name, html: `<div class="audit-card"><div class="audit-header"><div class="audit-name">${a.name}</div></div></div>` };
       }
     }));
-    // Sort by sprint number only (descending)
-    function extractSprint(html) {
-      const m = html.match(/sprint[- ](\d+(?:\.\d+)?)/i);
-      return m ? parseFloat(m[1]) : 0;
+    // Sort by sprint number, major.minor as separate integers (descending).
+    // Fixes lexicographic/parseFloat bugs where e.g. v2-sprint-13.10.md would
+    // collide with 13.1 (parseFloat) or sort before 13.2 (string sort).
+    // Arc rollup files (e.g. v2-arc-13.x-rollup.md) sort at the end of their
+    // arc, after all numbered 13.x sprints.
+    function extractSprintKey(card) {
+      // Prefer the source filename (stable); fall back to heading text.
+      const src = (card.name || '') + ' ' + (card.html || '');
+      // Arc rollup: e.g. v2-arc-13.x-rollup.md
+      const rollup = src.match(/arc[- ](\d+)\.x[- ]rollup/i);
+      if (rollup) {
+        // Place at end of arc: minor = -Infinity so it sorts lowest within
+        // the major (i.e. after all numbered 13.x in descending order).
+        return { major: parseInt(rollup[1], 10), minor: -Infinity, isRollup: true };
+      }
+      const m = src.match(/sprint[- ](\d+)(?:\.(\d+))?/i);
+      if (!m) return { major: -1, minor: -1, isRollup: false };
+      return {
+        major: parseInt(m[1], 10),
+        minor: m[2] != null ? parseInt(m[2], 10) : 0,
+        isRollup: false,
+      };
     }
-    cardData.sort((a, b) => extractSprint(b.html) - extractSprint(a.html));
+    cardData.sort((a, b) => {
+      const ka = extractSprintKey(a);
+      const kb = extractSprintKey(b);
+      if (kb.major !== ka.major) return kb.major - ka.major;
+      return kb.minor - ka.minor;
+    });
     el.innerHTML = cardData.map((c, i) => c.html.replace(/AUDIT_IDX/g, i)).join('');
   } catch(e) { el.innerHTML = `<p class="error">${e.message}</p>`; }
 }
