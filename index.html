@@ -163,15 +163,21 @@ const ORG = 'brott-studio';
 const AUDIT_REPO = 'studio-audits';
 const FRAMEWORK_REPO = 'studio-framework';
 const API = 'https://api.github.com';
-const CACHE_TTL = 30 * 60 * 1000; // 30 minutes
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes (default)
+const AUDIT_CACHE_TTL = 2 * 60 * 1000; // 2 minutes (audit lists update frequently)
+const NO_CACHE = new URLSearchParams(window.location.search).has('nocache') || new URLSearchParams(window.location.search).has('refresh');
 
 function cachedFetch(url, opts) {
   const key = 'ghcache:' + url;
+  if (NO_CACHE) { try { localStorage.removeItem(key); } catch(e) {} }
+  const ttl = url.includes('/contents/audits/') ? AUDIT_CACHE_TTL : CACHE_TTL;
   try {
-    const cached = localStorage.getItem(key);
-    if (cached) {
-      const { ts, data } = JSON.parse(cached);
-      if (Date.now() - ts < CACHE_TTL) return Promise.resolve({ ok: true, json: () => Promise.resolve(data), text: () => Promise.resolve(data) });
+    if (!NO_CACHE) {
+      const cached = localStorage.getItem(key);
+      if (cached) {
+        const { ts, data } = JSON.parse(cached);
+        if (Date.now() - ts < ttl) return Promise.resolve({ ok: true, json: () => Promise.resolve(data), text: () => Promise.resolve(data) });
+      }
     }
   } catch(e) {}
   return fetch(url, opts).then(res => {
