@@ -7,23 +7,30 @@ The Bott (EP) → spawns Riv with sprint tasks
   │
   Riv (Lead Orchestrator) → executes pipeline sequentially:
   │
-  ├─ Step 1: GIZMO (Design Review) — ALWAYS runs
-  │    └─ If design decisions → writes spec for Nutts
-  │    └─ If no decisions → reviews sprint vs GDD for drift
-  │    └─ If DRIFT DETECTED → escalate to The Bott
+  ├─ Phase 1: DESIGN INPUT
+  │    └─ GIZMO (Design Review) — ALWAYS runs first
+  │         └─ Reviews game state against GDD
+  │         └─ If design changes → provides spec + GDD update
+  │         └─ If no changes → "No design drift, proceed"
+  │         └─ If DRIFT DETECTED → escalate to The Bott
+  │         └─ Output goes to ETT (not directly to Nutts)
   │
-  ├─ Step 2: NUTTS (Build) → code + tests → PR
+  ├─ Phase 2: SPRINT PLANNING
+  │    └─ ETT (Technical PM)
+  │         └─ Reads: Gizmo's output + Specc's last audit + backlog + infra needs
+  │         └─ Produces unified sprint plan (design tasks + infra + testing + cleanup)
+  │         └─ DECISION: continue or escalate
   │
-  ├─ Step 3: BOLTZ (Review) → approve/merge or request changes
-  │    └─ If changes needed → NUTTS (Fix) → BOLTZ (Re-review)
-  │    └─ If rejected twice → escalate to The Bott
+  ├─ Phase 3: EXECUTION (sequential)
+  │    ├─ NUTTS (Build) → code + tests → PR
+  │    ├─ BOLTZ (Review) → approve/merge or request changes
+  │    │    └─ If changes needed → NUTTS (Fix) → BOLTZ (Re-review)
+  │    │    └─ If rejected twice → escalate to The Bott
+  │    ├─ OPTIC (Verify) → tests + Playwright + sims + vision
+  │    │    └─ If FAIL → escalate to The Bott
+  │    └─ SPECC (Audit) → audit + KB entries
   │
-  ├─ Step 4: OPTIC (Verify) → tests + Playwright + sims + vision
-  │    └─ If FAIL → escalate to The Bott
-  │
-  ├─ Step 5: SPECC (Audit) → audit + KB entries
-  │
-  └─ Step 6: REPORT → results back to The Bott
+  └─ REPORT → results back to The Bott
 ```
 
 ## Roles
@@ -33,8 +40,8 @@ The Bott (EP) → spawns Riv with sprint tasks
 | 🎬 **Human** | Creative Director | Direction, feel, playtesting, final say |
 | 🤖 **The Bott** | Executive Producer | Sprint planning, product vision, framework |
 | 📋 **Riv** | Lead Orchestrator | Executes pipeline, handles review loops |
-| 📋 **Ett** | Technical PM | Sprint planning, task breakdown (inactive — future) |
-| 🎯 **Gizmo** | Game Designer | Specs, balance decisions, GDD |
+| 📋 **Ett** | Technical PM | Sprint planning — integrates design + infra + cleanup |
+| 🎯 **Gizmo** | Game Designer | Design input — game state review, specs, GDD updates |
 | 💻 **Nutts** | Developer | Code + tests, opens PRs |
 | 👨‍💻 **Boltz** | Lead Dev | PR review, sole merger |
 | 🎮 **Optic** | Verifier | Tests, Playwright, sims, vision screenshots |
@@ -51,12 +58,13 @@ The Bott (EP) → spawns Riv with sprint tasks
 
 ## Core Principles
 
-1. **Structure over compliance** — enforce via CI, not instructions
-2. **Verification over trust** — "done" means verified working
-3. **Process quality → Product quality → Speed**
-4. **Player experience first**
-5. **Single responsibility per agent**
-6. **Before concluding a design doesn't work, verify the infrastructure supports it**
+1. **Design drives planning** — Gizmo reviews first, Ett plans based on design input
+2. **Structure over compliance** — enforce via CI, not instructions
+3. **Verification over trust** — "done" means verified working
+4. **Process quality → Product quality → Speed**
+5. **Player experience first**
+6. **Single responsibility per agent**
+7. **Before concluding a design doesn't work, verify the infrastructure supports it**
 
 ## Sprint Communication
 
@@ -66,6 +74,6 @@ The Bott (EP) → spawns Riv with sprint tasks
 
 ## Pipeline Completion Rule
 
-Never notify CD for playtesting until the FULL pipeline has completed (Build → Review → Verify → Deploy → Audit). No shortcuts.
+Never notify CD for playtesting until the FULL pipeline has completed (Design → Plan → Build → Review → Verify → Audit). No shortcuts.
 
 *Full details: [FRAMEWORK.md](FRAMEWORK.md)*
