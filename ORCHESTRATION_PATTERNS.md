@@ -156,3 +156,48 @@ Gizmo_A and Gizmo_B both design a feature → Critic picks the better one
 
 *Source: [learnopenclaw.org/multiagent](https://learnopenclaw.org/multiagent.html)*
 *Adapted for Brott Studio framework context.*
+
+---
+
+## Spike Sprint (Pattern 5)
+
+**Purpose:** When facing a technical question with multiple possible solutions, run all approaches in parallel and let a critic evaluate which works best. Answers "which approach should we use?" in one sprint instead of guessing.
+
+### Flow
+
+```
+Riv orchestrates:
+
+Phase 1 — PARALLEL EXPERIMENT (Fan-Out)
+├── Agent-A: Approach A (experiment, no PR)
+├── Agent-B: Approach B (experiment, no PR)
+├── Agent-C: Approach C (experiment, no PR)
+│   All work in isolated /tmp/ directories. No repo changes.
+
+Phase 2 — EVALUATE (Critic)
+└── Optic: Reviews all results, picks winner, explains why
+
+Phase 3 — AUDIT
+└── Specc: Documents findings + KB entry
+
+Phase 4 — REPORT
+└── Riv: Returns results to The Bott
+```
+
+### Key Rules
+
+- **No PRs, no branches pushed** — pure experiments only
+- **Isolation** — each agent works in its own temp directory; no repo changes
+- **Vision evaluation** — Optic uses screenshots/output comparison if applicable
+- **Winner deferred** — the winning approach gets implemented properly in the NEXT sprint
+- **Knowledge capture** — Specc documents all findings so dead-end experiments aren't repeated
+
+### When to Use
+
+- Technical uncertainty with multiple viable approaches
+- Need data before committing to an implementation
+- Debugging/investigation where root cause is unclear
+
+### First Used
+
+Sprint 8.2 — visual verification investigation (xvfb vs preload refactor vs URL params).
