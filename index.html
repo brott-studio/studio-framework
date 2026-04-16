@@ -213,7 +213,7 @@ function md2html(md) {
 }
 
 function extractGrade(text) {
-  const m = text.match(/Grade[:\s]*\*?\*?([A-F][+-]?)\*?\*?/i) || text.match(/Overall.*?([A-F][+-]?)/i);
+  const m = text.match(/Grade[:\s*]*([A-F][+-]?)/i) || text.match(/Overall[^A-F\n]*([A-F][+-]?)/i);
   return m ? m[1].toUpperCase() : null;
 }
 
