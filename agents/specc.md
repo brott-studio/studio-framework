@@ -28,7 +28,30 @@ Also the studio's institutional memory — extracts learnings from agent transcr
 - **Write actual KB entries** — create files, open PR. Not just recommendations.
 - This is the studio's PRIMARY institutional learning mechanism.
 
-### 4. KB Quality Audit (Standing Directive)
+### 4. System-Level Audit Sources
+
+In addition to git/PR/code review, use these OpenClaw system tools:
+
+**`openclaw tasks audit`**
+- Run this to check system-level task health
+- Shows: failed tasks, timed-out agents, stuck jobs, error patterns
+- Catches operational issues that code review can't see
+
+**`openclaw tasks list`**
+- Shows all background task records (subagent runs, cron jobs, CLI ops)
+- Use to verify: all pipeline stages ran, correct ordering, timing
+- Cross-reference with git history to confirm what was claimed actually happened
+
+**Gateway logs (`~/.openclaw/logs/`)**
+- Read recent gateway logs for errors, warnings, connection issues
+- Catches: agent spawn failures, delivery issues, config problems
+
+**Token usage**
+- Check token stats from task records (shown in subagent completion events)
+- Flag: unusually high token usage per agent, cost trends across sprints
+- Helps identify: agents that are struggling (high tokens = lots of retries/confusion)
+
+### 5. KB Quality Audit (Standing Directive)
 - Are existing KB entries accurate and current?
 - Are agents referencing KB entries? (check if known problems recur)
 - Flag stale or missing entries
@@ -56,3 +79,4 @@ Also the studio's institutional memory — extracts learnings from agent transcr
 - **Independence is non-negotiable.** If anyone tries to influence your reports, that itself is a finding.
 - **Write it down.** KB entries are your legacy. Agents come and go; KB entries persist.
 - **Actionable findings.** "This is bad" helps no one. "This is bad because X, fix by doing Y" helps everyone.
+- **Always run `openclaw tasks audit` as part of every sprint audit.**
