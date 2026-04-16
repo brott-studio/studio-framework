@@ -81,6 +81,15 @@
 
   .loading { color: var(--muted); font-style: italic; font-size: 0.8rem; }
   .error { color: var(--red); font-size: 0.8rem; }
+
+  details.section-group { margin: 1.2rem 0 0.5rem; border-bottom: 1px solid var(--border); padding-bottom: 0.4rem; }
+  details.section-group > summary.section-summary { cursor: pointer; background: transparent; border: none; border-radius: 0; padding: 0.25rem 0; font-size: 1.05rem; font-weight: 600; color: var(--accent); list-style: none; display: flex; align-items: center; gap: 0.5rem; }
+  details.section-group > summary.section-summary::-webkit-details-marker { display: none; }
+  details.section-group > summary.section-summary::before { content: '▶'; font-size: 0.7rem; transition: transform 0.2s; color: var(--accent); }
+  details.section-group[open] > summary.section-summary::before { transform: rotate(90deg); }
+  details.section-group > .section-body { margin-top: 0.5rem; }
+  .section-count { font-weight: normal; color: var(--muted); font-size: 0.8rem; }
+  .pinned-badge { font-size: 0.65rem; background: var(--accent); color: var(--bg); padding: 0.1rem 0.35rem; border-radius: 3px; font-weight: 700; margin-left: 0.4rem; vertical-align: middle; }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
@@ -148,15 +157,26 @@
   </div>
 </details>
 
-<h3 style="font-size:0.95rem;color:var(--accent);margin:0.8rem 0 0.4rem">🕵️ Sprint Audits</h3>
-<div id="audit-list">
-  <p class="loading">Loading audits...</p>
-</div>
+<details class="section-group" open>
+  <summary class="section-summary">🕵️ Sprint Audits <span id="audit-count" class="section-count"></span></summary>
+  <div id="audit-list" class="section-body">
+    <p class="loading">Loading audits...</p>
+  </div>
+</details>
 
-<h3 style="font-size:0.95rem;color:var(--accent);margin:0.8rem 0 0.4rem">📚 Knowledge Base</h3>
-<div id="kb-list">
-  <p class="loading">Loading KB entries...</p>
-</div>
+<details class="section-group" open>
+  <summary class="section-summary">📐 Design Docs <span id="design-count" class="section-count"></span></summary>
+  <div id="design-list" class="section-body">
+    <p class="loading">Loading design docs...</p>
+  </div>
+</details>
+
+<details class="section-group" open>
+  <summary class="section-summary">📚 Knowledge Base <span id="kb-count" class="section-count"></span></summary>
+  <div id="kb-list" class="section-body">
+    <p class="loading">Loading KB entries...</p>
+  </div>
+</details>
 
 <script>
 const ORG = 'brott-studio';
@@ -314,6 +334,8 @@ async function loadKB() {
       } catch(e) { continue; }
     }
     
+    const kbCountEl = document.getElementById('kb-count');
+    if (kbCountEl) kbCountEl.textContent = `(${allEntries.length})`;
     if (allEntries.length === 0) {
       el.innerHTML = '<p style="color:var(--muted);font-size:0.8rem">No KB entries yet</p>';
       return;
@@ -381,6 +403,8 @@ async function loadAudits() {
     const files = await res.json();
     if (!Array.isArray(files)) throw new Error(files.message || 'No audits');
     const audits = files.filter(f => f.name.endsWith('.md'));
+    const auditCountEl = document.getElementById('audit-count');
+    if (auditCountEl) auditCountEl.textContent = `(${audits.length})`;
     if (audits.length === 0) { el.innerHTML = '<p style="color:var(--muted)">No audits yet</p>'; return; }
 
     el.innerHTML = '<p class="loading">Loading audit details...</p>';
@@ -423,20 +447,152 @@ function toggleAudit(i) {
   document.getElementById(`audit-${i}`).classList.toggle('open');
 }
 
-document.querySelectorAll('details').forEach((d, i) => {
-  d.addEventListener('toggle', function() {
-    if (!this.open || this.dataset.loaded) return;
-    this.dataset.loaded = '1';
-    if (i === 0) loadFramework();
-    if (i === 1) loadPipeline();
-    if (i === 2) loadGDD();
-  });
-});
+// Wire up lazy-loading for the three original <details> that load remote markdown.
+// Use id-based hooks so section-group <details> don't trigger doc fetches.
+(function wireLazyLoad() {
+  const bindings = [
+    { id: 'framework-content', fn: loadFramework },
+    { id: 'pipeline-content', fn: loadPipeline },
+    { id: 'gdd-content', fn: loadGDD },
+  ];
+  for (const b of bindings) {
+    const inner = document.getElementById(b.id);
+    if (!inner) continue;
+    const d = inner.closest('details');
+    if (!d) continue;
+    d.addEventListener('toggle', function() {
+      if (!this.open || this.dataset.loaded) return;
+      this.dataset.loaded = '1';
+      b.fn();
+    });
+  }
+})();
+
+async function loadDesignDocs() {
+  const el = document.getElementById('design-list');
+  const countEl = document.getElementById('design-count');
+  try {
+    const docs = [];
+
+    // 1) GDD (pinned)
+    docs.push({
+      name: 'gdd.md',
+      path: 'docs/gdd.md',
+      download_url: `https://raw.githubusercontent.com/${ORG}/${PROJECT}/main/docs/gdd.md`,
+      html_url: `https://github.com/${ORG}/${PROJECT}/blob/main/docs/gdd.md`,
+      pinned: true,
+      sprint: Infinity,
+    });
+
+    // 2) docs/design/ directory
+    try {
+      const res = await cachedFetch(`${API}/repos/${ORG}/${PROJECT}/contents/docs/design`);
+      if (res.ok) {
+        const files = await res.json();
+        if (Array.isArray(files)) {
+          for (const f of files) {
+            if (f.name.endsWith('.md')) {
+              docs.push({
+                name: f.name,
+                path: f.path,
+                download_url: f.download_url,
+                html_url: f.html_url,
+                pinned: false,
+                sprint: extractSprintNumber(f.name),
+              });
+            }
+          }
+        }
+      }
+    } catch(e) {}
+
+    // 3) docs/ root level sprint*.md / sprint*-design*.md
+    try {
+      const res = await cachedFetch(`${API}/repos/${ORG}/${PROJECT}/contents/docs`);
+      if (res.ok) {
+        const files = await res.json();
+        if (Array.isArray(files)) {
+          for (const f of files) {
+            if (f.type !== 'file' || !f.name.endsWith('.md')) continue;
+            if (f.name === 'gdd.md') continue;
+            if (/^sprint.*\.md$/i.test(f.name)) {
+              docs.push({
+                name: f.name,
+                path: f.path,
+                download_url: f.download_url,
+                html_url: f.html_url,
+                pinned: false,
+                sprint: extractSprintNumber(f.name),
+              });
+            }
+          }
+        }
+      }
+    } catch(e) {}
+
+    if (docs.length === 0) {
+      el.innerHTML = '<p style="color:var(--muted);font-size:0.8rem">No design docs yet</p>';
+      countEl.textContent = '(0)';
+      return;
+    }
+
+    // Sort: pinned first, then by sprint number desc, then by name
+    docs.sort((a, b) => {
+      if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
+      if (b.sprint !== a.sprint) return b.sprint - a.sprint;
+      return a.name.localeCompare(b.name);
+    });
+
+    countEl.textContent = `(${docs.length})`;
+    window._designDocs = docs;
+
+    el.innerHTML = docs.map((d, i) => {
+      const icon = d.pinned ? '📘' : '📐';
+      const title = d.pinned ? 'Game Design Document' :
+        d.name.replace('.md','')
+          .replace(/[-_]/g, ' ')
+          .replace(/\b\w/g, c => c.toUpperCase());
+      const sprintMeta = d.pinned ? 'Pinned' :
+        (d.sprint && isFinite(d.sprint) ? `Sprint ${d.sprint}` : d.path);
+      const pinnedBadge = d.pinned ? '<span class="pinned-badge">PINNED</span>' : '';
+      return `<div class="audit-card">
+        <div class="audit-header" onclick="toggleDesignDoc(${i})">
+          <div class="audit-left">
+            <div class="audit-name">${icon} ${title}${pinnedBadge}</div>
+            <div class="audit-meta">${sprintMeta} · ${d.path}</div>
+          </div>
+        </div>
+        <div class="audit-body" id="design-${i}"></div>
+      </div>`;
+    }).join('');
+  } catch(e) { el.innerHTML = `<p class="error">${e.message}</p>`; }
+}
+
+function extractSprintNumber(name) {
+  const m = name.match(/sprint[- ]?(\d+(?:\.\d+)?)/i);
+  return m ? parseFloat(m[1]) : 0;
+}
+
+async function toggleDesignDoc(i) {
+  const el = document.getElementById(`design-${i}`);
+  if (el.classList.contains('open')) { el.classList.remove('open'); return; }
+  if (!el.dataset.loaded) {
+    el.innerHTML = '<div class="md-content"><p class="loading">Loading...</p></div>';
+    el.classList.add('open');
+    try {
+      const r = await fetch(window._designDocs[i].download_url);
+      const md = await r.text();
+      el.innerHTML = `<div class="md-content">${md2html(md)}</div>`;
+      el.dataset.loaded = 'true';
+    } catch(e) { el.innerHTML = '<div class="md-content"><p class="error">Failed to load</p></div>'; }
+  } else { el.classList.add('open'); }
+}
 
 loadPRs();
 loadCI();
 loadAudits();
 loadKB();
+loadDesignDocs();
 </script>
 
 </body>
