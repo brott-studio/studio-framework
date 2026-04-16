@@ -78,3 +78,17 @@ After capturing screenshots with Playwright, **VIEW them using the `read` tool**
 **How:** After saving a screenshot to a file, use `read(path)` to view it. The model has vision capabilities — same as looking at an image. Report what you SEE, not just what the code says should be there.
 
 This is the difference between "code says it renders" and "I can see it renders correctly."
+
+## Spec-vs-Implementation Verification
+
+When a design spec exists for the sprint (e.g., `docs/sprintN-design.md`), verify each acceptance criterion:
+
+1. Read the design spec
+2. For each specified feature/behavior:
+   - Use the game testing harness to navigate to the relevant screen
+   - Take a screenshot and VIEW it
+   - Compare what you see against what the spec describes
+3. Report for each criterion: **MATCHED** / **DEVIATED** / **UNABLE TO VERIFY**
+4. For deviations: describe exactly what the spec says vs what you see
+
+This catches cases where the implementation drifts from the design without anyone noticing.
