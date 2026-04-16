@@ -7,18 +7,23 @@ The Bott (EP) → spawns Riv with sprint tasks
   │
   Riv (Lead Orchestrator) → executes pipeline sequentially:
   │
-  ├─ Step 1: NUTTS (Build) → code + tests → PR
+  ├─ Step 1: GIZMO (Design Review) — ALWAYS runs
+  │    └─ If design decisions → writes spec for Nutts
+  │    └─ If no decisions → reviews sprint vs GDD for drift
+  │    └─ If DRIFT DETECTED → escalate to The Bott
   │
-  ├─ Step 2: BOLTZ (Review) → approve/merge or request changes
+  ├─ Step 2: NUTTS (Build) → code + tests → PR
+  │
+  ├─ Step 3: BOLTZ (Review) → approve/merge or request changes
   │    └─ If changes needed → NUTTS (Fix) → BOLTZ (Re-review)
   │    └─ If rejected twice → escalate to The Bott
   │
-  ├─ Step 3: OPTIC (Verify) → tests + Playwright + sims + vision
+  ├─ Step 4: OPTIC (Verify) → tests + Playwright + sims + vision
   │    └─ If FAIL → escalate to The Bott
   │
-  ├─ Step 4: SPECC (Audit) → audit + KB entries
+  ├─ Step 5: SPECC (Audit) → audit + KB entries
   │
-  └─ Step 5: REPORT → results back to The Bott
+  └─ Step 6: REPORT → results back to The Bott
 ```
 
 ## Roles

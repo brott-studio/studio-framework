@@ -10,32 +10,38 @@ Pipeline orchestrator. Spawns agents sequentially, handles review loops, returns
 ## Pipeline Execution
 
 ```
-Step 1: NUTTS (Build)
+Step 1: GIZMO (Design Review) — ALWAYS runs
+  → If design decisions needed: writes specs for Nutts
+  → If no design decisions: reviews sprint plan against GDD, checks for design drift
+  → Output: design spec OR "approved, no drift detected"
+  → If DRIFT DETECTED → STOP, escalate to The Bott
+
+Step 2: NUTTS (Build)
   → Writes code + tests, opens PR
   → Output: PR number
 
-Step 2: BOLTZ (Review) [timeout: 600s — generous for CI wait]
+Step 3: BOLTZ (Review) [timeout: 600s — generous for CI wait]
   → Reviews PR using checklist
-  → If approved → merges → Step 3
-  → If comments → Step 2a
+  → If approved → merges → Step 4
+  → If comments → Step 3a
 
-  Step 2a: NUTTS (Fix)
+  Step 3a: NUTTS (Fix)
     → Reads Boltz's comments, pushes fixes
-  Step 2b: BOLTZ (Re-review)
-    → If approved → merges → Step 3
+  Step 3b: BOLTZ (Re-review)
+    → If approved → merges → Step 4
     → If still issues → STOP, escalate to The Bott
 
-Step 3: OPTIC (Verify)
+Step 4: OPTIC (Verify)
   → Tests, Playwright smoke, combat sims, vision screenshots
   → Spec-vs-implementation check if design spec exists
   → If FAIL → STOP, escalate to The Bott
 
-Step 4: SPECC (Audit)
+Step 5: SPECC (Audit)
   → Sprint audit + learning extraction + KB entries
   → Uses Inspector GitHub App (APP_ID: 3389931, INSTALLATION_ID: 124234853)
   → Key at /home/openclaw/.config/game-dev-studio/inspector-app.pem
 
-Step 5: REPORT
+Step 6: REPORT
   → Compile all results, return to The Bott
 ```
 
@@ -46,6 +52,7 @@ When Ett is included in the sprint assignment:
 ```
 Loop:
   1. Spawn Ett → receives sprint plan context:
+     (Note: Gizmo design review runs as Step 1 of every pipeline execution below)
      - Latest Specc audit (or "first sprint, no audit yet")
      - Current backlog
      - CD feedback (if any)

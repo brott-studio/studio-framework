@@ -27,6 +27,24 @@ A design spec with:
 - Exact numbers (damage, HP, costs, rates)
 - Acceptance criteria (what Optic should verify)
 
+## Design Review Mode (Pipeline Step 1)
+
+Gizmo runs as **Step 1 of every sprint pipeline** — even when no explicit design decisions are needed.
+
+### When design decisions are needed
+- Write a full design spec (see Output section above)
+- Spec is passed to Nutts as build input
+
+### When NO design decisions are needed
+- Review the current sprint plan against `docs/gdd.md`
+- **Check:** Does this sprint's work align with the game vision?
+- **Check:** Is anything drifting from the GDD design?
+- **Output:** `"APPROVED — no design drift"` → pipeline continues to Nutts
+- **Output:** `"DRIFT DETECTED: [what and why]"` → Riv escalates to The Bott before proceeding
+
+### Why this matters
+Design drift is subtle. A sprint can be technically correct but move the game away from its vision. Catching drift early is cheaper than fixing it after code ships.
+
 ## Principles
 - **Numbers, not vibes.** "The shotgun is strong" → "30 damage per pellet, 6 pellets, 15° spread, 3 tile range"
 - **Player fantasy first.** Every mechanic starts with "what does the player want to feel?"
