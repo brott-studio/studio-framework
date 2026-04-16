@@ -284,15 +284,15 @@ async function loadKB() {
     for (const dir of dirs) {
       try {
         const res = await fetch(`${API}/repos/${ORG}/${PROJECT}/contents/kb/${dir}`);
+        if (!res.ok) continue;
         const files = await res.json();
-        if (Array.isArray(files)) {
-          for (const f of files) {
-            if (f.name.endsWith('.md') && f.name !== '.gitkeep') {
-              allEntries.push({ name: f.name, dir: dir, url: f.html_url, download: f.download_url });
-            }
+        if (!Array.isArray(files)) continue;
+        for (const f of files) {
+          if (f.name.endsWith('.md') && f.name !== '.gitkeep') {
+            allEntries.push({ name: f.name, dir: dir, url: f.html_url, download: f.download_url });
           }
         }
-      } catch(e) { /* dir might not exist */ }
+      } catch(e) { continue; }
     }
     
     if (allEntries.length === 0) {
@@ -373,7 +373,7 @@ async function loadAudits() {
         const name = formatAuditName(a.name);
         const title = extractTitle(md);
         const date = extractDate(md);
-        const dateStr = date ? new Date(date).toLocaleString() : '';
+        const dateStr = date ? new Date(date).toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric', hour:'2-digit', minute:'2-digit'}) : '—';
         const displayName = title ? `${name} — ${title}` : name;
         return `<div class="audit-card">
           <div class="audit-header" onclick="toggleAudit(${i})">
