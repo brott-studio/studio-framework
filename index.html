@@ -359,26 +359,35 @@ async function loadAudits() {
     if (!Array.isArray(files)) throw new Error(files.message || 'No audits');
     const audits = files.filter(f => f.name.endsWith('.md'));
     if (audits.length === 0) { el.innerHTML = '<p style="color:var(--muted)">No audits yet</p>'; return; }
-    
+
     el.innerHTML = '<p class="loading">Loading audit details...</p>';
-    let cardData = await Promise.all(audits.map(async (a, i) => {
+
+    // Fetch git commit dates sequentially to avoid GitHub API rate limits.
+    // Each call is made one at a time so we don't burst 12 parallel requests.
+    const commitDates = {};
+    for (const a of audits) {
+      try {
+        const commitRes = await fetch(`${API}/repos/${ORG}/${AUDIT_REPO}/commits?path=audits/${AUDIT_FOLDER}/${a.name}&per_page=1`);
+        if (commitRes.ok) {
+          const commits = await commitRes.json();
+          if (Array.isArray(commits) && commits.length > 0) {
+            commitDates[a.name] = commits[0].commit.author.date;
+          }
+        }
+      } catch(e) {}
+    }
+
+    // Fetch all audit content in parallel (these hit raw.githubusercontent.com, no rate limit)
+    let cardData = await Promise.all(audits.map(async (a) => {
       try {
         const r = await fetch(a.download_url);
         const md = await r.text();
         const grade = extractGrade(md);
         const heading = extractHeading(md) || a.name.replace('.md','');
-        const date = extractDate(md);
-        // Also try to get git commit date for more accuracy
-        let gitDate = null;
-        try {
-          const commitRes = await fetch(`${API}/repos/${ORG}/${AUDIT_REPO}/commits?path=audits/${AUDIT_FOLDER}/${a.name}&per_page=1`);
-          const commits = await commitRes.json();
-          if (Array.isArray(commits) && commits.length > 0) {
-            gitDate = commits[0].commit.author.date;
-          }
-        } catch(e) {}
-        const finalDate = gitDate || date;
-        const dateStr = finalDate ? new Date(finalDate).toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric', hour:'2-digit', minute:'2-digit'}) : '—';
+        const gitDate = commitDates[a.name] || null;
+        const contentDate = extractDate(md);
+        const finalDate = gitDate || contentDate;
+        const dateStr = finalDate ? new Date(finalDate).toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric', hour:'2-digit', minute:'2-digit'}) : '\u2014';
         const sortTime = finalDate ? new Date(finalDate).getTime() : 0;
         return { sortTime, html: `<div class="audit-card">
           <div class="audit-header" onclick="toggleAudit(AUDIT_IDX)">
@@ -394,7 +403,7 @@ async function loadAudits() {
         return { sortTime: 0, html: `<div class="audit-card"><div class="audit-header"><div class="audit-name">${a.name}</div></div></div>` };
       }
     }));
-    // Sort by git commit timestamp, most recent first
+    // Sort by git commit date, most recent first
     cardData.sort((a, b) => b.sortTime - a.sortTime);
     el.innerHTML = cardData.map((c, i) => c.html.replace(/AUDIT_IDX/g, i)).join('');
   } catch(e) { el.innerHTML = `<p class="error">${e.message}</p>`; }
