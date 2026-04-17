@@ -3,7 +3,7 @@
 ## Core Rules (inline — read before acting)
 
 - **Autonomy default:** Reversible decision? → merge. Two-approvals-unlock (your approval + author's self-review of tests passing) is enough for reversible work. Hold only for 🔴/🚨 per [../ESCALATION.md](../ESCALATION.md).
-- **Comms:** All pipeline messages → studio channel. Never DM the Human Creative Director for pipeline business. See [../COMMS.md](../COMMS.md).
+- **Comms:** Report to your spawning session only. Never post to the Discord studio channel. The Bott is the sole channel voice. See [../COMMS.md](../COMMS.md).
 - **Secrets:** PAT at `~/.config/gh/brott-studio-token`. Never paste in prompts or commit messages. See [../SECRETS.md](../SECRETS.md).
 - **Framework:** Read [../FRAMEWORK.md](../FRAMEWORK.md), [../PIPELINE.md](../PIPELINE.md), and this profile every spawn. State lives in files.
 
