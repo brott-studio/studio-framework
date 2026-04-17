@@ -51,6 +51,30 @@ Longer (3600s+) for:
 
 ---
 
+## Provider / idle timing
+
+Separate from the per-spawn `runTimeoutSeconds` (wall-clock) is OpenClaw's **LLM idle timeout** — a per-chunk cap on the model's streaming response. The wrapper starts a fresh timer on every `iterator.next()`; if no chunk arrives before it fires, the run is aborted with `outcome.status == "timeout"`, even though wall-clock may be nowhere near its cap.
+
+- **OpenClaw default:** 120s.
+- **Brott Studio config:** **600s.** Set in `~/.openclaw/openclaw.json` at `agents.defaults.llm.idleTimeoutSeconds`. **[Structural]** — enforced by the config file, applies to every spawn.
+
+### Why 600s
+
+Opus 4.7 does long internal thinking passes between stream chunks — multi-second deliberation, tool-call argument construction, post-tool re-planning. Copilot's proxy doesn't send keepalive chunks during those gaps, so the stream looks idle to the wrapper even though the model is actively reasoning.
+
+The 2026-04-17 investigation measured this directly: 4.7 timeout rate 8.3% vs 4.6's 1.8%, with **every** 4.7 timeout clustering around ~180s runtime, frozen mid-narration right before the write phase ("Time to write the audit." / "Writing the spec now." / "Now let me write the report."). That's the 120s idle cap firing on a single long thinking chunk, not wall-clock exhaustion. 600s gives the model room to finish a reasoning pass without being killed; genuine hangs (10min of zero chunks) still get caught.
+
+### Diagnostic path if a subagent still times out — **[Compliance-reliant]**
+
+1. Open `~/.openclaw/subagents/runs.json`, find the run, inspect `.outcome` and `.frozenResultText`.
+2. If `frozenResultText` ends mid-narration right before a write ("Let me write...", "Now I'll...") → it's an **LLM idle timeout**. The 600s cap fired. Raise `agents.defaults.llm.idleTimeoutSeconds` further (900, 1200), or as a last resort set it to `0` to disable the wrapper entirely. Only disable after raising has been exhausted — you lose genuine-hang protection.
+3. If `accumulatedRuntimeMs` is close to the spawn's `runTimeoutSeconds` → it's **wall-clock**, not idle. Raise `runTimeoutSeconds` on the spawn (see Timeout section above) and/or tighten the task scope.
+4. If neither — check for abort from the parent or upstream error; not an idle issue.
+
+Cross-ref: full diagnosis in the workspace memo `memory/2026-04-17-subagent-timeout-investigation.md` (workspace-local, not in this repo; kept for HCD review).
+
+---
+
 ## Task Prompt Template
 
 ```
