@@ -114,6 +114,26 @@
   .pulse-trend-sprint { font-size: 0.58rem; color: var(--muted); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; line-height: 1; }
   .pulse-trend-axis { font-size: 0.6rem; color: var(--muted); display: flex; justify-content: space-between; margin-top: 0.05rem; letter-spacing: 0.02em; }
   @media (max-width: 640px) { .pulse-commit-msg { max-width: 20ch; } }
+
+  /* Rate-limit banner */
+  #rate-limit-banner { display: none; background: #332701; border: 1px solid var(--yellow); color: #f7d867; padding: 0.5rem 0.75rem; border-radius: 4px; margin-bottom: 0.75rem; font-size: 0.85rem; }
+  #rate-limit-banner strong { color: var(--yellow); }
+
+  /* Empty state (distinct from error red) */
+  .empty-state { color: var(--muted); font-size: 0.8rem; font-style: italic; }
+
+  /* Focus ring for keyboard-accessible cards */
+  .audit-header:focus { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .audit-header:focus:not(:focus-visible) { outline: none; }
+
+  /* Refresh button */
+  #btn-refresh { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 0.3rem 0.55rem; color: var(--accent); font-size: 0.8rem; cursor: pointer; font-family: inherit; }
+  #btn-refresh:hover { border-color: var(--accent); background: #1c2129; }
+
+  /* Audit provenance line */
+  .audit-provenance { font-size: 0.68rem; color: var(--muted); margin-top: 0.1rem; }
+  .audit-provenance a { color: var(--muted); text-decoration: underline; text-decoration-color: var(--border); }
+  .audit-provenance a:hover { color: var(--accent); text-decoration-color: var(--accent); }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
@@ -126,36 +146,16 @@
   <select id="project-picker" style="background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:4px;padding:0.3rem 0.5rem;font-size:0.85rem;display:none">
     <option>Loading…</option>
   </select>
+  <button id="btn-refresh" type="button" title="Reload with fresh data (bypass cache)" aria-label="Refresh">↻ Refresh</button>
   <a id="link-live" href="#" target="_blank" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:0.3rem 0.55rem;color:var(--accent);text-decoration:none;font-size:0.8rem">▶ Live Build</a>
 </div>
 
 <p class="subtitle">100100 Productions <span style="color:var(--border);margin:0 0.4rem">│</span> AI Agent Studio</p>
 <p class="mission">Mission: Quality over speed. Ship it right, not just fast.</p>
 
-<!-- SECTION: Studio -->
-<div class="section-header">
-  <h2>🏭 Studio</h2>
-  <div class="section-links">
-    <a href="https://github.com/brott-studio/studio-framework" target="_blank">repo</a>
-    <a href="https://github.com/brott-studio/studio-framework/blob/main/PIPELINE.md" target="_blank">pipeline</a>
-  </div>
-</div>
+<div id="rate-limit-banner" role="status" aria-live="polite"></div>
 
-<details>
-  <summary>📖 Framework</summary>
-  <div class="inner md-content" id="framework-content">
-    <p class="loading">Loading...</p>
-  </div>
-</details>
-
-<details>
-  <summary>📋 Pipeline & Roles</summary>
-  <div class="inner md-content" id="pipeline-content">
-    <p class="loading">Loading...</p>
-  </div>
-</details>
-
-<!-- SECTION: Project -->
+<!-- SECTION: Project (moved above Studio — executive summary first) -->
 <div class="section-header">
   <h2>📊 Project</h2>
   <div class="section-links">
@@ -213,6 +213,29 @@
   </div>
 </details>
 
+<!-- SECTION: Studio (moved below Project — reference material, not executive summary) -->
+<div class="section-header">
+  <h2>🏭 Studio</h2>
+  <div class="section-links">
+    <a href="https://github.com/brott-studio/studio-framework" target="_blank">repo</a>
+    <a href="https://github.com/brott-studio/studio-framework/blob/main/PIPELINE.md" target="_blank">pipeline</a>
+  </div>
+</div>
+
+<details>
+  <summary>📖 Framework</summary>
+  <div class="inner md-content" id="framework-content">
+    <p class="loading">Loading...</p>
+  </div>
+</details>
+
+<details>
+  <summary>📋 Pipeline & Roles</summary>
+  <div class="inner md-content" id="pipeline-content">
+    <p class="loading">Loading...</p>
+  </div>
+</details>
+
 <script>
 const ORG = 'brott-studio';
 const FRAMEWORK_REPO = 'studio-framework';
@@ -244,6 +267,33 @@ let CFG = {
   liveUrl: DEFAULTS.liveUrl,
 };
 
+// Escape user-controlled strings before injecting into innerHTML.
+// Use this for any raw string that isn't already rendered HTML (marked() output is fine).
+function escapeHtml(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// Surface a single top-of-page banner when the GitHub API rate limit is hit.
+// Idempotent: subsequent 403s just refresh the minutes-until-reset.
+let _rateLimitBannerShown = false;
+function showRateLimitBanner(resetUnix) {
+  const banner = document.getElementById('rate-limit-banner');
+  if (!banner) return;
+  let msg = '⚠️ <strong>GitHub API rate limit reached.</strong> ';
+  if (resetUnix) {
+    const mins = Math.max(1, Math.ceil((resetUnix * 1000 - Date.now()) / 60000));
+    msg += `Resets in ~${mins}m. (Refreshing won't help until then.)`;
+  } else {
+    msg += "Try again in a bit. (Refreshing won't help.)";
+  }
+  banner.innerHTML = msg;
+  banner.style.display = '';
+  _rateLimitBannerShown = true;
+}
+
+// Sentinel for 404 responses so callers can distinguish "empty folder" from "real error".
+const NOT_FOUND = Symbol('notFound');
+
 function cachedFetch(url, opts) {
   const key = 'ghcache:' + url;
   if (NO_CACHE) { try { localStorage.removeItem(key); } catch(e) {} }
@@ -253,17 +303,27 @@ function cachedFetch(url, opts) {
       const cached = localStorage.getItem(key);
       if (cached) {
         const { ts, data } = JSON.parse(cached);
-        if (Date.now() - ts < ttl) return Promise.resolve({ ok: true, json: () => Promise.resolve(data), text: () => Promise.resolve(data) });
+        if (Date.now() - ts < ttl) return Promise.resolve({ ok: true, notFound: false, json: () => Promise.resolve(data), text: () => Promise.resolve(data) });
       }
     }
   } catch(e) {}
   return fetch(url, opts).then(res => {
+    // Rate-limit: 403 with x-ratelimit-remaining: 0 → banner, signal failure to caller.
+    if (res.status === 403 && res.headers.get('x-ratelimit-remaining') === '0') {
+      const reset = parseInt(res.headers.get('x-ratelimit-reset') || '0', 10) || 0;
+      showRateLimitBanner(reset);
+      return { ok: false, rateLimited: true, status: 403, json: () => Promise.resolve({}), text: () => Promise.resolve('') };
+    }
+    // 404 → sentinel so callers render "empty" instead of red "HTTP 404" error.
+    if (res.status === 404) {
+      return { ok: false, notFound: true, status: 404, json: () => Promise.resolve({ notFound: true }), text: () => Promise.resolve('') };
+    }
     if (!res.ok) return res;
     const ct = res.headers.get('content-type') || '';
     const isJson = ct.includes('json');
     return (isJson ? res.json() : res.text()).then(body => {
       try { localStorage.setItem(key, JSON.stringify({ ts: Date.now(), data: body })); } catch(e) {}
-      return { ok: true, json: () => Promise.resolve(body), text: () => Promise.resolve(body) };
+      return { ok: true, notFound: false, json: () => Promise.resolve(body), text: () => Promise.resolve(body) };
     });
   });
 }
@@ -367,9 +427,9 @@ function md2html(md) {
     // Handle both old and new marked.js API
     if (typeof href === 'object') {
       const token = href;
-      return `<a href="${token.href}" target="_blank"${token.title ? ' title="'+token.title+'"' : ''}>${token.text}</a>`;
+      return `<a href="${escapeHtml(token.href)}" target="_blank"${token.title ? ' title="'+escapeHtml(token.title)+'"' : ''}>${token.text}</a>`;
     }
-    return `<a href="${href}" target="_blank"${title ? ' title="'+title+'"' : ''}>${text}</a>`;
+    return `<a href="${escapeHtml(href)}" target="_blank"${title ? ' title="'+escapeHtml(title)+'"' : ''}>${text}</a>`;
   };
   marked.setOptions({ breaks: false, gfm: true, headerIds: false, mangle: false, renderer: renderer });
   return marked.parse(md);
@@ -430,6 +490,8 @@ async function loadGDD() {
   const el = document.getElementById('gdd-content');
   try {
     const r = await fetch(`https://raw.githubusercontent.com/${ORG}/${CFG.project}/main/${CFG.paths.gdd}`);
+    if (r.status === 404) { el.innerHTML = '<p class="empty-state">No GDD yet</p>'; return; }
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
     el.innerHTML = md2html(await r.text());
   } catch(e) { el.innerHTML = `<p class="error">Failed to load</p>`; }
 }
@@ -458,17 +520,23 @@ async function loadCI() {
       const d = new Date(r.created_at);
       const date = `${d.getMonth()+1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}`;
       const name = r.name.length > 30 ? r.name.substring(0,30) + '…' : r.name;
-      return `<div class="pr"><span class="pr-date" style="float:none;margin-right:0.4rem">${date}</span>${icon} <a href="${r.html_url}" target="_blank">${name}</a></div>`;
+      return `<div class="pr"><span class="pr-date" style="float:none;margin-right:0.4rem">${date}</span>${icon} <a href="${escapeHtml(r.html_url)}" target="_blank">${escapeHtml(name)}</a></div>`;
     }).join('');
-  } catch(e) { el.innerHTML = `<p class="error">${e.message}</p>`; }
+  } catch(e) { el.innerHTML = `<p class="error">${escapeHtml(e.message)}</p>`; }
 }
 
 
 async function loadKB() {
   const el = document.getElementById('kb-list');
+  const kbCountEl = document.getElementById('kb-count');
   try {
     // Flat fetch: <paths.kb>/*.md (no subfolders)
     const res = await cachedFetch(`${API}/repos/${ORG}/${CFG.project}/contents/${CFG.paths.kb}`);
+    if (res.notFound) {
+      el.innerHTML = '<p class="empty-state">No KB entries yet</p>';
+      if (kbCountEl) kbCountEl.textContent = '(0)';
+      return;
+    }
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const files = await res.json();
     if (!Array.isArray(files)) throw new Error(files.message || 'API error');
@@ -478,20 +546,19 @@ async function loadKB() {
       .map(f => ({ name: f.name, url: f.html_url, download: f.download_url }))
       .sort((a, b) => a.name.localeCompare(b.name));
 
-    const kbCountEl = document.getElementById('kb-count');
     if (kbCountEl) kbCountEl.textContent = `(${allEntries.length})`;
     if (allEntries.length === 0) {
-      el.innerHTML = '<p style="color:var(--muted);font-size:0.8rem">No KB entries yet</p>';
+      el.innerHTML = '<p class="empty-state">No KB entries yet</p>';
       return;
     }
 
     el.innerHTML = allEntries.map((entry, i) => {
       const title = entry.name.replace(/\.md$/, '').split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
       return `<div class="audit-card">
-        <div class="audit-header" onclick="toggleKB(${i})">
+        <div class="audit-header" role="button" tabindex="0" aria-expanded="false" data-toggle="kb" data-idx="${i}">
           <div class="audit-left">
-            <div class="audit-name">📚 ${title}</div>
-            <div class="audit-meta">${entry.name}</div>
+            <div class="audit-name">📚 ${escapeHtml(title)}</div>
+            <div class="audit-meta">${escapeHtml(entry.name)}</div>
           </div>
         </div>
         <div class="audit-body" id="kb-${i}"></div>
@@ -500,7 +567,7 @@ async function loadKB() {
 
     // Store download URLs for lazy loading
     window._kbEntries = allEntries;
-  } catch(e) { el.innerHTML = `<p class="error">${e.message}</p>`; }
+  } catch(e) { el.innerHTML = `<p class="error">${escapeHtml(e.message)}</p>`; }
 }
 
 async function toggleKB(i) {
@@ -533,28 +600,41 @@ async function loadPRs() {
       const icon = state === 'merged' ? '✅' : state === 'open' ? '🟡' : '❌';
       const d = new Date(pr.merged_at || pr.closed_at || pr.created_at);
       const date = `${d.getMonth()+1}/${d.getDate()}`;
-      return `<div class="pr"><span class="pr-num">#${pr.number}</span><span class="${cls}">${icon}</span> <a href="${pr.html_url}" target="_blank">${pr.title}</a> <span class="pr-date">${date}</span></div>`;
+      return `<div class="pr"><span class="pr-num">#${pr.number}</span><span class="${cls}">${icon}</span> <a href="${escapeHtml(pr.html_url)}" target="_blank">${escapeHtml(pr.title)}</a> <span class="pr-date">${date}</span></div>`;
     }).join('');
-  } catch(e) { el.innerHTML = `<p class="error">${e.message}</p>`; }
+  } catch(e) { el.innerHTML = `<p class="error">${escapeHtml(e.message)}</p>`; }
 }
 
 async function loadAudits() {
   const el = document.getElementById('audit-list');
   try {
     const res = await cachedFetch(`${API}/repos/${ORG}/${CFG.auditRepo}/contents/audits/${CFG.auditFolder}`);
+    if (res.notFound) {
+      const auditCountEl = document.getElementById('audit-count');
+      if (auditCountEl) auditCountEl.textContent = '(0)';
+      el.innerHTML = '<p class="empty-state">No audits yet</p>';
+      window._auditModel = [];
+      window._auditModelReady && window._auditModelReady([]);
+      return [];
+    }
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const files = await res.json();
     if (!Array.isArray(files)) throw new Error(files.message || 'No audits');
     const audits = files.filter(f => f.name.endsWith('.md'));
     const auditCountEl = document.getElementById('audit-count');
     if (auditCountEl) auditCountEl.textContent = `(${audits.length})`;
-    if (audits.length === 0) { el.innerHTML = '<p style="color:var(--muted)">No audits yet</p>'; return; }
+    if (audits.length === 0) {
+      el.innerHTML = '<p class="empty-state">No audits yet</p>';
+      window._auditModel = [];
+      window._auditModelReady && window._auditModelReady([]);
+      return [];
+    }
 
     el.innerHTML = '<p class="loading">Loading audit details...</p>';
 
-    // Sort by sprint ID (numeric, split on dot) descending — newest sprint first.
-    // Rollups pin to the end of their arc. Audit commit time is a tiebreaker.
-    // (Previous behavior sorted purely by commit-time, which drifted whenever an
-    // older audit was edited/recommitted.)
+    // Single source of truth: fetch markdown + commit once per audit, store
+    // everything (markdown, grade, commit metadata) on a shared model that
+    // Project Pulse reads from (no re-fetch).
     let cardData = await Promise.all(audits.map(async (a) => {
       try {
         const [mdRes, commitRes] = await Promise.all([
@@ -567,36 +647,104 @@ async function loadAudits() {
         const heading = extractHeading(md) || a.name.replace('.md','');
         const contentDate = extractDate(md);
         const dateStr = contentDate ? new Date(contentDate).toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'}) : '\u2014';
-        const commitDateStr = Array.isArray(commitRes) && commitRes[0] && commitRes[0].commit
-          ? (commitRes[0].commit.committer && commitRes[0].commit.committer.date) || (commitRes[0].commit.author && commitRes[0].commit.author.date)
+        const commit = Array.isArray(commitRes) && commitRes[0] ? commitRes[0] : null;
+        const commitDateStr = commit && commit.commit
+          ? (commit.commit.committer && commit.commit.committer.date) || (commit.commit.author && commit.commit.author.date)
           : null;
         const sortTime = commitDateStr ? new Date(commitDateStr).getTime() : 0;
         const key = parseSprintKey(a.name);
         const sprintShort = formatSprintShort(key);
-        const gradeHtml = grade
-          ? `<span class="audit-grade ${gradeClass(grade)}">${grade}</span>`
-          : `<span class="audit-grade grade-unknown" title="No grade found in audit markdown (source missing)">—</span>`;
-        return { sortTime, contentDate, name: a.name, key, sprintShort, grade, html: `<div class="audit-card">
-          <div class="audit-header" onclick="toggleAudit(AUDIT_IDX)">
-            <div class="audit-left">
-              <div class="audit-name">${heading}</div>
-              <div class="audit-meta">${sprintShort} · ${dateStr}</div>
-            </div>
-            ${gradeHtml}
-          </div>
-          <div class="audit-body" id="audit-AUDIT_IDX"><div class="md-content">${md2html(md)}</div></div>
-        </div>` };
+        return {
+          sortTime, contentDate, dateStr, name: a.name, key, sprintShort,
+          grade, heading, markdown: md, commit,
+          html_url: a.html_url, download_url: a.download_url,
+        };
       } catch(e) {
         const key = parseSprintKey(a.name);
-        return { sortTime: 0, contentDate: null, name: a.name, key, sprintShort: formatSprintShort(key), grade: null, html: `<div class="audit-card"><div class="audit-header"><div class="audit-name">${a.name}</div></div></div>` };
+        return {
+          sortTime: 0, contentDate: null, dateStr: '\u2014', name: a.name, key, sprintShort: formatSprintShort(key),
+          grade: null, heading: a.name, markdown: '', commit: null,
+          html_url: a.html_url, download_url: a.download_url, error: true,
+        };
       }
     }));
     cardData.sort(compareAuditsDesc);
-    // Expose sorted audit data for Project Pulse trend (so both widgets share sort).
-    window._auditsSorted = cardData;
-    el.innerHTML = cardData.map((c, i) => c.html.replace(/AUDIT_IDX/g, i)).join('');
-  } catch(e) { el.innerHTML = `<p class="error">${e.message}</p>`; }
+    // Expose shared model for Project Pulse (reads, never re-fetches).
+    window._auditModel = cardData;
+    window._auditsSorted = cardData; // legacy alias
+
+    el.innerHTML = cardData.map((c, i) => {
+      const gradeHtml = c.grade
+        ? `<span class="audit-grade ${gradeClass(c.grade)}">${escapeHtml(c.grade)}</span>`
+        : `<span class="audit-grade grade-unknown" title="No grade found in audit markdown (source missing)">—</span>`;
+      // Provenance: committer + relative time + short SHA link to GitHub
+      let provenance = '';
+      if (c.commit) {
+        const authorName = (c.commit.author && c.commit.author.login)
+          || (c.commit.commit && c.commit.commit.author && c.commit.commit.author.name)
+          || (c.commit.commit && c.commit.commit.committer && c.commit.commit.committer.name)
+          || 'unknown';
+        const commitDate = (c.commit.commit && c.commit.commit.committer && c.commit.commit.committer.date)
+          || (c.commit.commit && c.commit.commit.author && c.commit.commit.author.date);
+        const when = relTime(commitDate);
+        const sha = (c.commit.sha || '').slice(0, 7);
+        const cUrl = c.commit.html_url || c.html_url || '#';
+        provenance = `<div class="audit-provenance">↳ committed by ${escapeHtml(authorName)} · ${escapeHtml(when)} · <a href="${escapeHtml(cUrl)}" target="_blank" rel="noopener">${escapeHtml(sha)}</a></div>`;
+      } else if (c.html_url) {
+        provenance = `<div class="audit-provenance">↳ <a href="${escapeHtml(c.html_url)}" target="_blank" rel="noopener">view on GitHub</a></div>`;
+      }
+      return `<div class="audit-card">
+        <div class="audit-header" role="button" tabindex="0" aria-expanded="false" data-toggle="audit" data-idx="${i}">
+          <div class="audit-left">
+            <div class="audit-name">${escapeHtml(c.heading)}</div>
+            <div class="audit-meta">${escapeHtml(c.sprintShort)} · ${escapeHtml(c.dateStr)}</div>
+            ${provenance}
+          </div>
+          ${gradeHtml}
+        </div>
+        <div class="audit-body" id="audit-${i}"><div class="md-content">${md2html(c.markdown || '')}</div></div>
+      </div>`;
+    }).join('');
+    window._auditModelReady && window._auditModelReady(cardData);
+    return cardData;
+  } catch(e) {
+    el.innerHTML = `<p class="error">${escapeHtml(e.message)}</p>`;
+    window._auditModelReady && window._auditModelReady([]);
+    return [];
+  }
 }
+
+// ---------- Keyboard-accessible card toggles ----------
+// Cards use data-toggle="audit|kb|design" + data-idx. One delegated handler
+// wires click + Enter/Space so keyboard users can expand any card.
+function _dispatchToggle(kind, idx) {
+  if (kind === 'audit') return toggleAudit(idx);
+  if (kind === 'kb') return toggleKB(idx);
+  if (kind === 'design') return toggleDesignDoc(idx);
+}
+function _updateAriaExpanded(el) {
+  const idx = el.getAttribute('data-idx');
+  const kind = el.getAttribute('data-toggle');
+  if (!idx || !kind) return;
+  const body = document.getElementById(`${kind === 'design' ? 'design' : kind === 'kb' ? 'kb' : 'audit'}-${idx}`);
+  if (body) el.setAttribute('aria-expanded', body.classList.contains('open') ? 'true' : 'false');
+}
+document.addEventListener('click', (e) => {
+  const hdr = e.target.closest('.audit-header[data-toggle]');
+  if (!hdr) return;
+  const kind = hdr.getAttribute('data-toggle');
+  const idx = parseInt(hdr.getAttribute('data-idx'), 10);
+  Promise.resolve(_dispatchToggle(kind, idx)).then(() => _updateAriaExpanded(hdr));
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Enter' && e.key !== ' ') return;
+  const hdr = e.target.closest && e.target.closest('.audit-header[data-toggle]');
+  if (!hdr) return;
+  e.preventDefault();
+  const kind = hdr.getAttribute('data-toggle');
+  const idx = parseInt(hdr.getAttribute('data-idx'), 10);
+  Promise.resolve(_dispatchToggle(kind, idx)).then(() => _updateAriaExpanded(hdr));
+});
 
 function toggleAudit(i) {
   document.getElementById(`audit-${i}`).classList.toggle('open');
@@ -659,6 +807,7 @@ async function loadDesignDocs() {
           }
         }
       }
+      // 404 for designDocs dir → treated as "empty, no design folder" (not an error).
     } catch(e) {}
 
     // 3) docs/ root level sprint*.md / sprint*-design*.md
@@ -689,7 +838,7 @@ async function loadDesignDocs() {
     } catch(e) {}
 
     if (docs.length === 0) {
-      el.innerHTML = '<p style="color:var(--muted);font-size:0.8rem">No design docs yet</p>';
+      el.innerHTML = '<p class="empty-state">No design docs yet</p>';
       countEl.textContent = '(0)';
       return;
     }
@@ -714,16 +863,16 @@ async function loadDesignDocs() {
         (d.sprint && isFinite(d.sprint) ? `Sprint ${d.sprint}` : d.path);
       const pinnedBadge = d.pinned ? '<span class="pinned-badge">PINNED</span>' : '';
       return `<div class="audit-card">
-        <div class="audit-header" onclick="toggleDesignDoc(${i})">
+        <div class="audit-header" role="button" tabindex="0" aria-expanded="false" data-toggle="design" data-idx="${i}">
           <div class="audit-left">
-            <div class="audit-name">${icon} ${title}${pinnedBadge}</div>
-            <div class="audit-meta">${sprintMeta} · ${d.path}</div>
+            <div class="audit-name">${icon} ${escapeHtml(title)}${pinnedBadge}</div>
+            <div class="audit-meta">${escapeHtml(sprintMeta)} · ${escapeHtml(d.path)}</div>
           </div>
         </div>
         <div class="audit-body" id="design-${i}"></div>
       </div>`;
     }).join('');
-  } catch(e) { el.innerHTML = `<p class="error">${e.message}</p>`; }
+  } catch(e) { el.innerHTML = `<p class="error">${escapeHtml(e.message)}</p>`; }
 }
 
 function extractSprintNumber(name) {
@@ -755,6 +904,15 @@ async function toggleDesignDoc(i) {
   // Update page title with displayName for clarity across projects.
   if (CFG.displayName) {
     document.title = `Brott Studio — ${CFG.displayName}`;
+  }
+  // Wire refresh button: reload with ?refresh=1, preserving existing params.
+  const refreshBtn = document.getElementById('btn-refresh');
+  if (refreshBtn) {
+    refreshBtn.addEventListener('click', () => {
+      const next = new URLSearchParams(window.location.search);
+      next.set('refresh', '1');
+      window.location.search = next.toString();
+    });
   }
   // Fire off loaders (parallel, same as before).
   loadPRs();
@@ -838,84 +996,64 @@ function extractSprintLabel(name) {
   return m ? `Sprint ${m[1]}` : name.replace(/\.md$/,'');
 }
 
+// Promise exposed so Project Pulse can await loadAudits() completion
+// (avoiding the double-fetch of markdown + commit data).
+window._auditModelPromise = new Promise(resolve => {
+  window._auditModelReady = resolve;
+});
+
 async function loadProjectPulse() {
   const root = document.getElementById('project-pulse');
   const loadingEl = document.getElementById('pulse-loading');
   try {
-    // 1) Audit list (reuses cachedFetch → same cache key as loadAudits)
-    const auditsRes = await cachedFetch(`${API}/repos/${ORG}/${CFG.auditRepo}/contents/audits/${CFG.auditFolder}`);
-    const auditFiles = await auditsRes.json();
-    const audits = Array.isArray(auditFiles) ? auditFiles.filter(f => f.name.endsWith('.md')) : [];
-
-    // 2) Sort audits by sprint ID (desc), with commit time as tiebreaker.
-    // Matches loadAudits() so the Pulse trend and the list agree on "newest".
-    let auditsSorted = [];
-    if (audits.length) {
-      const withCommitTime = await Promise.all(audits.map(async (a) => {
-        try {
-          const r = await cachedFetch(`${API}/repos/${ORG}/${CFG.auditRepo}/commits?path=audits/${CFG.auditFolder}/${encodeURIComponent(a.name)}&per_page=1`);
-          const j = r.ok ? await r.json() : [];
-          const d = Array.isArray(j) && j[0] && j[0].commit
-            ? ((j[0].commit.committer && j[0].commit.committer.date) || (j[0].commit.author && j[0].commit.author.date))
-            : null;
-          return { file: a, sortTime: d ? new Date(d).getTime() : 0, name: a.name, key: parseSprintKey(a.name) };
-        } catch(e) { return { file: a, sortTime: 0, name: a.name, key: parseSprintKey(a.name) }; }
-      }));
-      withCommitTime.sort(compareAuditsDesc);
-      auditsSorted = withCommitTime;
-    }
+    // Read from the shared audit model (populated by loadAudits).
+    // No independent fetch of markdown / per-file commits — halves API cost.
+    const model = await window._auditModelPromise;
+    const auditsSorted = Array.isArray(model) ? model : [];
 
     // Latest audit = top of sorted list (newest sprint, excluding rollups if non-rollup exists)
     let latestSprintLabel = '\u2014';
     let latestGrade = null;
     const latestNonRollup = auditsSorted.find(x => !x.key.isRollup) || auditsSorted[0];
-    const latestAudit = latestNonRollup ? latestNonRollup.file : null;
-    if (latestAudit) {
-      latestSprintLabel = extractSprintLabel(latestAudit.name);
-      try {
-        const md = await (await fetch(latestAudit.download_url)).text();
-        latestGrade = extractGrade(md);
-      } catch(e) {}
+    if (latestNonRollup) {
+      latestSprintLabel = extractSprintLabel(latestNonRollup.name);
+      latestGrade = latestNonRollup.grade;
     }
 
-    // 3) Grade trend: last 5 sprint audits (skip rollups for a cleaner signal).
-    // Sorted order is newest-first → reverse for oldest-left / newest-right.
+    // Grade trend: last 5 sprint audits (skip rollups). Newest-first → reverse.
     const trendSource = auditsSorted.filter(x => !x.key.isRollup).slice(0, 5);
-    const trendEntries = await Promise.all(trendSource.map(async x => {
-      try {
-        const md = await (await fetch(x.file.download_url)).text();
-        return { grade: extractGrade(md), sprintShort: formatSprintShort(x.key), name: x.name };
-      } catch(e) { return { grade: null, sprintShort: formatSprintShort(x.key), name: x.name }; }
+    const trendEntries = trendSource.map(x => ({
+      grade: x.grade, sprintShort: formatSprintShort(x.key), name: x.name,
     }));
     const trendOrdered = trendEntries.slice().reverse(); // left = oldest, right = newest
 
-    // 4) Last commit on project repo (default branch)
+    // 4) Last commit on project repo (default branch) — still a separate call,
+    //    not part of the audit pipeline.
     let projCommit = null;
     try {
       const r = await cachedFetch(`${API}/repos/${ORG}/${CFG.project}/commits?per_page=1`);
-      const j = await r.json();
-      if (Array.isArray(j) && j[0]) projCommit = j[0];
+      if (r.ok) {
+        const j = await r.json();
+        if (Array.isArray(j) && j[0]) projCommit = j[0];
+      }
     } catch(e) {}
 
-    // 5) Last audit commit (most recent commit touching audits/<project>/)
-    let auditCommit = null;
-    try {
-      const r = await cachedFetch(`${API}/repos/${ORG}/${CFG.auditRepo}/commits?path=audits/${CFG.auditFolder}&per_page=1`);
-      const j = await r.json();
-      if (Array.isArray(j) && j[0]) auditCommit = j[0];
-    } catch(e) {}
+    // 5) Last audit commit: reuse most-recent sortTime from the model instead of
+    //    making another /commits?path= call.
+    const latestAuditEntry = auditsSorted.slice().sort((a,b) => (b.sortTime||0) - (a.sortTime||0))[0];
+    const auditCommit = latestAuditEntry && latestAuditEntry.commit ? latestAuditEntry.commit : null;
 
     // --- Render ---
     const parts = [];
 
     // Latest Sprint
     const gradeHtml = latestGrade
-      ? ` <span class="pulse-pill ${pulseGradeClass(latestGrade)}">${latestGrade}</span>`
+      ? ` <span class="pulse-pill ${pulseGradeClass(latestGrade)}">${escapeHtml(latestGrade)}</span>`
       : '';
-    parts.push(`<span class="pulse-item"><span class="pulse-label">Latest</span><span class="pulse-value">${latestSprintLabel}</span>${gradeHtml}</span>`);
+    parts.push(`<span class="pulse-item"><span class="pulse-label">Latest</span><span class="pulse-value">${escapeHtml(latestSprintLabel)}</span>${gradeHtml}</span>`);
 
     // Audits complete
-    parts.push(`<span class="pulse-item"><span class="pulse-label">Audits</span><span class="pulse-value">${audits.length} sprint${audits.length===1?'':'s'}</span></span>`);
+    parts.push(`<span class="pulse-item"><span class="pulse-label">Audits</span><span class="pulse-value">${auditsSorted.length} sprint${auditsSorted.length===1?'':'s'}</span></span>`);
 
     // Trend
     if (trendOrdered.length) {
@@ -924,9 +1062,9 @@ async function loadProjectPulse() {
         const title = e.grade
           ? `${e.sprintShort} · Grade ${e.grade}`
           : `${e.sprintShort} · ungraded (no grade found in audit source)`;
-        return `<span class="pulse-trend-cell" title="${title}">`
-          + `<span class="pulse-pill ${pulseGradeClass(e.grade)}">${gText}</span>`
-          + `<span class="pulse-trend-sprint">${e.sprintShort}</span>`
+        return `<span class="pulse-trend-cell" title="${escapeHtml(title)}">`
+          + `<span class="pulse-pill ${pulseGradeClass(e.grade)}">${escapeHtml(gText)}</span>`
+          + `<span class="pulse-trend-sprint">${escapeHtml(e.sprintShort)}</span>`
           + `</span>`;
       }).join('');
       const trendHtml = `<span class="pulse-trend-wrap">`
@@ -942,26 +1080,24 @@ async function loadProjectPulse() {
       let msg = (projCommit.commit && projCommit.commit.message || '').split('\n')[0];
       if (msg.length > 60) msg = msg.slice(0, 57) + '…';
       const url = projCommit.html_url || '#';
-      const esc = msg.replace(/</g,'&lt;').replace(/>/g,'&gt;');
-      parts.push(`<span class="pulse-item"><span class="pulse-label">Commit</span><span class="pulse-value">${when}</span><span class="pulse-dim">·</span><a href="${url}" target="_blank" class="pulse-commit-msg" title="${esc}">${esc}</a></span>`);
+      parts.push(`<span class="pulse-item"><span class="pulse-label">Commit</span><span class="pulse-value">${escapeHtml(when)}</span><span class="pulse-dim">·</span><a href="${escapeHtml(url)}" target="_blank" class="pulse-commit-msg" title="${escapeHtml(msg)}">${escapeHtml(msg)}</a></span>`);
     } else {
       parts.push(`<span class="pulse-item"><span class="pulse-label">Commit</span><span class="pulse-dim">\u2014</span></span>`);
     }
 
     // Last audit
     if (auditCommit) {
-      const when = relTime(auditCommit.commit && auditCommit.commit.author && auditCommit.commit.author.date);
+      const when = relTime((auditCommit.commit && auditCommit.commit.author && auditCommit.commit.author.date) || (auditCommit.commit && auditCommit.commit.committer && auditCommit.commit.committer.date));
       const url = auditCommit.html_url || '#';
-      parts.push(`<span class="pulse-item"><span class="pulse-label">Audit</span><a href="${url}" target="_blank" class="pulse-value" style="text-decoration:none;color:var(--text)">${when}</a></span>`);
+      parts.push(`<span class="pulse-item"><span class="pulse-label">Audit</span><a href="${escapeHtml(url)}" target="_blank" class="pulse-value" style="text-decoration:none;color:var(--text)">${escapeHtml(when)}</a></span>`);
     } else {
       parts.push(`<span class="pulse-item"><span class="pulse-label">Audit</span><span class="pulse-dim">\u2014</span></span>`);
     }
 
     if (loadingEl) loadingEl.remove();
-    // Preserve title, replace rest
     root.innerHTML = `<span class="pulse-title">📊 Project Pulse</span>` + parts.join('');
   } catch(e) {
-    if (loadingEl) loadingEl.innerHTML = `<span class="error">Pulse failed: ${e.message}</span>`;
+    if (loadingEl) loadingEl.innerHTML = `<span class="error">Pulse failed: ${escapeHtml(e.message)}</span>`;
   }
 }
 </script>
