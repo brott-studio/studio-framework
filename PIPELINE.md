@@ -59,7 +59,7 @@ The Bott (EP) → spawns Riv with sprint tasks
 ## Core Principles
 
 1. **Design drives planning** — Gizmo reviews first, Ett plans based on design input
-2. **Structure over compliance** — enforce via CI, not instructions
+2. **Structure over compliance where possible; explicit compliance-reliance where not.** Tag every rule as [Structural] or [Compliance-reliant] so it's clear which is which. See [FRAMEWORK.md](FRAMEWORK.md) "Enforcement Mechanisms".
 3. **Verification over trust** — "done" means verified working
 4. **Process quality → Product quality → Speed**
 5. **Player experience first**
@@ -68,12 +68,34 @@ The Bott (EP) → spawns Riv with sprint tasks
 
 ## Sprint Communication
 
-- Pipeline updates stay within Riv's orchestration (not in main channel)
-- The Bott receives Riv's final report only
-- CD gets pinged only for: playtest-ready builds, decisions needed, critical issues
+See [COMMS.md](COMMS.md) for full rules.
+
+- Pipeline updates stay within Riv's orchestration (posted to studio channel, not DM'd to HCD)
+- The Bott receives Riv's final report in the studio channel
+- HCD gets @-mentioned only for: playtest-ready builds, merge calls needing HCD signoff, or escalations per [ESCALATION.md](ESCALATION.md) 🔴/🚨 criteria
+
+## Sub-Sprint Audit Gate (HARD RULE)
+
+**[Compliance-reliant.]** Sub-sprint N+1 MUST NOT begin until Specc's sprint-N audit is committed to `brott-studio/studio-audits` at `audits/<project>/sprint-<N>.md`.
+
+Redundant compliance surfaces:
+- **Riv** verifies via `gh api` check before spawning any agent for sub-sprint N+1. If missing, STOP and escalate to The Bott.
+- **Ett** verifies when planning; refuses to plan next sprint without prior audit.
+- **The Bott** monitors for sub-sprint transitions without matching audit commit and intervenes.
+
+Specc has been invaluable to pipeline quality. Skipping Specc between sub-sprints has caused real problems — this gate exists because of that history.
 
 ## Pipeline Completion Rule
 
-Never notify CD for playtesting until the FULL pipeline has completed (Design → Plan → Build → Review → Verify → Audit). No shortcuts.
+Never notify HCD for playtesting until the FULL pipeline has completed (Design → Plan → Build → Review → Verify → Audit). No shortcuts.
 
-*Full details: [FRAMEWORK.md](FRAMEWORK.md)*
+## Cross-references
+
+- Full framework: [FRAMEWORK.md](FRAMEWORK.md)
+- Per-agent spawn templates: [SPAWN_PROTOCOL.md](SPAWN_PROTOCOL.md)
+- Subagent knobs & incremental-write protocol: [SUBAGENT_PLAYBOOK.md](SUBAGENT_PLAYBOOK.md)
+- Escalation tiers: [ESCALATION.md](ESCALATION.md)
+- Repo map + who writes where: [REPO_MAP.md](REPO_MAP.md)
+- Comms routing: [COMMS.md](COMMS.md)
+- Secrets handling: [SECRETS.md](SECRETS.md)
+- Conventions: [CONVENTIONS.md](CONVENTIONS.md)
