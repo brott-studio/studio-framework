@@ -425,16 +425,24 @@ async function loadAudits() {
 
     el.innerHTML = '<p class="loading">Loading audit details...</p>';
 
-    // Use dates from markdown content only — no git API calls needed
+    // Sort by last-commit time in the studio-audits repo (most recent first).
+    // Filenames are fragile; commit timestamps are truth.
     let cardData = await Promise.all(audits.map(async (a) => {
       try {
-        const r = await fetch(a.download_url);
-        const md = await r.text();
+        const [mdRes, commitRes] = await Promise.all([
+          fetch(a.download_url).then(r => r.text()),
+          cachedFetch(`${API}/repos/${ORG}/${AUDIT_REPO}/commits?path=audits/${AUDIT_FOLDER}/${encodeURIComponent(a.name)}&per_page=1`)
+            .then(r => r.ok ? r.json() : []).catch(() => []),
+        ]);
+        const md = mdRes;
         const grade = extractGrade(md);
         const heading = extractHeading(md) || a.name.replace('.md','');
         const contentDate = extractDate(md);
         const dateStr = contentDate ? new Date(contentDate).toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'}) : '\u2014';
-        const sortTime = contentDate ? new Date(contentDate).getTime() : 0;
+        const commitDateStr = Array.isArray(commitRes) && commitRes[0] && commitRes[0].commit
+          ? (commitRes[0].commit.committer && commitRes[0].commit.committer.date) || (commitRes[0].commit.author && commitRes[0].commit.author.date)
+          : null;
+        const sortTime = commitDateStr ? new Date(commitDateStr).getTime() : 0;
         return { sortTime, contentDate, name: a.name, html: `<div class="audit-card">
           <div class="audit-header" onclick="toggleAudit(AUDIT_IDX)">
             <div class="audit-left">
@@ -449,35 +457,8 @@ async function loadAudits() {
         return { sortTime: 0, contentDate: null, name: a.name, html: `<div class="audit-card"><div class="audit-header"><div class="audit-name">${a.name}</div></div></div>` };
       }
     }));
-    // Sort by sprint number, major.minor as separate integers (descending).
-    // Fixes lexicographic/parseFloat bugs where e.g. v2-sprint-13.10.md would
-    // collide with 13.1 (parseFloat) or sort before 13.2 (string sort).
-    // Arc rollup files (e.g. v2-arc-13.x-rollup.md) sort at the end of their
-    // arc, after all numbered 13.x sprints.
-    function extractSprintKey(card) {
-      // Prefer the source filename (stable); fall back to heading text.
-      const src = (card.name || '') + ' ' + (card.html || '');
-      // Arc rollup: e.g. v2-arc-13.x-rollup.md
-      const rollup = src.match(/arc[- ](\d+)\.x[- ]rollup/i);
-      if (rollup) {
-        // Place at end of arc: minor = -Infinity so it sorts lowest within
-        // the major (i.e. after all numbered 13.x in descending order).
-        return { major: parseInt(rollup[1], 10), minor: -Infinity, isRollup: true };
-      }
-      const m = src.match(/sprint[- ](\d+)(?:\.(\d+))?/i);
-      if (!m) return { major: -1, minor: -1, isRollup: false };
-      return {
-        major: parseInt(m[1], 10),
-        minor: m[2] != null ? parseInt(m[2], 10) : 0,
-        isRollup: false,
-      };
-    }
-    cardData.sort((a, b) => {
-      const ka = extractSprintKey(a);
-      const kb = extractSprintKey(b);
-      if (kb.major !== ka.major) return kb.major - ka.major;
-      return kb.minor - ka.minor;
-    });
+    // Sort descending by last-commit time (most recent first). Missing times sink.
+    cardData.sort((a, b) => (b.sortTime || 0) - (a.sortTime || 0));
     el.innerHTML = cardData.map((c, i) => c.html.replace(/AUDIT_IDX/g, i)).join('');
   } catch(e) { el.innerHTML = `<p class="error">${e.message}</p>`; }
 }
