@@ -657,18 +657,9 @@ async function loadProjectPulse() {
     const auditFiles = await auditsRes.json();
     const audits = Array.isArray(auditFiles) ? auditFiles.filter(f => f.name.endsWith('.md')) : [];
 
-    // Sort by sprint number desc
-    const sortedAudits = audits.slice().sort((a, b) => {
-      const na = (a.name.match(/sprint[- ]?(\d+(?:\.\d+)?)/i) || [0,0])[1];
-      const nb = (b.name.match(/sprint[- ]?(\d+(?:\.\d+)?)/i) || [0,0])[1];
-      return parseFloat(nb) - parseFloat(na);
-    });
-
-    // 2) Latest audit: pick by most-recent commit time (filenames are fragile).
+    // 2) Sort audits by most-recent commit time (filenames are fragile).
     // Matches loadAudits() — source of truth is the studio-audits commit log.
-    let latestSprintLabel = '\u2014';
-    let latestGrade = null;
-    let latestAudit = null;
+    let auditsByTime = [];
     if (audits.length) {
       const withCommitTime = await Promise.all(audits.map(async (a) => {
         try {
@@ -681,8 +672,13 @@ async function loadProjectPulse() {
         } catch(e) { return { file: a, time: 0 }; }
       }));
       withCommitTime.sort((a, b) => (b.time || 0) - (a.time || 0));
-      latestAudit = withCommitTime[0] && withCommitTime[0].file;
+      auditsByTime = withCommitTime.map(x => x.file);
     }
+
+    // Latest audit = newest by commit time
+    let latestSprintLabel = '\u2014';
+    let latestGrade = null;
+    const latestAudit = auditsByTime[0] || null;
     if (latestAudit) {
       latestSprintLabel = extractSprintLabel(latestAudit.name);
       try {
@@ -691,8 +687,8 @@ async function loadProjectPulse() {
       } catch(e) {}
     }
 
-    // 3) Grade trend: last 5 audits (most recent first → reverse so oldest-left, newest-right)
-    const trendSource = sortedAudits.slice(0, 5);
+    // 3) Grade trend: last 5 audits by commit time (most recent first → reverse so oldest-left, newest-right)
+    const trendSource = auditsByTime.slice(0, 5);
     const trendGrades = await Promise.all(trendSource.map(async a => {
       try {
         const md = await (await fetch(a.download_url)).text();
