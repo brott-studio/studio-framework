@@ -115,6 +115,11 @@
   .pulse-trend-axis { font-size: 0.6rem; color: var(--muted); display: flex; justify-content: space-between; margin-top: 0.05rem; letter-spacing: 0.02em; }
   @media (max-width: 640px) { .pulse-commit-msg { max-width: 20ch; } }
 
+  /* Rate-limit banner (top strip, muted, non-modal) */
+  #rate-limit-banner { display: none; background: var(--surface); border-bottom: 1px solid var(--yellow); color: var(--yellow); padding: 0.4rem 0.75rem; font-size: 0.8rem; text-align: center; position: sticky; top: 0; z-index: 100; }
+  #rate-limit-banner .rlb-close { float: right; cursor: pointer; color: var(--muted); background: none; border: none; font-size: 0.95rem; line-height: 1; padding: 0 0.3rem; font-family: inherit; }
+  #rate-limit-banner .rlb-close:hover { color: var(--text); }
+
   /* Empty state (distinct from error red) */
   .empty-state { color: var(--muted); font-size: 0.8rem; font-style: italic; }
 
@@ -134,6 +139,7 @@
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
+<div id="rate-limit-banner" role="status" aria-live="polite"><span id="rlb-text"></span><button class="rlb-close" type="button" aria-label="Dismiss" onclick="hideRateLimitBanner()">×</button></div>
 
 <div class="header">
   <img src="icon.png" alt="Brott Studio">
@@ -270,6 +276,30 @@ function escapeHtml(s) {
 // Sentinel for 404 responses so callers can distinguish "empty folder" from "real error".
 const NOT_FOUND = Symbol('notFound');
 
+// --- Rate-limit banner (session-only state; shows on 403 + X-RateLimit-Remaining: 0) ---
+let _rlbResetEpoch = 0;
+let _rlbTimer = null;
+function showRateLimitBanner(resetEpoch) {
+  _rlbResetEpoch = resetEpoch || 0;
+  const banner = document.getElementById('rate-limit-banner');
+  const text = document.getElementById('rlb-text');
+  if (!banner || !text) return;
+  const resetStr = _rlbResetEpoch ? new Date(_rlbResetEpoch * 1000).toLocaleTimeString() : 'soon';
+  text.textContent = `⚠️ GitHub API rate limit reached. Resets at ${resetStr} local. Dashboard data may be stale.`;
+  banner.style.display = '';
+  if (!_rlbTimer) {
+    _rlbTimer = setInterval(() => {
+      if (_rlbResetEpoch && Date.now() >= _rlbResetEpoch * 1000) hideRateLimitBanner();
+    }, 30000);
+  }
+}
+function hideRateLimitBanner() {
+  const banner = document.getElementById('rate-limit-banner');
+  if (banner) banner.style.display = 'none';
+  if (_rlbTimer) { clearInterval(_rlbTimer); _rlbTimer = null; }
+  _rlbResetEpoch = 0;
+}
+
 // cachedFetch
 // - In-TTL: serves from localStorage, no network hit.
 // - TTL expired but we have an ETag: sends If-None-Match. 304 → serve cached body and refresh ts
@@ -306,6 +336,14 @@ function cachedFetch(url, opts) {
   }
 
   return fetch(url, fetchOpts).then(res => {
+    // Rate-limit: 403 with x-ratelimit-remaining: 0 → banner, signal failure to caller.
+    if (res.status === 403 && res.headers.get('x-ratelimit-remaining') === '0') {
+      const reset = parseInt(res.headers.get('x-ratelimit-reset') || '0', 10) || 0;
+      showRateLimitBanner(reset);
+      return { ok: false, rateLimited: true, status: 403, json: () => Promise.resolve({}), text: () => Promise.resolve('') };
+    }
+    // Any successful response → clear banner (covers recovery, even if user dismissed).
+    if (res.ok || res.status === 304) hideRateLimitBanner();
     // 304 Not Modified → cached body is still valid; refresh ts so TTL restarts.
     if (res.status === 304 && cachedEntry) {
       try { localStorage.setItem(key, JSON.stringify({ ts: Date.now(), etag: cachedEntry.etag, data: cachedEntry.data })); } catch(e) {}
