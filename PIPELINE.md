@@ -5,21 +5,27 @@
 ```
 The Bott (EP) → spawns Riv with sprint tasks
   │
-  Riv (Lead Orchestrator) → executes pipeline sequentially:
+  Riv (Lead Orchestrator) → sub-sprint loop:
+  │
+  ├─ Phase 0: AUDIT-GATE (loop precondition)
+  │    └─ Skipped on the first iteration. Otherwise: verify prior Specc audit
+  │       exists in `brott-studio/studio-audits`. Missing → STOP, escalate to The Bott.
   │
   ├─ Phase 1: DESIGN INPUT
-  │    └─ GIZMO (Design Review) — ALWAYS runs first
+  │    └─ GIZMO (Design Review) — always runs first
   │         └─ Reviews game state against GDD
   │         └─ If design changes → provides spec + GDD update
   │         └─ If no changes → "No design drift, proceed"
   │         └─ If DRIFT DETECTED → escalate to The Bott
-  │         └─ Output goes to ETT (not directly to Nutts)
+  │         └─ Output goes to ETT
   │
-  ├─ Phase 2: SPRINT PLANNING
-  │    └─ ETT (Technical PM)
-  │         └─ Reads: Gizmo's output + Specc's last audit + backlog + infra needs
-  │         └─ Produces unified sprint plan (design tasks + infra + testing + cleanup)
-  │         └─ DECISION: continue or escalate
+  ├─ Phase 2: CONTINUATION-CHECK + SPRINT PLANNING
+  │    └─ ETT (Technical PM) — single spawn per iteration
+  │         └─ Inputs: Gizmo's output + prior Specc audit (if any) + backlog + HCD escalations
+  │         └─ Step A — continue-or-complete check:
+  │              • Complete → emit sprint-complete marker → Riv EXITS loop → REPORT
+  │              • Continue → fall through to Step B
+  │         └─ Step B — emit unified sprint plan (design + build + infra + cleanup)
   │
   ├─ Phase 3: EXECUTION (sequential)
   │    ├─ NUTTS (Build) → code + tests → PR
@@ -28,38 +34,33 @@ The Bott (EP) → spawns Riv with sprint tasks
   │    │    └─ If rejected twice → escalate to The Bott
   │    ├─ OPTIC (Verify) → tests + Playwright + sims + vision
   │    │    └─ If FAIL → note failure in sprint results; continue to Specc. Ett addresses in next sub-sprint.
-  │    └─ SPECC (Audit) → audit + KB entries
+  │    └─ SPECC (Audit) → audit + KB entries (commits to `studio-audits`)
   │
-  ├─ Phase 4: CONTINUATION DECISION
-  │    └─ ETT (Continuation Mode) — spawned by Riv after Specc commits audit
-  │         └─ Inputs: sprint plan, Specc audit, backlog, any HCD escalations
-  │         └─ DECISION: continue (queue next sub-sprint) | complete (sprint done)
-  │         └─ If continue → Riv loops back to Gizmo (design changes) or Nutts (more build)
-  │         └─ If complete → proceed to REPORT
-  │
-  └─ REPORT → Riv → The Bott (only after Ett signals sprint-complete)
+  └─ loop back to Phase 0 (audit-gate → Gizmo → Ett …)
+
+REPORT → Riv → The Bott (fires only when Ett's Phase 2 Step A returns "complete")
 ```
 
-## Continuation Decision (After Audit)
+## Continuation-Check + Planning (Phase 2)
 
-**[Compliance-reliant.]** After Specc commits the audit, Riv pauses the pipeline and spawns Ett in **continuation mode**. Riv does not self-decide continue-vs-complete — that's Ett's call.
+**[Compliance-reliant.]** Ett is spawned exactly once per sub-sprint iteration, immediately after Gizmo. Ett's first action is the continue-or-complete check; if continuing, Ett emits the sprint plan that incorporates Gizmo's design input. Riv does not self-decide continue-vs-complete — that's Ett's call.
 
-**Ett's inputs (continuation mode):**
-- The active sprint plan (with original scope + any deltas)
-- The Specc audit report just committed
+**Ett's inputs (every spawn):**
+- Gizmo's design assessment (spec-delta, scope-rethink, or "no drift")
+- The prior Specc audit report (or "first iteration, no audit yet")
+- The active sprint plan / sprint goal from The Bott
 - The current backlog
-- Any HCD escalations since the sprint started
+- Any HCD escalations surfaced since the sprint started
 
-**Ett's outputs:** one of two things —
-- **(a) Sprint-plan addendum** — delta/addendum describing the next sub-sprint's scope. Signals continue.
-- **(b) Sprint-complete marker** — explicit "sprint has converged" signal. Signals complete.
+**Ett's outputs — one of two things:**
+- **(a) Sprint plan** (continue) — the plan for this iteration's execution phase (design tasks + build + infra + cleanup), incorporating Gizmo's output. Riv proceeds to Nutts.
+- **(b) Sprint-complete marker** (complete) — explicit "sprint has converged" signal with one-line rationale. Riv exits the loop and produces its final report to The Bott.
 
-**Loop-back routing:**
-- If (a) **and** the addendum includes design changes → Riv re-enters the pipeline at **Gizmo** (Phase 1), then Ett (Phase 2) re-plans with the design input, then execution.
-- If (a) **and** the addendum is build-only (no design delta) → Riv re-enters at **Nutts** (Step 3a) with the addendum as the build spec.
-- If (b) → Riv produces its final report per the Reporting to The Bott section in [agents/riv.md](agents/riv.md).
+Do not return both. Do not leave the decision implicit.
 
 Riv's final report to The Bott fires on **sprint-complete**, not on audit-commit.
+
+**Final-iteration trade-off:** On the iteration where Ett decides "complete," Gizmo still ran (Phase 1 precedes Phase 2). This is accepted: the wasted-spawn cost is trivial and Gizmo's final-state design assessment becomes useful audit context for The Bott and for Specc retrospectives.
 
 ## Roles
 
@@ -104,11 +105,11 @@ See [COMMS.md](COMMS.md) for full rules.
 
 ## Sub-Sprint Audit Gate (HARD RULE)
 
-**[Compliance-reliant.]** Sub-sprint N+1 MUST NOT begin until Specc's sprint-N audit is committed to `brott-studio/studio-audits` at `audits/<project>/sprint-<N>.md`.
+**[Compliance-reliant.]** At the top of each sub-sprint iteration (skipped on the first), the prior Specc audit MUST exist in `brott-studio/studio-audits` at `audits/<project>/sprint-<N>.md` before any agent for sub-sprint N+1 is spawned. This gate is a **loop precondition**, not a post-Specc check — its natural home is at the start of each iteration.
 
 Redundant compliance surfaces:
-- **Riv** verifies via `gh api` check before spawning any agent for sub-sprint N+1. If missing, STOP and escalate to The Bott.
-- **Ett** verifies when planning; refuses to plan next sprint without prior audit.
+- **Riv** verifies via `gh api` check at the top of each iteration (Phase 0) before spawning Gizmo. If missing, STOP and escalate to The Bott.
+- **Ett** re-verifies during its Step A continuation check; refuses to plan without prior audit data.
 - **The Bott** monitors for sub-sprint transitions without matching audit commit and intervenes.
 
 Specc has been invaluable to pipeline quality. Skipping Specc between sub-sprints has caused real problems — this gate exists because of that history.

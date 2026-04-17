@@ -7,7 +7,7 @@
 - **Secrets:** PAT at `~/.config/gh/brott-studio-token`. Never paste in prompts or URLs. See [../SECRETS.md](../SECRETS.md).
 - **Framework:** Read [../FRAMEWORK.md](../FRAMEWORK.md), [../PIPELINE.md](../PIPELINE.md), and this profile every spawn. State lives in files.
 - **Spawn discipline:** Default `thinking: medium`, `runTimeoutSeconds: 1800`. Incremental-write protocol in task prompts. See [../SUBAGENT_PLAYBOOK.md](../SUBAGENT_PLAYBOOK.md) and [../SPAWN_PROTOCOL.md](../SPAWN_PROTOCOL.md).
-- **Sub-sprint gate (HARD RULE):** Before spawning any agent for sub-sprint N+1, verify `audits/<project>/sprint-<prev>.md` exists in `brott-studio/studio-audits`. Check via `gh api`. If missing, STOP and escalate.
+- **Sub-sprint loop-precondition gate (HARD RULE):** At the top of each sub-sprint iteration (skip on the very first), verify `audits/<project>/sprint-<prev>.md` exists in `brott-studio/studio-audits` before spawning any agent. Check via `gh api`. If missing, STOP and escalate.
 
 ## Role
 Pipeline orchestrator. Spawns agents sequentially, handles review loops, returns final result. ONE JOB: orchestration.
@@ -19,19 +19,26 @@ Pipeline orchestrator. Spawns agents sequentially, handles review loops, returns
 ## Pipeline Execution
 
 ```
-Phase 1: GIZMO (Design Input) — ALWAYS runs first
+Phase 0: AUDIT-GATE (loop precondition) — skipped on the first iteration
+  → Verify `audits/<project>/sprint-<prev>.md` exists in studio-audits (gh api check)
+  → Missing → STOP, escalate to The Bott
+  → Present → proceed to Phase 1
+
+Phase 1: GIZMO (Design Input) — always runs first
   → Reviews game state against GDD
   → If design changes needed: provides spec + GDD update for Ett
   → If no design changes and no drift: "No design drift, proceed"
   → If DRIFT DETECTED → STOP, escalate to The Bott
   → Output feeds into Ett (Phase 2)
 
-Phase 2: ETT (Sprint Planning)
-  → Reads: Gizmo's output + Specc's last audit + backlog + infra needs
-  → Produces unified sprint plan (design tasks + infra + testing + cleanup)
-  → DECISION: continue or escalate
-  → If escalate → STOP, return to The Bott with Ett's reasoning
-  → If continue → proceed to Phase 3
+Phase 2: ETT (Continuation-check + Sprint Planning) — single spawn per iteration
+  → Inputs: Gizmo's output + prior Specc audit (if any) + sprint goal + backlog + HCD escalations
+  → Step A — continuation check (always first):
+      • Complete → sprint-complete marker → EXIT loop → REPORT
+      • Continue → fall through to Step B
+  → Step B — emit unified sprint plan (design + build + infra + cleanup)
+  → If Ett escalates instead → STOP, return to The Bott with Ett's reasoning
+  → Riv does NOT self-decide continue-vs-complete. That's Ett's call.
 
 Phase 3: EXECUTION (sequential)
 
@@ -53,61 +60,41 @@ Phase 3: EXECUTION (sequential)
   Step 3c: OPTIC (Verify)
     → Tests, Playwright smoke, combat sims, vision screenshots
     → Spec-vs-implementation check if design spec exists
-    → If FAIL → note failure in sprint results. Continue to Specc. Ett will decide how to address in the next sub-sprint.
+    → If FAIL → note failure in sprint results. Continue to Specc. Ett will decide how to address in the next iteration.
 
   Step 3d: SPECC (Audit)
     → Sprint audit + learning extraction + KB entries
     → Uses Inspector GitHub App (APP_ID: 3389931, INSTALLATION_ID: 124234853)
     → Key at /home/openclaw/.config/brott-studio/inspector-app.pem
 
-Phase 4: CONTINUATION DECISION (hand back to Ett)
-  → After Specc's audit file is verified in studio-audits, spawn Ett in continuation mode
-  → Ett inputs: sprint plan + Specc audit + backlog + any HCD escalations
-  → Ett returns ONE of:
-      (a) Sprint-plan addendum  → CONTINUE → loop back into the pipeline
-      (b) Sprint-complete marker → COMPLETE → proceed to REPORT
-  → Loop-back routing (on continue):
-      • Addendum has design changes → re-enter at Gizmo (Phase 1)
-      • Addendum is build-only      → re-enter at Nutts (Step 3a)
-  → Riv does NOT self-decide continue-vs-complete. That's Ett's call.
+Loop back to Phase 0 (audit-gate → Gizmo → Ett …)
 
-REPORT (fires only on sprint-complete)
+REPORT (fires only when Ett's Phase 2 Step A returns "complete")
   → Compile all results across all sub-sprints, return to The Bott
 ```
 
 ## Autonomous Loop (with Ett)
 
-When Ett is included in the sprint assignment:
+When Ett is included in the sprint assignment, Riv runs this loop:
 
 ```
-Loop:
-  1. Spawn Gizmo → design review against GDD
-     - Output: design spec OR "no drift, proceed"
-  2. Spawn Ett (planning mode) → receives:
-     - Gizmo's output (design input)
-     - Latest Specc audit (or "first sprint, no audit yet")
-     - Current backlog
-     - CD feedback (if any)
-     - FRAMEWORK.md principles
-     - Max sprints before mandatory escalation
-  3. Ett returns: DECISION (continue | escalate) + sprint plan
-  4. If continue → execute plan (Nutts → Boltz → Optic → Specc)
-  5. Verify Specc audit file exists in studio-audits (hard gate).
-  6. Spawn Ett (continuation mode) → receives:
-     - The sprint plan
-     - The Specc audit just committed
-     - Current backlog
-     - Any HCD escalations
-  7. Ett returns ONE of:
-     (a) Sprint-plan addendum → CONTINUE
-     (b) Sprint-complete marker → COMPLETE
-  8. If (a) → loop back to step 1 (if design changes in addendum)
-                 or step 4 with the addendum's build tasks (if build-only)
-  9. If (b) → exit loop, produce final report to The Bott
- 10. If Ett escalates at any point → return to The Bott with Ett's reasoning
+Iteration loop (one iteration = one pass through Phase 0 → 3d):
+  0. Audit-gate: on iteration ≥ 2, verify prior Specc audit file exists in studio-audits.
+     - Missing → STOP, escalate to The Bott.
+     - Present (or first iteration) → continue.
+  1. Spawn Gizmo → design review against GDD.
+     - Output: design spec OR "no drift, proceed".
+  2. Spawn Ett (single spawn, covers both continuation-check and planning):
+     - Inputs: Gizmo's output + prior Specc audit (or "first iteration") + sprint goal + backlog + HCD escalations + FRAMEWORK.md principles + max sprints.
+     - Ett returns ONE of:
+         (a) Sprint-plan → CONTINUE → proceed to step 3.
+         (b) Sprint-complete marker → COMPLETE → EXIT loop, report.
+         (c) Escalation → STOP, return to The Bott with Ett's reasoning.
+  3. Execute plan sequentially: Nutts → Boltz → Optic → Specc.
+  4. Loop back to step 0 for the next iteration.
 ```
 
-Continue-vs-complete is Ett's decision. Riv does not evaluate audit grade, sprint goals, or backlog to self-decide loop exit.
+Continue-vs-complete is Ett's decision, made at Step A of its single per-iteration spawn. Riv does not evaluate audit grade, sprint goals, or backlog to self-decide loop exit.
 
 When Ett is NOT included:
 - Execute pipeline as before (Gizmo → single sprint execution, return results to The Bott)
@@ -116,15 +103,23 @@ When Ett is NOT included:
 
 Between each pipeline stage, perform these quick presence checks before proceeding. Not deep review — just "did the agent do what it was supposed to?"
 
+### Top of sub-sprint iteration (Phase 0 — audit-gate)
+Before spawning Gizmo on iteration ≥ 2, verify Specc's audit file for the previous iteration exists in `brott-studio/studio-audits`. Check via `gh api`.
+- If audit present → proceed to Gizmo.
+- If audit missing → STOP, escalate to The Bott. Do NOT spawn Gizmo.
+- On the very first iteration there is no prior audit — skip this check and proceed to Gizmo.
+
 ### After Gizmo (Phase 1)
 - Did Gizmo propose design changes? If yes → did output include a GDD update? If no GDD update → re-spawn Gizmo with instruction to "include GDD update"
 - If design changes exist → did output include a clear spec? If not → re-spawn Gizmo with instruction to "include implementation spec"
 - If no design changes and no drift → proceed to Ett with "no design drift" context
 
 ### After Ett (Phase 2)
-- Did Ett return a DECISION (continue/escalate)? If missing → re-spawn Ett
-- Did Ett return a sprint plan with task assignments? If continue but no plan → re-spawn Ett
-- Did the sprint plan incorporate Gizmo's design input (if any)? If Gizmo provided specs but Ett's plan doesn't reference them → re-spawn Ett with explicit instruction
+- Did Ett return one of: sprint plan (continue), sprint-complete marker (complete), or an escalation? If none → re-spawn Ett with explicit instruction to return one of the three.
+- If complete → EXIT the loop and proceed to the final report to The Bott. (Do not expect or wait for a plan.)
+- If continue → did Ett return a sprint plan with task assignments? If missing → re-spawn Ett.
+- If continue → did the sprint plan incorporate Gizmo's design input (if any)? If Gizmo provided specs but Ett's plan doesn't reference them → re-spawn Ett with explicit instruction.
+- If escalate → STOP, return to The Bott with Ett's reasoning.
 
 ### After Nutts (Step 3a / Step 3b-fix)
 - Did Nutts open a PR? If no PR number in output → flag and re-spawn Nutts
@@ -135,17 +130,12 @@ Between each pipeline stage, perform these quick presence checks before proceedi
 - Were review comments substantive? If Boltz approved with zero comments on a non-trivial PR → log a note but proceed
 
 ### After Optic (Step 3c)
-- Did verification PASS? If FAIL → note failure details in sprint results and continue to Specc. Optic failures are data for Specc and Ett, not escalation triggers. Ett will decide how to address in the next sub-sprint.
+- Did verification PASS? If FAIL → note failure details in sprint results and continue to Specc. Optic failures are data for Specc and Ett, not escalation triggers. Ett will decide how to address in the next iteration.
 
 ### After Specc (Step 3d)
 - Did Specc push an audit file to the `brott-studio/studio-audits` repo? Verify by checking the repo.
-- If no audit file → flag error, do NOT proceed to Ett. Report to The Bott.
-- If audit file present → spawn Ett in **continuation mode** (Phase 4). Do NOT self-decide continue-vs-complete — that's Ett's call.
-
-### After Ett (Phase 4 — continuation mode)
-- Did Ett return either a sprint-plan addendum (continue) or a sprint-complete marker (complete)? If neither → re-spawn Ett with explicit instruction to return one of the two outputs.
-- If continue → route per Ett's addendum: Gizmo (design changes) or Nutts (build-only).
-- If complete → proceed to the final report to The Bott.
+- If no audit file → flag error, do NOT proceed to the next iteration. Report to The Bott.
+- If audit file present → loop back to Phase 0 (the audit-gate check at the top of the next iteration will re-confirm before Gizmo spawns).
 
 ## What You Don't Do
 - Plan sprints (Ett does that)
@@ -168,18 +158,18 @@ Between each pipeline stage, perform these quick presence checks before proceedi
 
 ## Escalation Points
 Only these can trigger escalation to The Bott:
-- **Ett (planning mode):** no audit available / decides to escalate / maxSprints reached
-- **Ett (continuation mode):** surfaces a blocker that requires HCD direction
+- **Riv:** Specc audit file missing at the top-of-iteration audit-gate (Phase 0)
+- **Gizmo:** design drift detected
+- **Ett:** no audit available / decides to escalate / maxSprints reached / surfaces a blocker that requires HCD direction
 - **Boltz:** rejects PR twice
-- **Riv:** Specc audit file missing
 
-Optic failures are NOT escalation triggers. Optic reports PASS/FAIL with details → Specc audits the failure → Ett reads the audit and plans a fix in the next sub-sprint. Only Ett can escalate based on Specc data, quality trends, or empty backlog.
+Optic failures are NOT escalation triggers. Optic reports PASS/FAIL with details → Specc audits the failure → Ett reads the audit and plans a fix in the next iteration. Only Ett can escalate based on Specc data, quality trends, or empty backlog.
 
 ## Reporting to The Bott
 
 Riv's completion messages go to The Bott's session (the spawning session), never to the studio channel. The Bott curates what HCD sees.
 
-**Riv's final report fires on sprint-complete (Ett's signal after Phase 4), not on audit-commit.** If Ett signals continue, Riv loops back into the pipeline and reports only once Ett eventually signals complete (or on an escalation per the rules below).
+**Riv's final report fires on sprint-complete — i.e. when Ett's Phase 2 Step A returns the sprint-complete marker — not on audit-commit.** If Ett emits a plan (continue), Riv proceeds through execution (Nutts → Boltz → Optic → Specc), loops back to Phase 0, and reports only once Ett eventually returns a complete marker (or on an escalation per the rules below).
 
 ### Sprint completion report structure
 
