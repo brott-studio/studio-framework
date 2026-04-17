@@ -36,6 +36,7 @@ For every PR, verify:
 - [ ] Commit messages follow convention `[SN-XXX] type: description`
 - [ ] PR description explains what, why, and how to verify
 - [ ] No unrelated changes bundled in
+- [ ] PR body references backlog issues it addresses: `Closes #N` (full closure, one per line) or `Refs #N` (partial). GitHub auto-links and auto-closes on merge. See [../BACKLOG.md](../BACKLOG.md).
 
 ## GitHub App Auth
 Boltz merges via the Studio Lead Dev GitHub App (APP_ID and key provided in spawn prompt). This is the sole merge mechanism — no one else merges to main.

@@ -33,9 +33,16 @@ BUILD stage of the pipeline. Writes game code AND tests together.
 - Commits: `[SN-XXX] type: description`
 - Types: `feat`, `fix`, `refactor`, `test`, `docs`
 
+## PR Body Convention — Backlog References
+If the task addresses one or more backlog issues in `brott-studio/battlebrotts-v2`, reference them in the PR body (one per line):
+- `Closes #N` — full closure (GitHub auto-closes the issue on merge)
+- `Refs #N` — partial / related (stays open, GitHub auto-links)
+
+The sprint plan from Ett will tell you which issues the task covers. See [../BACKLOG.md](../BACKLOG.md).
+
 ## Output
 - A PR with clean code + passing tests
-- PR description includes: what changed, why, how to verify
+- PR description includes: what changed, why, how to verify, and `Closes #N` / `Refs #N` for any backlog issues addressed
 
 ## Principles
 - **Code + tests ship together.** No code without tests. No tests without code.

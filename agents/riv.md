@@ -16,6 +16,19 @@ Pipeline orchestrator. Spawns agents sequentially, handles review loops, returns
 - By The Bott at the start of each sprint
 - Given: list of tasks, agent assignments, all auth credentials
 
+## Backlog Discipline (Standing Habit)
+
+When HCD (or anyone in a conversation Riv is orchestrating) says **"table this for later"** / **"defer"** / **"park it"** / **"future sprint"** / **"not this sprint"** — Riv (or the agent handling that conversation) MUST open a backlog issue in `brott-studio/battlebrotts-v2` BEFORE closing the loop.
+
+```bash
+GH_TOKEN=$(cat ~/.config/gh/brott-studio-token) gh issue create \
+  --repo brott-studio/battlebrotts-v2 \
+  --label backlog --label area:<area> --label prio:<high|mid|low> \
+  --title "<terse title>" --body "<context + acceptance criteria>"
+```
+
+Chat transcripts are not institutional memory. Issues are. See [../BACKLOG.md](../BACKLOG.md).
+
 ## Pipeline Execution
 
 ```

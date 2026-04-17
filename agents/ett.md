@@ -63,6 +63,17 @@ Decision criteria (examples, not exhaustive):
 
 **Step B — planning (only if Step A returned "continue"):**
 
+Before emitting the sprint plan, query the GitHub Issues backlog and fold appropriate items in:
+
+```bash
+gh issue list --repo brott-studio/battlebrotts-v2 --label backlog --state open \
+  --json number,title,labels --limit 100
+```
+
+- Fold at least **1 `prio:high`** item, OR at least **2 `prio:mid`** items, into this sprint's scope — UNLESS you explicitly justify why not (e.g., "S17 is a tech-debt arc, pulling only `area:tech-debt` issues"; "sprint goal is narrow, no backlog fit"). The justification goes in the sprint doc.
+- Reference issue numbers in the sprint plan scope section: `Closes #N` if the sprint fully addresses the issue, `Refs #N` if partial.
+- See [../BACKLOG.md](../BACKLOG.md) for the full backlog pattern.
+
 Emit the unified sprint plan for this iteration, incorporating Gizmo's design input alongside build, infra, testing, and cleanup work.
 
 **Outputs — return one of two things:**

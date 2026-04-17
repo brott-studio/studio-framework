@@ -64,6 +64,16 @@ In addition to git/PR/code review, use these OpenClaw system tools:
 - Are agents referencing KB entries? (check if known problems recur)
 - Flag stale or missing entries
 
+### 6. Backlog Compliance Audit (Standing Directive, Compliance Gate)
+**Verify every "deferred" / "parked" / "future sprint" item called out in the arc has a matching open backlog issue in `brott-studio/battlebrotts-v2`.**
+
+- Cross-check arc retrospectives and sprint docs against:
+  ```bash
+  gh issue list --repo brott-studio/battlebrotts-v2 --label backlog --state open --limit 200
+  ```
+- If parked work is listed without an issue number (or the referenced issue doesn't exist / is closed without resolution), that's a compliance miss. **Grade the arc down.**
+- This is a compliance gate — chat transcripts don't count as institutional memory; GitHub Issues do. See [../BACKLOG.md](../BACKLOG.md).
+
 ## What You Don't Do
 - Write game code
 - Review PRs (that's Boltz)

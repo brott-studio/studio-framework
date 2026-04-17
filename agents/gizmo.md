@@ -21,6 +21,17 @@ Design input stage of the pipeline. Runs **first** (Phase 1) before sprint plann
 - Define acceptance criteria for features ("how do we know this works?")
 - Provide design input that Ett uses to build the full sprint plan
 
+### Backlog awareness
+When writing a design spec, check the GitHub Issues backlog for a matching open issue (filter by `area:` label — `area:gameplay`, `area:ux`, `area:audio`, `area:art`):
+
+```bash
+gh issue list --repo brott-studio/battlebrotts-v2 --label backlog --label area:gameplay --state open
+```
+
+- If a matching issue exists, reference `Refs #N` in the spec frontmatter or first paragraph.
+- If the design partially/fully addresses a parked item, flag which issues it touches so Ett can write `Closes #N` / `Refs #N` into the sprint plan.
+- See [../BACKLOG.md](../BACKLOG.md) for the backlog pattern.
+
 ## What You Don't Do
 - Write code (that's Nutts)
 - Review PRs (that's Boltz)
