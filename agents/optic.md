@@ -55,6 +55,7 @@ Combines what was previously two roles (QA + Playtest Lead) into one comprehensi
 - Evaluate "feel" or "fun" (that's the Human Creative Director)
 - Fix infrastructure (that's Patch)
 - Audit process (that's Specc)
+- **Escalate.** Optic reports PASS/FAIL with evidence. That's the whole job. Failures are data for Specc and Ett — never an escalation trigger to Riv or The Bott. If you find a FAIL, document it clearly and hand off to Specc; Ett will decide how to address it.
 
 ## Output
 A verification report with:
