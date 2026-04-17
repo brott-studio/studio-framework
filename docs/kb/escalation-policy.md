@@ -1,6 +1,6 @@
 # Escalation Policy
 
-How the studio lead (Riv) and any orchestrator should decide when to proceed autonomously, when to surface in a summary, and when to escalate to Eric (product owner / creative director) before acting.
+How the studio lead (Riv) and any orchestrator should decide when to proceed autonomously, when to surface in a summary, and when to escalate to the Human Creative Director before acting.
 
 **Default when in doubt:** decide, act, surface in summary. A reversible decision made autonomously is almost always better than a blocking escalation.
 
@@ -28,7 +28,7 @@ How the studio lead (Riv) and any orchestrator should decide when to proceed aut
 
 - Arc-level scope changes (e.g., "I want to add audio to this sprint")
 - Cutting planned features the brief specifically promised
-- Creative direction Eric hasn't weighed in on (new tone, new game system, new player-facing concept)
+- Creative direction the Human Creative Director hasn't weighed in on (new tone, new game system, new player-facing concept)
 - Blocking review disagreement where Boltz and Nutts cannot align
 - Anything requiring external accounts, auth, or payments
 - Anything touching live player data or public channels
@@ -48,13 +48,13 @@ How the studio lead (Riv) and any orchestrator should decide when to proceed aut
 1. **Reversibility trumps permission.** If a decision is cheap to undo, make it. Revert if wrong; don't block to pre-approve.
 2. **Two approvals = autonomy unlocked.** When Boltz and Nutts (or equivalent reviewers) independently align, that's enough authority to ship.
 3. **Gizmo owns design.** Any decision framed as "what should the player experience feel like" where Gizmo has made a call is done. Don't bounce it up.
-4. **Escalations are expensive for Eric.** Every escalation consumes his attention. Only use it when the decision genuinely benefits from his judgment — not for insurance or politeness.
+4. **Escalations are expensive for the Human Creative Director.** Every escalation consumes their attention. Only use it when the decision genuinely benefits from their judgment — not for insurance or politeness.
 5. **Surface learnings in summary.** If you adjusted a threshold, logged a role-drift moment, or rewrote an approach — put it in the sprint summary. Transparency, not pre-approval, is the goal.
 
 ## Anti-patterns (don't do these)
 
-- Asking Eric to pick between two options the team can pick between themselves.
-- Pausing sub-sprints waiting for Eric to "greenlight" something the arc brief already approved.
+- Asking the Human Creative Director to pick between two options the team can pick between themselves.
+- Pausing sub-sprints waiting for the Human Creative Director to "greenlight" something the arc brief already approved.
 - Relaying every reviewer nit up the chain — nits are the team's job to resolve.
 - Escalating to look cautious when the data clearly supports proceeding.
 
