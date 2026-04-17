@@ -115,10 +115,6 @@
   .pulse-trend-axis { font-size: 0.6rem; color: var(--muted); display: flex; justify-content: space-between; margin-top: 0.05rem; letter-spacing: 0.02em; }
   @media (max-width: 640px) { .pulse-commit-msg { max-width: 20ch; } }
 
-  /* Rate-limit banner */
-  #rate-limit-banner { display: none; background: #332701; border: 1px solid var(--yellow); color: #f7d867; padding: 0.5rem 0.75rem; border-radius: 4px; margin-bottom: 0.75rem; font-size: 0.85rem; }
-  #rate-limit-banner strong { color: var(--yellow); }
-
   /* Empty state (distinct from error red) */
   .empty-state { color: var(--muted); font-size: 0.8rem; font-style: italic; }
 
@@ -146,14 +142,12 @@
   <select id="project-picker" style="background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:4px;padding:0.3rem 0.5rem;font-size:0.85rem;display:none">
     <option>Loading…</option>
   </select>
-  <button id="btn-refresh" type="button" title="Reload with fresh data (bypass cache)" aria-label="Refresh">↻ Refresh</button>
+  <button id="btn-refresh" type="button" title="Refresh" aria-label="Refresh">↻</button>
   <a id="link-live" href="#" target="_blank" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:0.3rem 0.55rem;color:var(--accent);text-decoration:none;font-size:0.8rem">▶ Live Build</a>
 </div>
 
 <p class="subtitle">100100 Productions <span style="color:var(--border);margin:0 0.4rem">│</span> AI Agent Studio</p>
 <p class="mission">Mission: Quality over speed. Ship it right, not just fast.</p>
-
-<div id="rate-limit-banner" role="status" aria-live="polite"></div>
 
 <!-- SECTION: Project (moved above Studio — executive summary first) -->
 <div class="section-header">
@@ -273,24 +267,6 @@ function escapeHtml(s) {
   return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
-// Surface a single top-of-page banner when the GitHub API rate limit is hit.
-// Idempotent: subsequent 403s just refresh the minutes-until-reset.
-let _rateLimitBannerShown = false;
-function showRateLimitBanner(resetUnix) {
-  const banner = document.getElementById('rate-limit-banner');
-  if (!banner) return;
-  let msg = '⚠️ <strong>GitHub API rate limit reached.</strong> ';
-  if (resetUnix) {
-    const mins = Math.max(1, Math.ceil((resetUnix * 1000 - Date.now()) / 60000));
-    msg += `Resets in ~${mins}m. (Refreshing won't help until then.)`;
-  } else {
-    msg += "Try again in a bit. (Refreshing won't help.)";
-  }
-  banner.innerHTML = msg;
-  banner.style.display = '';
-  _rateLimitBannerShown = true;
-}
-
 // Sentinel for 404 responses so callers can distinguish "empty folder" from "real error".
 const NOT_FOUND = Symbol('notFound');
 
@@ -308,12 +284,6 @@ function cachedFetch(url, opts) {
     }
   } catch(e) {}
   return fetch(url, opts).then(res => {
-    // Rate-limit: 403 with x-ratelimit-remaining: 0 → banner, signal failure to caller.
-    if (res.status === 403 && res.headers.get('x-ratelimit-remaining') === '0') {
-      const reset = parseInt(res.headers.get('x-ratelimit-reset') || '0', 10) || 0;
-      showRateLimitBanner(reset);
-      return { ok: false, rateLimited: true, status: 403, json: () => Promise.resolve({}), text: () => Promise.resolve('') };
-    }
     // 404 → sentinel so callers render "empty" instead of red "HTTP 404" error.
     if (res.status === 404) {
       return { ok: false, notFound: true, status: 404, json: () => Promise.resolve({ notFound: true }), text: () => Promise.resolve('') };
