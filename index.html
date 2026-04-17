@@ -664,13 +664,29 @@ async function loadProjectPulse() {
       return parseFloat(nb) - parseFloat(na);
     });
 
-    // 2) Latest audit: parse grade from its content
+    // 2) Latest audit: pick by most-recent commit time (filenames are fragile).
+    // Matches loadAudits() — source of truth is the studio-audits commit log.
     let latestSprintLabel = '\u2014';
     let latestGrade = null;
-    if (sortedAudits[0]) {
-      latestSprintLabel = extractSprintLabel(sortedAudits[0].name);
+    let latestAudit = null;
+    if (audits.length) {
+      const withCommitTime = await Promise.all(audits.map(async (a) => {
+        try {
+          const r = await cachedFetch(`${API}/repos/${ORG}/${AUDIT_REPO}/commits?path=audits/${AUDIT_FOLDER}/${encodeURIComponent(a.name)}&per_page=1`);
+          const j = r.ok ? await r.json() : [];
+          const d = Array.isArray(j) && j[0] && j[0].commit
+            ? ((j[0].commit.committer && j[0].commit.committer.date) || (j[0].commit.author && j[0].commit.author.date))
+            : null;
+          return { file: a, time: d ? new Date(d).getTime() : 0 };
+        } catch(e) { return { file: a, time: 0 }; }
+      }));
+      withCommitTime.sort((a, b) => (b.time || 0) - (a.time || 0));
+      latestAudit = withCommitTime[0] && withCommitTime[0].file;
+    }
+    if (latestAudit) {
+      latestSprintLabel = extractSprintLabel(latestAudit.name);
       try {
-        const md = await (await fetch(sortedAudits[0].download_url)).text();
+        const md = await (await fetch(latestAudit.download_url)).text();
         latestGrade = extractGrade(md);
       } catch(e) {}
     }
