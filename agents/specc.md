@@ -80,7 +80,7 @@ In addition to git/PR/code review, use these OpenClaw system tools:
 
 Always include a full ISO timestamp in the audit header: `**Date:** YYYY-MM-DDTHH:MMZ` (UTC). This is used for dashboard sorting.
 
-- Audit report committed to `brott-studio/studio-audits` at exact path `audits/<project>/sprint-<N>.md` (this path is the sub-sprint gate — see [../REPO_MAP.md](../REPO_MAP.md))
+- Audit report committed to `brott-studio/studio-audits` at exact path `audits/<project>/sprint-<N.M>.md` (this path is the sprint gate — see [../REPO_MAP.md](../REPO_MAP.md))
 - KB entries as a PR on the project repo (if learnings found)
 - Sprint grade with clear reasoning
 - **Role Performance Review** (required — see below)

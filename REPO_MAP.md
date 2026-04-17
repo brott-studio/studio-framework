@@ -54,7 +54,7 @@ The three-repo architecture of the brott-studio AI agent studio.
 **Why separate from the project repo:**
 1. **Independence.** An audit critical of the build must live somewhere the builders don't own. Separate repo = separate merge rights.
 2. **Cross-sprint history.** Audits persist as the project evolves. If the game repo gets force-pushed or squashed, audit history remains intact.
-3. **Structural enforcement surface** (aspirational). A future structural gate could watch `studio-audits` commits to unlock `<project-repo>` sprint-N+1 merges. See [ESCALATION.md](ESCALATION.md) context on sub-sprint Specc gate.
+3. **Structural enforcement surface** (aspirational). A future structural gate could watch `studio-audits` commits to unlock `<project-repo>` arc-N+1 merges. See [ESCALATION.md](ESCALATION.md) context on the sprint Specc gate.
 
 ---
 

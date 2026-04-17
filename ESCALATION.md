@@ -10,7 +10,7 @@ How the studio lead (Riv) and any orchestrator should decide when to proceed aut
 
 - Defensible trade-offs where 2+ reviewers align (e.g., Boltz + Nutts both approve)
 - Bug fixes, test changes, refactors that fit the sprint brief
-- Sub-sprint transitions within an approved arc
+- Sprint transitions within an approved arc
 - Scope interpretation inside the creative brief's boundaries
 - Any decision where Gizmo has design authority and has made a call
 - Process/tooling improvements that serve the existing brief
@@ -54,7 +54,7 @@ How the studio lead (Riv) and any orchestrator should decide when to proceed aut
 ## Anti-patterns (don't do these)
 
 - Asking the Human Creative Director to pick between two options the team can pick between themselves.
-- Pausing sub-sprints waiting for the Human Creative Director to "greenlight" something the arc brief already approved.
+- Pausing sprints waiting for the Human Creative Director to "greenlight" something the arc brief already approved.
 - Relaying every reviewer nit up the chain — nits are the team's job to resolve.
 - Escalating to look cautious when the data clearly supports proceeding.
 

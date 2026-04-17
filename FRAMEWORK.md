@@ -43,15 +43,15 @@ These four rules appear here AND inline in every agent profile so they're load-b
 
 ```
 🎬 Human Creative Director (HCD)
-   Direction, feel, playtesting, final say
+   Direction, feel, playtesting, final say. Writes the arc brief.
 
 🤖 The Bott — Executive Producer
-   Pipeline design, sprint planning, orchestration, framework maintenance
-   Spawns Riv per sprint. Intervenes on exceptions.
+   Pipeline design, arc framing, orchestration kickoff, framework maintenance.
+   Spawns Riv per arc. Intervenes on exceptions.
 
 📋 Riv — Lead Orchestrator
-   Executes the sprint pipeline, manages review loops and sub-sprint transitions.
-   Spawned by The Bott per sprint.
+   Executes the sprint loop inside an arc, manages review loops and sprint transitions.
+   Spawned by The Bott per arc.
 
 🕵️ Specc — Inspector (independent)
    Post-sprint audits, learning extraction, KB maintenance.
@@ -85,36 +85,45 @@ Rivett was the original combined PM + orchestrator role. Initially retired becau
 
 ---
 
+## The Arc + Sprint Model
+
+The framework has two container levels:
+
+- **Arc** — the outer, strategic unit HCD directs. An arc has a goal ("make the first 5 minutes irresistible", "get infra healthy") but not an acceptance checklist. It ends when Gizmo and Ett converge on "arc intent satisfied and no high-value work remains." HCD delivers an **arc brief** — see [ARC_BRIEF.md](ARC_BRIEF.md) for the canonical pattern.
+- **Sprint** — one full pipeline iteration inside an arc. Gizmo → Ett → Nutts → Boltz → Optic → Specc. Ships code + audit. Sprints within an arc are numbered `N.1`, `N.2`, `N.3`, where `N` is the arc number.
+
+Riv is spawned per **arc**. Inside the arc, Riv runs the sprint loop until Ett emits an arc-complete marker.
+
 ## Sprint Pipeline
 
 Full flow detail: [PIPELINE.md](PIPELINE.md).
 
 ```
-The Bott → spawns Riv with sprint goal
+The Bott → spawns Riv with arc brief
   │
-  Riv sub-sprint loop:
+  Riv sprint loop:
   │
-  ├─ [Top of iteration] Audit-gate: verify prior Specc audit exists (skip on first iteration)
-  ├─ Gizmo (Design Input) → no-drift / spec-delta / scope-rethink
+  ├─ [Top of sprint] Audit-gate: verify prior Specc audit exists (skip on first sprint of arc)
+  ├─ Gizmo (Design Input + Arc-Intent Check) → no-drift / spec-delta / scope-rethink; arc-intent verdict
   ├─ Ett (Plan + Continuation-check):
-  │    ├─ Complete → EXIT LOOP
+  │    ├─ Complete (arc intent satisfied) → EXIT LOOP
   │    └─ Continue → emit plan (incorporates Gizmo output)
   ├─ Nutts (Build) → PR
   ├─ Boltz (Review) → approve/merge or request changes → loop to Nutts
   ├─ Optic (Verify) → PASS/FAIL report (never escalates)
   ├─ Specc (Audit) → commits to studio-audits + KB
-  └─ loop back to top of iteration
+  └─ loop back to top of next sprint
   │
-  Riv → final report → The Bott
+  Riv → final arc report → The Bott
 ```
 
 ### Pipeline Rules
 - Each stage reads the previous stage's output. No stage skipping.
-- **Sub-sprint loop-precondition gate [Compliance-reliant, hard rule]:** At the top of each sub-sprint iteration (skip on the very first), Riv verifies the prior Specc audit is committed to `studio-audits` before spawning Gizmo. If missing → STOP and escalate. Ett then, as the first action of its single per-iteration spawn, performs the continue-or-complete check before emitting the plan. Riv is mechanical orchestration; it does not self-decide continuation. The Bott monitors the gate independently.
+- **Sprint loop-precondition gate [Compliance-reliant, hard rule]:** At the top of each sprint in an arc (skip on the very first), Riv verifies the prior Specc audit is committed to `studio-audits` before spawning Gizmo. If missing → STOP and escalate. Ett then, as the first action of its single per-sprint spawn, performs the continue-or-complete check before emitting the plan. Riv is mechanical orchestration; it does not self-decide continuation. The Bott monitors the gate independently.
 - If VERIFY fails → back to BUILD (not "ship anyway")
 - If REVIEW requests changes → back to BUILD (not "merge anyway")
 - Riv escalates to The Bott per [ESCALATION.md](ESCALATION.md) 🔴/🚨 criteria.
-- Pipeline state lives in a sprint file, not in any agent's memory.
+- Pipeline state lives in sprint plan files + the arc brief, not in any agent's memory.
 
 ---
 
@@ -232,7 +241,7 @@ Every rule in this framework is tagged **[Structural]** or **[Compliance-reliant
 | Visual verification | Playwright in pipeline | [Structural] |
 | Agent logging | Git history IS the log (no separate log files needed) | [Structural] |
 | Dashboard freshness | Generated after sprint, not maintained live | [Structural] |
-| Sub-sprint Specc gate | Riv + Ett + The Bott all check | [Compliance-reliant] |
+| Sprint Specc gate | Riv + Ett + The Bott all check | [Compliance-reliant] |
 | Role boundaries | Pipeline stages (agents only do their stage) | [Compliance-reliant] |
 | Secrets handling | PAT in file, credential helper | [Compliance-reliant] (file-based, not CI-gated) |
 | Comms routing | Channel not DM | [Compliance-reliant] |
