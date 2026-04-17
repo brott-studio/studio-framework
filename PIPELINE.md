@@ -27,7 +27,7 @@ The Bott (EP) → spawns Riv with sprint tasks
   │    │    └─ If changes needed → NUTTS (Fix) → BOLTZ (Re-review)
   │    │    └─ If rejected twice → escalate to The Bott
   │    ├─ OPTIC (Verify) → tests + Playwright + sims + vision
-  │    │    └─ If FAIL → escalate to The Bott
+  │    │    └─ If FAIL → note failure in sprint results; continue to Specc. Ett addresses in next sub-sprint.
   │    └─ SPECC (Audit) → audit + KB entries
   │
   ├─ Phase 4: CONTINUATION DECISION
