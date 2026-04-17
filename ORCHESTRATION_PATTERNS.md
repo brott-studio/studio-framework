@@ -134,13 +134,22 @@ Agents can pass findings via shared storage (files, repos) without passing full 
 
 **Primary: Pipeline (Pattern 2)**
 ```
-The Bott → Riv (orchestrator) → Nutts → Boltz → Optic → Specc
+The Bott → Riv (orchestrator) → Gizmo → Ett → Nutts → Boltz → Optic → Specc
 ```
 
 **With review loop:**
 ```
 Riv → Nutts → Boltz → [comments?] → Nutts fix → Boltz re-review → Optic → Specc
 ```
+
+**Hard gate between sub-sprints (compliance-reliant):**
+```
+Riv → ...sprint-N pipeline... → Specc audit committed → GATE → Riv starts sprint-N+1
+```
+Before sub-sprint N+1 begins, Riv MUST verify `audits/<project>/sprint-<N>.md` exists in `brott-studio/studio-audits`. See [PIPELINE.md](PIPELINE.md) "Sub-Sprint Audit Gate" and [SPAWN_PROTOCOL.md](SPAWN_PROTOCOL.md) Riv template.
+
+**Incremental-write protocol for subagent tasks:**
+All spawned subagent tasks should use the skeleton-first + save-after-each-section pattern from [SUBAGENT_PLAYBOOK.md](SUBAGENT_PLAYBOOK.md). This ensures partial progress survives runtime cut-offs. Particularly important for research and writing tasks.
 
 **Future: Hierarchical (Pattern 3)**
 ```
