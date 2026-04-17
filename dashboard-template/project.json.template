@@ -1,0 +1,14 @@
+{
+  "name": "my-project",
+  "displayName": "My Project",
+  "org": "brott-studio",
+  "auditRepo": "studio-audits",
+  "auditFolder": "my-project",
+  "paths": {
+    "gdd": "docs/gdd.md",
+    "designDocs": "docs/design",
+    "kb": "docs/kb"
+  },
+  "ciWorkflows": ["ci.yml", "deploy.yml"],
+  "liveUrl": "https://brott-studio.github.io/my-project/"
+}

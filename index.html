@@ -117,6 +117,11 @@
 <div class="header">
   <img src="icon.png" alt="Brott Studio">
   <h1>Brott Studio</h1>
+  <div style="flex:1"></div>
+  <select id="project-picker" style="background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:4px;padding:0.3rem 0.5rem;font-size:0.85rem;display:none">
+    <option>Loading…</option>
+  </select>
+  <a id="link-live" href="#" target="_blank" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:0.3rem 0.55rem;color:var(--accent);text-decoration:none;font-size:0.8rem">▶ Live Build</a>
 </div>
 
 <p class="subtitle">100100 Productions <span style="color:var(--border);margin:0 0.4rem">│</span> AI Agent Studio</p>
@@ -205,12 +210,34 @@
 
 <script>
 const ORG = 'brott-studio';
-const AUDIT_REPO = 'studio-audits';
 const FRAMEWORK_REPO = 'studio-framework';
 const API = 'https://api.github.com';
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes (default)
 const AUDIT_CACHE_TTL = 2 * 60 * 1000; // 2 minutes (audit lists update frequently)
+const DISCOVERY_TTL = 5 * 60 * 1000; // org-project discovery
 const NO_CACHE = new URLSearchParams(window.location.search).has('nocache') || new URLSearchParams(window.location.search).has('refresh');
+
+// Hard-coded defaults preserve today's dashboard behavior for projects
+// without a .studio/project.json manifest.
+const DEFAULTS = {
+  auditRepo: 'studio-audits',
+  paths: { gdd: 'docs/gdd.md', designDocs: 'docs/design', kb: 'docs/kb' },
+  ciWorkflows: null,  // null = show all
+  liveUrl: null,
+};
+
+// CFG is populated by loadManifest() before any loaders run.
+// All fetches below read from CFG, not top-level constants.
+let CFG = {
+  project: null,
+  displayName: null,
+  org: ORG,
+  auditRepo: DEFAULTS.auditRepo,
+  auditFolder: null,  // defaults to project name
+  paths: { ...DEFAULTS.paths },
+  ciWorkflows: DEFAULTS.ciWorkflows,
+  liveUrl: DEFAULTS.liveUrl,
+};
 
 function cachedFetch(url, opts) {
   const key = 'ghcache:' + url;
@@ -237,10 +264,96 @@ function cachedFetch(url, opts) {
 }
 const params = new URLSearchParams(window.location.search);
 const PROJECT = params.get('project') || 'battlebrotts-v2';
-const AUDIT_FOLDER = params.get('audit_folder') || PROJECT;
+const AUDIT_FOLDER_OVERRIDE = params.get('audit_folder');
 
-document.getElementById('link-game').href = `https://${ORG}.github.io/${PROJECT}/game/`;
-document.getElementById('link-repo').href = `https://github.com/${ORG}/${PROJECT}`;
+// ---------- Manifest + project discovery ----------
+async function loadManifest(project) {
+  // Try to fetch .studio/project.json from the project repo.
+  // Missing fields fall back to DEFAULTS; a 404 means "legacy project" and we use all defaults.
+  let manifest = null;
+  try {
+    const r = await fetch(`https://raw.githubusercontent.com/${ORG}/${project}/main/.studio/project.json`);
+    if (r.ok) manifest = await r.json();
+  } catch(e) { /* ignore, use defaults */ }
+
+  const m = manifest || {};
+  const paths = Object.assign({}, DEFAULTS.paths, m.paths || {});
+  CFG = {
+    project,
+    displayName: m.displayName || project,
+    org: m.org || ORG,
+    auditRepo: m.auditRepo || DEFAULTS.auditRepo,
+    auditFolder: AUDIT_FOLDER_OVERRIDE || m.auditFolder || project,
+    paths,
+    ciWorkflows: Array.isArray(m.ciWorkflows) && m.ciWorkflows.length ? m.ciWorkflows : DEFAULTS.ciWorkflows,
+    liveUrl: m.liveUrl || null,
+  };
+  return CFG;
+}
+
+async function discoverProjects() {
+  // Returns [{name, displayName}]. Filters org repos to those with .studio/project.json.
+  const discKey = 'ghcache:discover:' + ORG;
+  if (!NO_CACHE) {
+    try {
+      const cached = localStorage.getItem(discKey);
+      if (cached) {
+        const { ts, data } = JSON.parse(cached);
+        if (Date.now() - ts < DISCOVERY_TTL && Array.isArray(data)) return data;
+      }
+    } catch(e) {}
+  } else {
+    try { localStorage.removeItem(discKey); } catch(e) {}
+  }
+
+  let repos = [];
+  try {
+    const r = await fetch(`${API}/orgs/${ORG}/repos?per_page=100`);
+    if (r.ok) repos = await r.json();
+  } catch(e) {}
+  if (!Array.isArray(repos)) repos = [];
+
+  // Probe each repo for .studio/project.json. 200 = include, 404 = skip.
+  // Unauthenticated GitHub limit is 60/hr so cap probes defensively.
+  const candidates = repos.filter(r => !r.fork && !r.archived).slice(0, 60);
+  const results = await Promise.all(candidates.map(async (repo) => {
+    try {
+      const resp = await fetch(`https://raw.githubusercontent.com/${ORG}/${repo.name}/main/.studio/project.json`);
+      if (!resp.ok) return null;
+      const m = await resp.json().catch(() => ({}));
+      return { name: repo.name, displayName: m.displayName || repo.name };
+    } catch(e) { return null; }
+  }));
+  const found = results.filter(Boolean).sort((a, b) => a.name.localeCompare(b.name));
+  try { localStorage.setItem(discKey, JSON.stringify({ ts: Date.now(), data: found })); } catch(e) {}
+  return found;
+}
+
+function applyHeaderLinks() {
+  document.getElementById('link-game').href = `https://${ORG}.github.io/${CFG.project}/game/`;
+  document.getElementById('link-repo').href = `https://github.com/${ORG}/${CFG.project}`;
+  const live = document.getElementById('link-live');
+  if (CFG.liveUrl) { live.href = CFG.liveUrl; live.style.display = ''; }
+  else { live.style.display = 'none'; }
+}
+
+async function populateProjectPicker() {
+  const sel = document.getElementById('project-picker');
+  const projects = await discoverProjects();
+  // If discovery returned nothing, include the current project so user isn't stuck on empty.
+  if (!projects.find(p => p.name === CFG.project)) {
+    projects.unshift({ name: CFG.project, displayName: CFG.displayName || CFG.project });
+  }
+  sel.innerHTML = projects.map(p =>
+    `<option value="${p.name}"${p.name === CFG.project ? ' selected' : ''}>${p.displayName}</option>`
+  ).join('');
+  sel.style.display = '';
+  sel.addEventListener('change', () => {
+    const next = new URLSearchParams(window.location.search);
+    next.set('project', sel.value);
+    window.location.search = next.toString();
+  });
+}
 
 function md2html(md) {
   const renderer = new marked.Renderer();
@@ -311,7 +424,7 @@ async function loadPipeline() {
 async function loadGDD() {
   const el = document.getElementById('gdd-content');
   try {
-    const r = await fetch(`https://raw.githubusercontent.com/${ORG}/${PROJECT}/main/docs/gdd.md`);
+    const r = await fetch(`https://raw.githubusercontent.com/${ORG}/${CFG.project}/main/${CFG.paths.gdd}`);
     el.innerHTML = md2html(await r.text());
   } catch(e) { el.innerHTML = `<p class="error">Failed to load</p>`; }
 }
@@ -321,10 +434,18 @@ async function loadCI() {
   const el = document.getElementById('ci-list');
   const countEl = document.getElementById('ci-count');
   try {
-    const res = await cachedFetch(`${API}/repos/${ORG}/${PROJECT}/actions/runs?per_page=50`);
+    const res = await cachedFetch(`${API}/repos/${ORG}/${CFG.project}/actions/runs?per_page=50`);
     const data = await res.json();
-    const runs = data.workflow_runs;
+    let runs = data.workflow_runs;
     if (!Array.isArray(runs)) throw new Error(data.message || 'API error');
+    // If manifest pins a ciWorkflows list, filter to those workflow files.
+    if (Array.isArray(CFG.ciWorkflows) && CFG.ciWorkflows.length) {
+      const wanted = new Set(CFG.ciWorkflows);
+      runs = runs.filter(r => {
+        const p = (r.path || '').split('/').pop();
+        return wanted.has(p);
+      });
+    }
     countEl.textContent = `(${runs.length})`;
     if (runs.length === 0) { el.innerHTML = '<p style="color:var(--muted)">No CI runs yet</p>'; return; }
     el.innerHTML = runs.map(r => {
@@ -341,8 +462,8 @@ async function loadCI() {
 async function loadKB() {
   const el = document.getElementById('kb-list');
   try {
-    // Flat fetch: docs/kb/*.md (no subfolders)
-    const res = await cachedFetch(`${API}/repos/${ORG}/${PROJECT}/contents/docs/kb`);
+    // Flat fetch: <paths.kb>/*.md (no subfolders)
+    const res = await cachedFetch(`${API}/repos/${ORG}/${CFG.project}/contents/${CFG.paths.kb}`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const files = await res.json();
     if (!Array.isArray(files)) throw new Error(files.message || 'API error');
@@ -396,7 +517,7 @@ async function loadPRs() {
   const el = document.getElementById('pr-list');
   const countEl = document.getElementById('pr-count');
   try {
-    const res = await cachedFetch(`${API}/repos/${ORG}/${PROJECT}/pulls?state=all&sort=created&direction=desc&per_page=100`);
+    const res = await cachedFetch(`${API}/repos/${ORG}/${CFG.project}/pulls?state=all&sort=created&direction=desc&per_page=100`);
     const prs = await res.json();
     if (!Array.isArray(prs)) throw new Error(prs.message || 'API error');
     countEl.textContent = `(${prs.length})`;
@@ -415,7 +536,7 @@ async function loadPRs() {
 async function loadAudits() {
   const el = document.getElementById('audit-list');
   try {
-    const res = await cachedFetch(`${API}/repos/${ORG}/${AUDIT_REPO}/contents/audits/${AUDIT_FOLDER}`);
+    const res = await cachedFetch(`${API}/repos/${ORG}/${CFG.auditRepo}/contents/audits/${CFG.auditFolder}`);
     const files = await res.json();
     if (!Array.isArray(files)) throw new Error(files.message || 'No audits');
     const audits = files.filter(f => f.name.endsWith('.md'));
@@ -431,7 +552,7 @@ async function loadAudits() {
       try {
         const [mdRes, commitRes] = await Promise.all([
           fetch(a.download_url).then(r => r.text()),
-          cachedFetch(`${API}/repos/${ORG}/${AUDIT_REPO}/commits?path=audits/${AUDIT_FOLDER}/${encodeURIComponent(a.name)}&per_page=1`)
+          cachedFetch(`${API}/repos/${ORG}/${CFG.auditRepo}/commits?path=audits/${CFG.auditFolder}/${encodeURIComponent(a.name)}&per_page=1`)
             .then(r => r.ok ? r.json() : []).catch(() => []),
         ]);
         const md = mdRes;
@@ -496,17 +617,17 @@ async function loadDesignDocs() {
 
     // 1) GDD (pinned)
     docs.push({
-      name: 'gdd.md',
-      path: 'docs/gdd.md',
-      download_url: `https://raw.githubusercontent.com/${ORG}/${PROJECT}/main/docs/gdd.md`,
-      html_url: `https://github.com/${ORG}/${PROJECT}/blob/main/docs/gdd.md`,
+      name: (CFG.paths.gdd.split('/').pop()) || 'gdd.md',
+      path: CFG.paths.gdd,
+      download_url: `https://raw.githubusercontent.com/${ORG}/${CFG.project}/main/${CFG.paths.gdd}`,
+      html_url: `https://github.com/${ORG}/${CFG.project}/blob/main/${CFG.paths.gdd}`,
       pinned: true,
       sprint: Infinity,
     });
 
-    // 2) docs/design/ directory
+    // 2) <paths.designDocs>/ directory
     try {
-      const res = await cachedFetch(`${API}/repos/${ORG}/${PROJECT}/contents/docs/design`);
+      const res = await cachedFetch(`${API}/repos/${ORG}/${CFG.project}/contents/${CFG.paths.designDocs}`);
       if (res.ok) {
         const files = await res.json();
         if (Array.isArray(files)) {
@@ -527,14 +648,17 @@ async function loadDesignDocs() {
     } catch(e) {}
 
     // 3) docs/ root level sprint*.md / sprint*-design*.md
+    // Scan the parent of paths.gdd (defaults to 'docs') for sprint docs.
+    const docsRoot = CFG.paths.gdd.includes('/') ? CFG.paths.gdd.split('/').slice(0,-1).join('/') : '';
+    const gddFile = CFG.paths.gdd.split('/').pop();
     try {
-      const res = await cachedFetch(`${API}/repos/${ORG}/${PROJECT}/contents/docs`);
+      const res = await cachedFetch(`${API}/repos/${ORG}/${CFG.project}/contents/${docsRoot}`);
       if (res.ok) {
         const files = await res.json();
         if (Array.isArray(files)) {
           for (const f of files) {
             if (f.type !== 'file' || !f.name.endsWith('.md')) continue;
-            if (f.name === 'gdd.md') continue;
+            if (f.name === gddFile) continue;
             if (/^sprint.*\.md$/i.test(f.name)) {
               docs.push({
                 name: f.name,
@@ -608,12 +732,26 @@ async function toggleDesignDoc(i) {
   } else { el.classList.add('open'); }
 }
 
-loadPRs();
-loadCI();
-loadAudits();
-loadKB();
-loadDesignDocs();
-loadProjectPulse();
+// ---------- Bootstrap ----------
+// Load manifest FIRST; every loader reads CFG so we must populate it
+// before kicking them off. Project picker is async + non-blocking.
+(async function bootstrap() {
+  await loadManifest(PROJECT);
+  applyHeaderLinks();
+  // Update page title with displayName for clarity across projects.
+  if (CFG.displayName) {
+    document.title = `Brott Studio — ${CFG.displayName}`;
+  }
+  // Fire off loaders (parallel, same as before).
+  loadPRs();
+  loadCI();
+  loadAudits();
+  loadKB();
+  loadDesignDocs();
+  loadProjectPulse();
+  // Project picker is independent; failures shouldn't block dashboard.
+  populateProjectPicker().catch(() => {});
+})();
 
 // ---------- Project Pulse ----------
 function relTime(iso) {
@@ -653,7 +791,7 @@ async function loadProjectPulse() {
   const loadingEl = document.getElementById('pulse-loading');
   try {
     // 1) Audit list (reuses cachedFetch → same cache key as loadAudits)
-    const auditsRes = await cachedFetch(`${API}/repos/${ORG}/${AUDIT_REPO}/contents/audits/${AUDIT_FOLDER}`);
+    const auditsRes = await cachedFetch(`${API}/repos/${ORG}/${CFG.auditRepo}/contents/audits/${CFG.auditFolder}`);
     const auditFiles = await auditsRes.json();
     const audits = Array.isArray(auditFiles) ? auditFiles.filter(f => f.name.endsWith('.md')) : [];
 
@@ -663,7 +801,7 @@ async function loadProjectPulse() {
     if (audits.length) {
       const withCommitTime = await Promise.all(audits.map(async (a) => {
         try {
-          const r = await cachedFetch(`${API}/repos/${ORG}/${AUDIT_REPO}/commits?path=audits/${AUDIT_FOLDER}/${encodeURIComponent(a.name)}&per_page=1`);
+          const r = await cachedFetch(`${API}/repos/${ORG}/${CFG.auditRepo}/commits?path=audits/${CFG.auditFolder}/${encodeURIComponent(a.name)}&per_page=1`);
           const j = r.ok ? await r.json() : [];
           const d = Array.isArray(j) && j[0] && j[0].commit
             ? ((j[0].commit.committer && j[0].commit.committer.date) || (j[0].commit.author && j[0].commit.author.date))
@@ -700,7 +838,7 @@ async function loadProjectPulse() {
     // 4) Last commit on project repo (default branch)
     let projCommit = null;
     try {
-      const r = await cachedFetch(`${API}/repos/${ORG}/${PROJECT}/commits?per_page=1`);
+      const r = await cachedFetch(`${API}/repos/${ORG}/${CFG.project}/commits?per_page=1`);
       const j = await r.json();
       if (Array.isArray(j) && j[0]) projCommit = j[0];
     } catch(e) {}
@@ -708,7 +846,7 @@ async function loadProjectPulse() {
     // 5) Last audit commit (most recent commit touching audits/<project>/)
     let auditCommit = null;
     try {
-      const r = await cachedFetch(`${API}/repos/${ORG}/${AUDIT_REPO}/commits?path=audits/${AUDIT_FOLDER}&per_page=1`);
+      const r = await cachedFetch(`${API}/repos/${ORG}/${CFG.auditRepo}/commits?path=audits/${CFG.auditFolder}&per_page=1`);
       const j = await r.json();
       if (Array.isArray(j) && j[0]) auditCommit = j[0];
     } catch(e) {}
