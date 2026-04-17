@@ -70,9 +70,9 @@ The Bott (EP) → spawns Riv with sprint tasks
 
 See [COMMS.md](COMMS.md) for full rules.
 
-- Pipeline updates stay within Riv's orchestration (posted to studio channel, not DM'd to HCD)
-- The Bott receives Riv's final report in the studio channel
-- HCD gets @-mentioned only for: playtest-ready builds, merge calls needing HCD signoff, or escalations per [ESCALATION.md](ESCALATION.md) 🔴/🚨 criteria
+- Pipeline chatter stays in-session: subagents report to Riv, Riv reports to The Bott's session. No agent posts to the Discord studio channel.
+- The Bott is the sole channel voice. For every Riv completion, The Bott posts a curated summary to the channel.
+- HCD gets @-mentioned (via The Bott's channel post) only for: playtest-ready builds, merge calls needing HCD signoff, or escalations per [ESCALATION.md](ESCALATION.md) 🔴/🚨 criteria
 
 ## Sub-Sprint Audit Gate (HARD RULE)
 
