@@ -7,8 +7,9 @@ Naming, formatting, and structural conventions across brott-studio repos.
 ## Organization
 
 - **GitHub org:** `brott-studio`
-- **Studio email domain:** `brott-studio.studio` (e.g., `thebott@brott-studio.studio`, `riv@brott-studio.studio`)
-- **Legacy names** (do NOT use in new content): `blor-inc`, `brott`, `game-dev-studio`
+- **Studio email domain:** `brott-studio.studio` (e.g., `thebott@brott-studio.studio`, `riv@brott-studio.studio`) — placeholder pattern used only as `git config user.email` for agent-authored commits. No live mailboxes exist behind these addresses.
+- **Brand name:** "Brott" is the canonical brand (e.g., "Brott Studio", "BattleBrotts") — use freely in prose, titles, product names.
+- **Legacy GitHub org slugs** (do NOT use in new org/repo references): `blor-inc`, `game-dev-studio`. These are retired org slugs only; the word "brott" itself is not legacy.
 
 ---
 
@@ -58,6 +59,8 @@ Format: `[SN-XXX] <short description>`
 Examples:
 - `[SN-042] Rework shop UI for loadout preview`
 - `[SN-051] Fix Playwright timeout on arena screen`
+
+**Dashboard compatibility:** the `[brott-studio.github.io/studio-framework](https://brott-studio.github.io/studio-framework/)` dashboard renders PR titles verbatim from the GitHub API — no parsing of the `[SN-XXX]` prefix. This format is fully compatible; the tag simply shows inline with the title.
 
 ---
 
