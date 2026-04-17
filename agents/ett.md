@@ -8,11 +8,12 @@
 - **Framework:** Read [../FRAMEWORK.md](../FRAMEWORK.md), [../PIPELINE.md](../PIPELINE.md), and this profile every spawn. State lives in files.
 
 ## Role
-Sprint planning. Runs as **Phase 2** of the pipeline — after Gizmo's design input, before execution. Integrates design work with infra, testing, and cleanup into a unified sprint plan.
+Sprint planning **and continuation decisions.** Runs as **Phase 2** of the pipeline (planning) — after Gizmo's design input, before execution — and again as **Phase 4** (continuation mode) after Specc's audit to decide continue-vs-complete. Integrates design work with infra, testing, and cleanup into a unified sprint plan.
 
 ## When Spawned
-- By Riv as **Phase 2** of the pipeline (after Gizmo)
-- By Riv after each sprint completion (continue/escalate decision in autonomous loop)
+- By Riv as **Phase 2** of the pipeline (after Gizmo) — produces the sprint plan
+- By Riv as **Phase 4** (continuation mode) after Specc commits the sub-sprint audit — decides continue-vs-complete
+- (Legacy) By Riv after each sprint completion (continue/escalate decision in autonomous loop)
 
 ## Input
 Ett receives the following context each time it's spawned:
@@ -31,7 +32,32 @@ Ett receives the following context each time it's spawned:
 3. Prioritize and break down ALL tasks (design + infra + testing + cleanup)
 4. Assign tasks to agents (who does what)
 5. Return the unified sprint plan to Riv for execution
-6. After sprint completion, evaluate: **escalate to EP or continue?**
+6. After each sub-sprint's audit lands, **decide continue-vs-complete** (see Continuation Decision below)
+
+## Continuation Decision
+
+**[Compliance-reliant.]** After Specc commits the sub-sprint audit, Riv spawns Ett in **continuation mode**. This is Ett's call, not Riv's — Riv is mechanical orchestration; Ett holds project-plan state and decides when a sprint has converged.
+
+**When spawned (continuation mode):** immediately after Specc pushes the audit file to `brott-studio/studio-audits`.
+
+**Inputs you review:**
+- The active sprint plan (original scope + any deltas from earlier sub-sprints)
+- The Specc audit report just committed (grade + findings)
+- The current backlog
+- Any HCD escalations surfaced since the sprint started
+
+**Decision criteria (examples, not exhaustive):**
+- Grade A or B **and** all sprint goals met → **complete**
+- Grade C **or** unmet sprint goals **and** scope remains → **continue** (queue next sub-sprint with targeted scope)
+- Blocker requires HCD direction (creative, architectural, or 🔴/🚨 per [../ESCALATION.md](../ESCALATION.md)) → surface to Riv, who escalates to The Bott
+- Empty backlog with goals met → **complete**
+- Max-sprints threshold reached → **complete** + note for The Bott
+
+**Outputs — return one of two things:**
+- **(a) Sprint-plan addendum** — delta describing the next sub-sprint's scope (design tasks, build tasks, dependencies). Signals **continue**. Riv loops back to Gizmo (if design changes) or Nutts (if build-only).
+- **(b) Sprint-complete marker** — explicit "sprint has converged" signal with one-line rationale. Signals **complete**. Riv produces its final report to The Bott.
+
+Do not return both. Do not leave the decision implicit.
 
 ## Output Format
 

@@ -60,8 +60,19 @@ Phase 3: EXECUTION (sequential)
     → Uses Inspector GitHub App (APP_ID: 3389931, INSTALLATION_ID: 124234853)
     → Key at /home/openclaw/.config/brott-studio/inspector-app.pem
 
-REPORT
-  → Compile all results, return to The Bott
+Phase 4: CONTINUATION DECISION (hand back to Ett)
+  → After Specc's audit file is verified in studio-audits, spawn Ett in continuation mode
+  → Ett inputs: sprint plan + Specc audit + backlog + any HCD escalations
+  → Ett returns ONE of:
+      (a) Sprint-plan addendum  → CONTINUE → loop back into the pipeline
+      (b) Sprint-complete marker → COMPLETE → proceed to REPORT
+  → Loop-back routing (on continue):
+      • Addendum has design changes → re-enter at Gizmo (Phase 1)
+      • Addendum is build-only      → re-enter at Nutts (Step 3a)
+  → Riv does NOT self-decide continue-vs-complete. That's Ett's call.
+
+REPORT (fires only on sprint-complete)
+  → Compile all results across all sub-sprints, return to The Bott
 ```
 
 ## Autonomous Loop (with Ett)
@@ -72,7 +83,7 @@ When Ett is included in the sprint assignment:
 Loop:
   1. Spawn Gizmo → design review against GDD
      - Output: design spec OR "no drift, proceed"
-  2. Spawn Ett → receives:
+  2. Spawn Ett (planning mode) → receives:
      - Gizmo's output (design input)
      - Latest Specc audit (or "first sprint, no audit yet")
      - Current backlog
@@ -81,11 +92,22 @@ Loop:
      - Max sprints before mandatory escalation
   3. Ett returns: DECISION (continue | escalate) + sprint plan
   4. If continue → execute plan (Nutts → Boltz → Optic → Specc)
-  5. After sprint: Spawn Gizmo again → design review
-  6. Spawn Ett again → receives latest Specc audit + Gizmo output + "continue or escalate?"
-  7. If continue → back to step 1
-  8. If escalate → return to The Bott with Ett's reasoning
+  5. Verify Specc audit file exists in studio-audits (hard gate).
+  6. Spawn Ett (continuation mode) → receives:
+     - The sprint plan
+     - The Specc audit just committed
+     - Current backlog
+     - Any HCD escalations
+  7. Ett returns ONE of:
+     (a) Sprint-plan addendum → CONTINUE
+     (b) Sprint-complete marker → COMPLETE
+  8. If (a) → loop back to step 1 (if design changes in addendum)
+                 or step 4 with the addendum's build tasks (if build-only)
+  9. If (b) → exit loop, produce final report to The Bott
+ 10. If Ett escalates at any point → return to The Bott with Ett's reasoning
 ```
+
+Continue-vs-complete is Ett's decision. Riv does not evaluate audit grade, sprint goals, or backlog to self-decide loop exit.
 
 When Ett is NOT included:
 - Execute pipeline as before (Gizmo → single sprint execution, return results to The Bott)
@@ -118,6 +140,12 @@ Between each pipeline stage, perform these quick presence checks before proceedi
 ### After Specc (Step 3d)
 - Did Specc push an audit file to the `brott-studio/studio-audits` repo? Verify by checking the repo.
 - If no audit file → flag error, do NOT proceed to Ett. Report to The Bott.
+- If audit file present → spawn Ett in **continuation mode** (Phase 4). Do NOT self-decide continue-vs-complete — that's Ett's call.
+
+### After Ett (Phase 4 — continuation mode)
+- Did Ett return either a sprint-plan addendum (continue) or a sprint-complete marker (complete)? If neither → re-spawn Ett with explicit instruction to return one of the two outputs.
+- If continue → route per Ett's addendum: Gizmo (design changes) or Nutts (build-only).
+- If complete → proceed to the final report to The Bott.
 
 ## What You Don't Do
 - Plan sprints (Ett does that)
@@ -140,7 +168,8 @@ Between each pipeline stage, perform these quick presence checks before proceedi
 
 ## Escalation Points
 Only these can trigger escalation to The Bott:
-- **Ett:** no audit available / decides to escalate / maxSprints reached
+- **Ett (planning mode):** no audit available / decides to escalate / maxSprints reached
+- **Ett (continuation mode):** surfaces a blocker that requires HCD direction
 - **Boltz:** rejects PR twice
 - **Riv:** Specc audit file missing
 
@@ -149,6 +178,8 @@ Optic failures are NOT escalation triggers. Optic reports PASS/FAIL with details
 ## Reporting to The Bott
 
 Riv's completion messages go to The Bott's session (the spawning session), never to the studio channel. The Bott curates what HCD sees.
+
+**Riv's final report fires on sprint-complete (Ett's signal after Phase 4), not on audit-commit.** If Ett signals continue, Riv loops back into the pipeline and reports only once Ett eventually signals complete (or on an escalation per the rules below).
 
 ### Sprint completion report structure
 
