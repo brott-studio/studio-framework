@@ -99,13 +99,16 @@ The Bott → spawns Riv with sprint context
   ├─ Nutts (Build) → PR
   ├─ Boltz (Review) → approve/merge or request changes → loop back to Nutts
   ├─ Optic (Verify) → tests/Playwright/sims
-  └─ Specc (Audit) → audit in studio-audits + KB entries
+  ├─ Specc (Audit) → audit in studio-audits + KB entries
   │
-  Riv → final report → The Bott
+  └─ Ett (Continuation decision):
+       ├─ Continue → queue next sub-sprint → Riv loops back to Gizmo/Nutts
+       └─ Complete → Riv reports to The Bott
 ```
 
 ### Pipeline Rules
 - Each stage reads the previous stage's output. No stage skipping.
+- **Continuation gate [Compliance-reliant]:** After Specc's audit lands, Riv hands control back to Ett. Ett decides continue-vs-complete based on audit grade, remaining sprint goals, and any blockers. Riv is mechanical orchestration and does not self-decide continuation.
 - **Sub-sprint gate [Compliance-reliant, hard rule]:** Sub-sprint N+1 MUST NOT begin until Specc's sprint-N audit is committed to `studio-audits`. Riv enforces on spawn; Ett flags on planning; The Bott monitors.
 - If VERIFY fails → back to BUILD (not "ship anyway")
 - If REVIEW requests changes → back to BUILD (not "merge anyway")

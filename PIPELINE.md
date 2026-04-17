@@ -30,8 +30,36 @@ The Bott (EP) → spawns Riv with sprint tasks
   │    │    └─ If FAIL → escalate to The Bott
   │    └─ SPECC (Audit) → audit + KB entries
   │
-  └─ REPORT → results back to The Bott
+  ├─ Phase 4: CONTINUATION DECISION
+  │    └─ ETT (Continuation Mode) — spawned by Riv after Specc commits audit
+  │         └─ Inputs: sprint plan, Specc audit, backlog, any HCD escalations
+  │         └─ DECISION: continue (queue next sub-sprint) | complete (sprint done)
+  │         └─ If continue → Riv loops back to Gizmo (design changes) or Nutts (more build)
+  │         └─ If complete → proceed to REPORT
+  │
+  └─ REPORT → Riv → The Bott (only after Ett signals sprint-complete)
 ```
+
+## Continuation Decision (After Audit)
+
+**[Compliance-reliant.]** After Specc commits the audit, Riv pauses the pipeline and spawns Ett in **continuation mode**. Riv does not self-decide continue-vs-complete — that's Ett's call.
+
+**Ett's inputs (continuation mode):**
+- The active sprint plan (with original scope + any deltas)
+- The Specc audit report just committed
+- The current backlog
+- Any HCD escalations since the sprint started
+
+**Ett's outputs:** one of two things —
+- **(a) Sprint-plan addendum** — delta/addendum describing the next sub-sprint's scope. Signals continue.
+- **(b) Sprint-complete marker** — explicit "sprint has converged" signal. Signals complete.
+
+**Loop-back routing:**
+- If (a) **and** the addendum includes design changes → Riv re-enters the pipeline at **Gizmo** (Phase 1), then Ett (Phase 2) re-plans with the design input, then execution.
+- If (a) **and** the addendum is build-only (no design delta) → Riv re-enters at **Nutts** (Step 3a) with the addendum as the build spec.
+- If (b) → Riv produces its final report per the Reporting to The Bott section in [agents/riv.md](agents/riv.md).
+
+Riv's final report to The Bott fires on **sprint-complete**, not on audit-commit.
 
 ## Roles
 
