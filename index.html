@@ -360,7 +360,10 @@ async function loadManifest(project) {
 }
 
 async function discoverProjects() {
-  // Returns [{name, displayName}]. Filters org repos to those with .studio/project.json.
+  // Returns [{name, displayName}]. Uses GitHub code search to find repos with .studio/project.json,
+  // replacing the old approach of probing up to 60 repos individually.
+  // Fallback: if search API fails or rate-limits, use a hardcoded minimal list so the dashboard
+  // still works. Discovery is non-critical background work; never surface errors to the user.
   const discKey = 'ghcache:discover:' + ORG;
   if (!NO_CACHE) {
     try {
@@ -374,25 +377,45 @@ async function discoverProjects() {
     try { localStorage.removeItem(discKey); } catch(e) {}
   }
 
-  let repos = [];
-  try {
-    const r = await fetch(`${API}/orgs/${ORG}/repos?per_page=100`);
-    if (r.ok) repos = await r.json();
-  } catch(e) {}
-  if (!Array.isArray(repos)) repos = [];
+  const FALLBACK = [{ name: 'battlebrotts-v2', displayName: 'battlebrotts-v2' }];
 
-  // Probe each repo for .studio/project.json. 200 = include, 404 = skip.
-  // Unauthenticated GitHub limit is 60/hr so cap probes defensively.
-  const candidates = repos.filter(r => !r.fork && !r.archived).slice(0, 60);
-  const results = await Promise.all(candidates.map(async (repo) => {
+  // 1. Single search call to locate project.json manifests across the org.
+  let repoNames = [];
+  try {
+    const q = encodeURIComponent(`filename:project.json path:.studio org:${ORG}`);
+    const r = await fetch(`${API}/search/code?q=${q}`);
+    if (!r.ok) {
+      console.warn('[discoverProjects] search API returned', r.status, '— falling back to hardcoded list');
+      return FALLBACK;
+    }
+    const body = await r.json();
+    const items = Array.isArray(body && body.items) ? body.items : [];
+    const seen = new Set();
+    for (const it of items) {
+      const name = it && it.repository && it.repository.name;
+      if (name && !seen.has(name)) { seen.add(name); repoNames.push(name); }
+    }
+  } catch(e) {
+    console.warn('[discoverProjects] search API threw', e, '— falling back to hardcoded list');
+    return FALLBACK;
+  }
+
+  if (repoNames.length === 0) {
+    // Empty results is a legitimate outcome (no projects registered yet); cache and return empty.
+    try { localStorage.setItem(discKey, JSON.stringify({ ts: Date.now(), data: [] })); } catch(e) {}
+    return [];
+  }
+
+  // 2. Fetch each manifest's raw content to pick up displayName (typically 1-2 requests).
+  const results = await Promise.all(repoNames.map(async (name) => {
     try {
-      const resp = await fetch(`https://raw.githubusercontent.com/${ORG}/${repo.name}/main/.studio/project.json`);
-      if (!resp.ok) return null;
+      const resp = await fetch(`https://raw.githubusercontent.com/${ORG}/${name}/main/.studio/project.json`);
+      if (!resp.ok) return { name, displayName: name };
       const m = await resp.json().catch(() => ({}));
-      return { name: repo.name, displayName: m.displayName || repo.name };
-    } catch(e) { return null; }
+      return { name, displayName: (m && m.displayName) || name };
+    } catch(e) { return { name, displayName: name }; }
   }));
-  const found = results.filter(Boolean).sort((a, b) => a.name.localeCompare(b.name));
+  const found = results.sort((a, b) => a.name.localeCompare(b.name));
   try { localStorage.setItem(discKey, JSON.stringify({ ts: Date.now(), data: found })); } catch(e) {}
   return found;
 }
