@@ -90,26 +90,27 @@ Rivett was the original combined PM + orchestrator role. Initially retired becau
 Full flow detail: [PIPELINE.md](PIPELINE.md).
 
 ```
-The Bott → spawns Riv with sprint context
+The Bott → spawns Riv with sprint goal
   │
-  Riv orchestrates sequentially:
+  Riv sub-sprint loop:
   │
-  ├─ Gizmo (Design Input) → spec or "no drift"
-  ├─ Ett (Plan) → unified sprint plan
+  ├─ [Top of iteration] Audit-gate: verify prior Specc audit exists (skip on first iteration)
+  ├─ Gizmo (Design Input) → no-drift / spec-delta / scope-rethink
+  ├─ Ett (Plan + Continuation-check):
+  │    ├─ Complete → EXIT LOOP
+  │    └─ Continue → emit plan (incorporates Gizmo output)
   ├─ Nutts (Build) → PR
-  ├─ Boltz (Review) → approve/merge or request changes → loop back to Nutts
-  ├─ Optic (Verify) → tests/Playwright/sims
-  ├─ Specc (Audit) → audit in studio-audits + KB entries
+  ├─ Boltz (Review) → approve/merge or request changes → loop to Nutts
+  ├─ Optic (Verify) → PASS/FAIL report (never escalates)
+  ├─ Specc (Audit) → commits to studio-audits + KB
+  └─ loop back to top of iteration
   │
-  └─ Ett (Continuation decision):
-       ├─ Continue → queue next sub-sprint → Riv loops back to Gizmo/Nutts
-       └─ Complete → Riv reports to The Bott
+  Riv → final report → The Bott
 ```
 
 ### Pipeline Rules
 - Each stage reads the previous stage's output. No stage skipping.
-- **Continuation gate [Compliance-reliant]:** After Specc's audit lands, Riv hands control back to Ett. Ett decides continue-vs-complete based on audit grade, remaining sprint goals, and any blockers. Riv is mechanical orchestration and does not self-decide continuation.
-- **Sub-sprint gate [Compliance-reliant, hard rule]:** Sub-sprint N+1 MUST NOT begin until Specc's sprint-N audit is committed to `studio-audits`. Riv enforces on spawn; Ett flags on planning; The Bott monitors.
+- **Sub-sprint loop-precondition gate [Compliance-reliant, hard rule]:** At the top of each sub-sprint iteration (skip on the very first), Riv verifies the prior Specc audit is committed to `studio-audits` before spawning Gizmo. If missing → STOP and escalate. Ett then, as the first action of its single per-iteration spawn, performs the continue-or-complete check before emitting the plan. Riv is mechanical orchestration; it does not self-decide continuation. The Bott monitors the gate independently.
 - If VERIFY fails → back to BUILD (not "ship anyway")
 - If REVIEW requests changes → back to BUILD (not "merge anyway")
 - Riv escalates to The Bott per [ESCALATION.md](ESCALATION.md) 🔴/🚨 criteria.
