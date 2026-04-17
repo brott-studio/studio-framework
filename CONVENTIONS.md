@@ -24,7 +24,7 @@ Examples:
 
 Rules:
 - Lowercase, kebab-case
-- Sprint ID first if applicable (`sprint-N` or `sprint-N.M` for sub-sprints)
+- Sprint/arc ID first if applicable (`arc-N` for arcs, `sprint-N.M` for sprints within an arc)
 - Short slug describing the work (3–5 words max)
 - No personal names in branches
 
@@ -99,7 +99,7 @@ Ett assigns task IDs in the sprint plan. Agents reference them in PR titles, com
 When using git worktrees for parallel work:
 ```
 /tmp/<repo-name>/                     — main clone
-/tmp/<repo-name>-sprint-<N.M>/        — worktree for a specific sub-sprint
+/tmp/<repo-name>-sprint-<N.M>/        — worktree for a specific sprint
 /tmp/<repo-name>-scratch/             — throwaway exploration
 ```
 

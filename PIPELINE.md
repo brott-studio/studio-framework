@@ -1,29 +1,37 @@
 # Pipeline & Roles
 
+## The Arc + Sprint Model
+
+- **Arc** = the outer strategic unit. HCD delivers an [arc brief](ARC_BRIEF.md); Gizmo + Ett decide when it's complete.
+- **Sprint** = one full pipeline iteration inside an arc. Numbered `N.1`, `N.2`, … where `N` is the arc number.
+
+Riv is spawned per arc. Inside the arc, Riv runs the sprint loop until Ett emits the arc-complete marker.
+
 ## Sprint Pipeline (Orchestrated by Riv)
 
 ```
-The Bott (EP) → spawns Riv with sprint tasks
+The Bott (EP) → spawns Riv with arc brief
   │
-  Riv (Lead Orchestrator) → sub-sprint loop:
+  Riv (Lead Orchestrator) → sprint loop:
   │
   ├─ Phase 0: AUDIT-GATE (loop precondition)
-  │    └─ Skipped on the first iteration. Otherwise: verify prior Specc audit
+  │    └─ Skipped on the first sprint of the arc. Otherwise: verify prior Specc audit
   │       exists in `brott-studio/studio-audits`. Missing → STOP, escalate to The Bott.
   │
-  ├─ Phase 1: DESIGN INPUT
-  │    └─ GIZMO (Design Review) — always runs first
+  ├─ Phase 1: DESIGN INPUT + ARC-INTENT CHECK
+  │    └─ GIZMO — always runs first
   │         └─ Reviews game state against GDD
+  │         └─ Emits arc-intent verdict (satisfied / progressing / drift) when arc brief provided
   │         └─ If design changes → provides spec + GDD update
   │         └─ If no changes → "No design drift, proceed"
-  │         └─ If DRIFT DETECTED → escalate to The Bott
+  │         └─ If GDD DRIFT DETECTED → escalate to The Bott
   │         └─ Output goes to ETT
   │
   ├─ Phase 2: CONTINUATION-CHECK + SPRINT PLANNING
-  │    └─ ETT (Technical PM) — single spawn per iteration
-  │         └─ Inputs: Gizmo's output + prior Specc audit (if any) + backlog + HCD escalations
+  │    └─ ETT (Technical PM) — single spawn per sprint
+  │         └─ Inputs: Arc brief + Gizmo's output (incl. arc-intent verdict) + prior Specc audit (if any) + backlog + HCD escalations
   │         └─ Step A — continue-or-complete check:
-  │              • Complete → emit sprint-complete marker → Riv EXITS loop → REPORT
+  │              • Complete → emit arc-complete marker → Riv EXITS loop → REPORT
   │              • Continue → fall through to Step B
   │         └─ Step B — emit unified sprint plan (design + build + infra + cleanup)
   │
@@ -33,34 +41,34 @@ The Bott (EP) → spawns Riv with sprint tasks
   │    │    └─ If changes needed → NUTTS (Fix) → BOLTZ (Re-review)
   │    │    └─ If rejected twice → escalate to The Bott
   │    ├─ OPTIC (Verify) → tests + Playwright + sims + vision
-  │    │    └─ If FAIL → note failure in sprint results; continue to Specc. Ett addresses in next sub-sprint.
+  │    │    └─ If FAIL → note failure in sprint results; continue to Specc. Ett addresses in the next sprint.
   │    └─ SPECC (Audit) → audit + KB entries (commits to `studio-audits`)
   │
   └─ loop back to Phase 0 (audit-gate → Gizmo → Ett …)
 
-REPORT → Riv → The Bott (fires only when Ett's Phase 2 Step A returns "complete")
+REPORT → Riv → The Bott (fires only when Ett's Phase 2 Step A returns the arc-complete marker)
 ```
 
 ## Continuation-Check + Planning (Phase 2)
 
-**[Compliance-reliant.]** Ett is spawned exactly once per sub-sprint iteration, immediately after Gizmo. Ett's first action is the continue-or-complete check; if continuing, Ett emits the sprint plan that incorporates Gizmo's design input. Riv does not self-decide continue-vs-complete — that's Ett's call.
+**[Compliance-reliant.]** Ett is spawned exactly once per sprint, immediately after Gizmo. Ett's first action is the continue-or-complete check; if continuing, Ett emits the sprint plan that incorporates Gizmo's design input. Riv does not self-decide continue-vs-complete — that's Ett's call.
 
 **Ett's inputs (every spawn):**
-- Gizmo's design assessment (spec-delta, scope-rethink, or "no drift")
-- The prior Specc audit report (or "first iteration, no audit yet")
-- The active sprint plan / sprint goal from The Bott
-- The current backlog
-- Any HCD escalations surfaced since the sprint started
+- The arc brief (goal, priorities, max-sprints fuse, hard constraints)
+- Gizmo's design assessment (spec-delta, scope-rethink, or "no drift") **and** arc-intent verdict when arc context is provided
+- The prior Specc audit report (or "first sprint in arc, no audit yet")
+- The current backlog (including carry-forward from the arc's prior sprints)
+- Any HCD escalations surfaced since the arc started
 
 **Ett's outputs — one of two things:**
-- **(a) Sprint plan** (continue) — the plan for this iteration's execution phase (design tasks + build + infra + cleanup), incorporating Gizmo's output. Riv proceeds to Nutts.
-- **(b) Sprint-complete marker** (complete) — explicit "sprint has converged" signal with one-line rationale. Riv exits the loop and produces its final report to The Bott.
+- **(a) Sprint plan** (continue) — the plan for this sprint's execution phase (design tasks + build + infra + cleanup), incorporating Gizmo's output. Riv proceeds to Nutts.
+- **(b) Arc-complete marker** (complete) — explicit "the arc has converged" signal with one-line rationale (citing Gizmo's arc-intent verdict, audit trend, or fuse). Riv exits the loop and produces its final report to The Bott.
 
 Do not return both. Do not leave the decision implicit.
 
-Riv's final report to The Bott fires on **sprint-complete**, not on audit-commit.
+Riv's final report to The Bott fires on **arc-complete**, not on audit-commit.
 
-**Final-iteration trade-off:** On the iteration where Ett decides "complete," Gizmo still ran (Phase 1 precedes Phase 2). This is accepted: the wasted-spawn cost is trivial and Gizmo's final-state design assessment becomes useful audit context for The Bott and for Specc retrospectives.
+**Last-sprint trade-off:** On the sprint where Ett decides "complete," Gizmo still ran (Phase 1 precedes Phase 2). This is accepted: the wasted-spawn cost is trivial and Gizmo's final-state design assessment becomes useful audit context for The Bott and for Specc retrospectives.
 
 ## Roles
 
@@ -103,16 +111,16 @@ See [COMMS.md](COMMS.md) for full rules.
 - The Bott is the sole channel voice. For every Riv completion, The Bott posts a curated summary to the channel.
 - HCD gets @-mentioned (via The Bott's channel post) only for: playtest-ready builds, merge calls needing HCD signoff, or escalations per [ESCALATION.md](ESCALATION.md) 🔴/🚨 criteria
 
-## Sub-Sprint Audit Gate (HARD RULE)
+## Sprint Audit Gate (HARD RULE)
 
-**[Compliance-reliant.]** At the top of each sub-sprint iteration (skipped on the first), the prior Specc audit MUST exist in `brott-studio/studio-audits` at `audits/<project>/sprint-<N>.md` before any agent for sub-sprint N+1 is spawned. This gate is a **loop precondition**, not a post-Specc check — its natural home is at the start of each iteration.
+**[Compliance-reliant.]** At the top of each sprint in an arc (skipped on the very first sprint of the arc), the prior Specc audit MUST exist in `brott-studio/studio-audits` at `audits/<project>/sprint-<N.M>.md` before any agent for sprint N.M+1 is spawned. This gate is a **loop precondition**, not a post-Specc check — its natural home is at the start of each sprint.
 
 Redundant compliance surfaces:
-- **Riv** verifies via `gh api` check at the top of each iteration (Phase 0) before spawning Gizmo. If missing, STOP and escalate to The Bott.
+- **Riv** verifies via `gh api` check at the top of each sprint (Phase 0) before spawning Gizmo. If missing, STOP and escalate to The Bott.
 - **Ett** re-verifies during its Step A continuation check; refuses to plan without prior audit data.
-- **The Bott** monitors for sub-sprint transitions without matching audit commit and intervenes.
+- **The Bott** monitors for sprint transitions without matching audit commit and intervenes.
 
-Specc has been invaluable to pipeline quality. Skipping Specc between sub-sprints has caused real problems — this gate exists because of that history.
+Specc has been invaluable to pipeline quality. Skipping Specc between sprints has caused real problems — this gate exists because of that history.
 
 ## Pipeline Completion Rule
 
@@ -121,6 +129,7 @@ Never notify HCD for playtesting until the FULL pipeline has completed (Design �
 ## Cross-references
 
 - Full framework: [FRAMEWORK.md](FRAMEWORK.md)
+- Arc brief pattern: [ARC_BRIEF.md](ARC_BRIEF.md)
 - Per-agent spawn templates: [SPAWN_PROTOCOL.md](SPAWN_PROTOCOL.md)
 - Subagent knobs & incremental-write protocol: [SUBAGENT_PLAYBOOK.md](SUBAGENT_PLAYBOOK.md)
 - Escalation tiers: [ESCALATION.md](ESCALATION.md)

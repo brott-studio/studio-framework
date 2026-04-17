@@ -22,7 +22,8 @@ If you're a fresh agent session spawned against this repo, read the framework in
 | File | Purpose |
 |---|---|
 | [FRAMEWORK.md](FRAMEWORK.md) | Studio operating manual — principles, leadership, pipeline, core rules |
-| [PIPELINE.md](PIPELINE.md) | Sprint flow, phases, orchestration, sub-sprint Specc gate |
+| [PIPELINE.md](PIPELINE.md) | Sprint flow, phases, orchestration, sprint Specc gate |
+| [ARC_BRIEF.md](ARC_BRIEF.md) | Arc brief pattern — what HCD writes to direct an arc |
 | [SPAWN_PROTOCOL.md](SPAWN_PROTOCOL.md) | Per-agent spawn templates, preamble, credential handling |
 | [ORCHESTRATION_PATTERNS.md](ORCHESTRATION_PATTERNS.md) | Multi-agent patterns (pipeline, fan-out, spike sprint) |
 | [SUBAGENT_PLAYBOOK.md](SUBAGENT_PLAYBOOK.md) | Spawn knobs (thinking, timeout), incremental-write protocol |
