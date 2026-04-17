@@ -108,6 +108,11 @@
   .pulse-pill.p-unknown{ background: var(--bg); color: var(--muted);  border-color: var(--border); }
   .pulse-commit-msg { color: var(--text); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.75rem; max-width: 32ch; overflow: hidden; text-overflow: ellipsis; }
   .pulse-loading { color: var(--muted); font-style: italic; }
+  .pulse-trend-wrap { display: inline-flex; flex-direction: column; gap: 0.1rem; align-items: stretch; }
+  .pulse-trend-pills { display: inline-flex; gap: 0.2rem; align-items: flex-end; }
+  .pulse-trend-cell { display: inline-flex; flex-direction: column; align-items: center; gap: 0.05rem; }
+  .pulse-trend-sprint { font-size: 0.58rem; color: var(--muted); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; line-height: 1; }
+  .pulse-trend-axis { font-size: 0.6rem; color: var(--muted); display: flex; justify-content: space-between; margin-top: 0.05rem; letter-spacing: 0.02em; }
   @media (max-width: 640px) { .pulse-commit-msg { max-width: 20ch; } }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -546,8 +551,10 @@ async function loadAudits() {
 
     el.innerHTML = '<p class="loading">Loading audit details...</p>';
 
-    // Sort by last-commit time in the studio-audits repo (most recent first).
-    // Filenames are fragile; commit timestamps are truth.
+    // Sort by sprint ID (numeric, split on dot) descending — newest sprint first.
+    // Rollups pin to the end of their arc. Audit commit time is a tiebreaker.
+    // (Previous behavior sorted purely by commit-time, which drifted whenever an
+    // older audit was edited/recommitted.)
     let cardData = await Promise.all(audits.map(async (a) => {
       try {
         const [mdRes, commitRes] = await Promise.all([
@@ -564,22 +571,29 @@ async function loadAudits() {
           ? (commitRes[0].commit.committer && commitRes[0].commit.committer.date) || (commitRes[0].commit.author && commitRes[0].commit.author.date)
           : null;
         const sortTime = commitDateStr ? new Date(commitDateStr).getTime() : 0;
-        return { sortTime, contentDate, name: a.name, html: `<div class="audit-card">
+        const key = parseSprintKey(a.name);
+        const sprintShort = formatSprintShort(key);
+        const gradeHtml = grade
+          ? `<span class="audit-grade ${gradeClass(grade)}">${grade}</span>`
+          : `<span class="audit-grade grade-unknown" title="No grade found in audit markdown (source missing)">—</span>`;
+        return { sortTime, contentDate, name: a.name, key, sprintShort, grade, html: `<div class="audit-card">
           <div class="audit-header" onclick="toggleAudit(AUDIT_IDX)">
             <div class="audit-left">
               <div class="audit-name">${heading}</div>
-              <div class="audit-meta">${dateStr}</div>
+              <div class="audit-meta">${sprintShort} · ${dateStr}</div>
             </div>
-            ${grade ? `<span class="audit-grade ${gradeClass(grade)}">${grade}</span>` : ''}
+            ${gradeHtml}
           </div>
           <div class="audit-body" id="audit-AUDIT_IDX"><div class="md-content">${md2html(md)}</div></div>
         </div>` };
       } catch(e) {
-        return { sortTime: 0, contentDate: null, name: a.name, html: `<div class="audit-card"><div class="audit-header"><div class="audit-name">${a.name}</div></div></div>` };
+        const key = parseSprintKey(a.name);
+        return { sortTime: 0, contentDate: null, name: a.name, key, sprintShort: formatSprintShort(key), grade: null, html: `<div class="audit-card"><div class="audit-header"><div class="audit-name">${a.name}</div></div></div>` };
       }
     }));
-    // Sort descending by last-commit time (most recent first). Missing times sink.
-    cardData.sort((a, b) => (b.sortTime || 0) - (a.sortTime || 0));
+    cardData.sort(compareAuditsDesc);
+    // Expose sorted audit data for Project Pulse trend (so both widgets share sort).
+    window._auditsSorted = cardData;
     el.innerHTML = cardData.map((c, i) => c.html.replace(/AUDIT_IDX/g, i)).join('');
   } catch(e) { el.innerHTML = `<p class="error">${e.message}</p>`; }
 }
@@ -780,6 +794,44 @@ function pulseGradeClass(g) {
   return 'p-unknown';
 }
 
+// Parse sort keys from audit filename. Returns { major, minor, isRollup }.
+// Major/minor are numeric (so S13.10 > S13.2). Rollups sort inside their arc
+// but get pushed to the end of that arc (lowest minor) for readability.
+function parseSprintKey(name) {
+  // Rollups: e.g. v2-arc-13.x-rollup.md
+  const rollup = name.match(/arc[- ]?(\d+)(?:\.x)?[- ]?rollup/i);
+  if (rollup) return { major: parseInt(rollup[1], 10), minor: -1, isRollup: true };
+  // Standard: v2-sprint-13.10.md, v2-sprint-9.md, v2-sprint-9-riv-test.md
+  const m = name.match(/sprint[- ]?(\d+)(?:\.(\d+))?/i);
+  if (m) {
+    return {
+      major: parseInt(m[1], 10),
+      minor: m[2] != null ? parseInt(m[2], 10) : 0,
+      isRollup: false,
+    };
+  }
+  return { major: -1, minor: -1, isRollup: false };
+}
+
+// Compare for newest-first (desc). Rollups pinned to end of their arc (sort
+// immediately below minor=0 for that major). Audit commit time is tiebreaker.
+function compareAuditsDesc(a, b) {
+  const ka = a.key || parseSprintKey(a.name);
+  const kb = b.key || parseSprintKey(b.name);
+  if (kb.major !== ka.major) return kb.major - ka.major;
+  // Within same major: rollups sink below all sprint minors of that arc.
+  if (ka.isRollup !== kb.isRollup) return ka.isRollup ? 1 : -1;
+  if (kb.minor !== ka.minor) return kb.minor - ka.minor;
+  return (b.sortTime || 0) - (a.sortTime || 0);
+}
+
+function formatSprintShort(key) {
+  if (!key || key.major < 0) return '?';
+  if (key.isRollup) return `S${key.major}.x`;
+  if (key.minor === 0) return `S${key.major}`;
+  return `S${key.major}.${key.minor}`;
+}
+
 function extractSprintLabel(name) {
   // e.g. sprint-13.3-audit.md -> "Sprint 13.3"
   const m = name.match(/sprint[- ]?(\d+(?:\.\d+)?)/i);
@@ -795,9 +847,9 @@ async function loadProjectPulse() {
     const auditFiles = await auditsRes.json();
     const audits = Array.isArray(auditFiles) ? auditFiles.filter(f => f.name.endsWith('.md')) : [];
 
-    // 2) Sort audits by most-recent commit time (filenames are fragile).
-    // Matches loadAudits() — source of truth is the studio-audits commit log.
-    let auditsByTime = [];
+    // 2) Sort audits by sprint ID (desc), with commit time as tiebreaker.
+    // Matches loadAudits() so the Pulse trend and the list agree on "newest".
+    let auditsSorted = [];
     if (audits.length) {
       const withCommitTime = await Promise.all(audits.map(async (a) => {
         try {
@@ -806,17 +858,18 @@ async function loadProjectPulse() {
           const d = Array.isArray(j) && j[0] && j[0].commit
             ? ((j[0].commit.committer && j[0].commit.committer.date) || (j[0].commit.author && j[0].commit.author.date))
             : null;
-          return { file: a, time: d ? new Date(d).getTime() : 0 };
-        } catch(e) { return { file: a, time: 0 }; }
+          return { file: a, sortTime: d ? new Date(d).getTime() : 0, name: a.name, key: parseSprintKey(a.name) };
+        } catch(e) { return { file: a, sortTime: 0, name: a.name, key: parseSprintKey(a.name) }; }
       }));
-      withCommitTime.sort((a, b) => (b.time || 0) - (a.time || 0));
-      auditsByTime = withCommitTime.map(x => x.file);
+      withCommitTime.sort(compareAuditsDesc);
+      auditsSorted = withCommitTime;
     }
 
-    // Latest audit = newest by commit time
+    // Latest audit = top of sorted list (newest sprint, excluding rollups if non-rollup exists)
     let latestSprintLabel = '\u2014';
     let latestGrade = null;
-    const latestAudit = auditsByTime[0] || null;
+    const latestNonRollup = auditsSorted.find(x => !x.key.isRollup) || auditsSorted[0];
+    const latestAudit = latestNonRollup ? latestNonRollup.file : null;
     if (latestAudit) {
       latestSprintLabel = extractSprintLabel(latestAudit.name);
       try {
@@ -825,15 +878,16 @@ async function loadProjectPulse() {
       } catch(e) {}
     }
 
-    // 3) Grade trend: last 5 audits by commit time (most recent first → reverse so oldest-left, newest-right)
-    const trendSource = auditsByTime.slice(0, 5);
-    const trendGrades = await Promise.all(trendSource.map(async a => {
+    // 3) Grade trend: last 5 sprint audits (skip rollups for a cleaner signal).
+    // Sorted order is newest-first → reverse for oldest-left / newest-right.
+    const trendSource = auditsSorted.filter(x => !x.key.isRollup).slice(0, 5);
+    const trendEntries = await Promise.all(trendSource.map(async x => {
       try {
-        const md = await (await fetch(a.download_url)).text();
-        return extractGrade(md);
-      } catch(e) { return null; }
+        const md = await (await fetch(x.file.download_url)).text();
+        return { grade: extractGrade(md), sprintShort: formatSprintShort(x.key), name: x.name };
+      } catch(e) { return { grade: null, sprintShort: formatSprintShort(x.key), name: x.name }; }
     }));
-    const trendOrdered = trendGrades.slice().reverse(); // left = oldest, right = newest
+    const trendOrdered = trendEntries.slice().reverse(); // left = oldest, right = newest
 
     // 4) Last commit on project repo (default branch)
     let projCommit = null;
@@ -865,8 +919,21 @@ async function loadProjectPulse() {
 
     // Trend
     if (trendOrdered.length) {
-      const pills = trendOrdered.map(g => `<span class="pulse-pill ${pulseGradeClass(g)}">${g || '\u2014'}</span>`).join('');
-      parts.push(`<span class="pulse-item"><span class="pulse-label">Trend</span><span class="pulse-trend">${pills}</span></span>`);
+      const cells = trendOrdered.map(e => {
+        const gText = e.grade || '\u2014';
+        const title = e.grade
+          ? `${e.sprintShort} · Grade ${e.grade}`
+          : `${e.sprintShort} · ungraded (no grade found in audit source)`;
+        return `<span class="pulse-trend-cell" title="${title}">`
+          + `<span class="pulse-pill ${pulseGradeClass(e.grade)}">${gText}</span>`
+          + `<span class="pulse-trend-sprint">${e.sprintShort}</span>`
+          + `</span>`;
+      }).join('');
+      const trendHtml = `<span class="pulse-trend-wrap">`
+        + `<span class="pulse-trend-pills">${cells}</span>`
+        + `<span class="pulse-trend-axis"><span>← older</span><span>newer →</span></span>`
+        + `</span>`;
+      parts.push(`<span class="pulse-item"><span class="pulse-label">Trend</span>${trendHtml}</span>`);
     }
 
     // Last commit
