@@ -58,7 +58,7 @@ Phase 3: EXECUTION (sequential)
   Step 3d: SPECC (Audit)
     → Sprint audit + learning extraction + KB entries
     → Uses Inspector GitHub App (APP_ID: 3389931, INSTALLATION_ID: 124234853)
-    → Key at /home/openclaw/.config/game-dev-studio/inspector-app.pem
+    → Key at /home/openclaw/.config/brott-studio/inspector-app.pem
 
 REPORT
   → Compile all results, return to The Bott
