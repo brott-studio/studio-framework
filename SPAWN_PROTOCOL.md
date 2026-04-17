@@ -211,12 +211,6 @@ Subagent spawn defaults:
 - thinking: medium
 - runTimeoutSeconds: 1800
 - See SUBAGENT_PLAYBOOK.md
-
-After spawning: just wait. Do NOT call `sessions_yield` or `NO_REPLY`.
-As a run-mode isolated subagent, `sessions_yield` ends your session and
-breaks the loop. The child's completion announce arrives as a user-role
-message in your session — resume from there. Orchestrator agents (Riv
-and any future similar roles) must wait, not yield.
 ```
 
 ---
