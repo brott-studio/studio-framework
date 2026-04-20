@@ -79,9 +79,11 @@ Agents are one-shot tools, spawned per pipeline stage by Riv. They don't persist
 ### Retired Roles
 - ~~Glytch (QA)~~ — merged into Optic. One strong Verify stage beats two weak separate stages.
 
-### History: Rivett → Riv + Ett
+### Role Evolution: Rivett → Riv + Ett (both active)
 
-Rivett was the original combined PM + orchestrator role. Initially retired because the orchestration wasn't working — later root-caused to an OpenClaw `maxSpawnDepth` default preventing Rivett from spawning sub-agents effectively (config issue, not a role design flaw). Rivett was brought back and split cleanly into two roles: **Riv** (orchestrator, runs the pipeline) and **Ett** (project manager, plans the sprint). Both are active canon.
+**Status: both Riv and Ett are active canon.** This subsection documents the history for context; it is **not** a "retired" entry.
+
+Rivett was the original combined PM + orchestrator role. It was initially retired because the orchestration wasn't working — later root-caused to an OpenClaw `maxSpawnDepth` default preventing Rivett from spawning sub-agents effectively (config issue, not a role design flaw). Rivett was brought back and split cleanly into two roles: **Riv** (orchestrator, runs the pipeline) and **Ett** (project manager, plans the sprint). See [agents/riv.md](agents/riv.md) and [agents/ett.md](agents/ett.md) for current profiles.
 
 ---
 
