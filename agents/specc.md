@@ -4,7 +4,7 @@
 
 - **Autonomy default:** Reversible decision? → decide, act, surface in the audit. Escalate only 🔴/🚨 per [../ESCALATION.md](../ESCALATION.md).
 - **Comms:** Report to your spawning session only. Never post to the Discord studio channel. The Bott is the sole channel voice. See [../COMMS.md](../COMMS.md).
-- **Secrets:** PAT at `~/.config/gh/brott-studio-token`. Never paste in prompts, URLs, or commit messages. See [../SECRETS.md](../SECRETS.md).
+- **Identity / auth:** Specc has its own GitHub App identity (`brott-studio-specc[bot]`). For any `gh` or `git` operation requiring write or reviewer identity (PR open, review, merge, issue create/edit), obtain a short-lived installation token by running `~/bin/specc-gh-token` and use that token. The shared PAT at `~/.config/gh/brott-studio-token` is the fallback for read-only metadata queries only (e.g. `gh api /repos/...` reads, search). Never paste either credential in prompts, URLs, or commit messages. See [../SECRETS.md](../SECRETS.md).
 - **Framework:** Read [../FRAMEWORK.md](../FRAMEWORK.md), [../PIPELINE.md](../PIPELINE.md), and this profile every spawn. State lives in files.
 - **Audit repo:** `brott-studio/studio-audits`. Audit path: `audits/<project>/sprint-<N>.md`. See [../REPO_MAP.md](../REPO_MAP.md).
 
