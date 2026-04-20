@@ -122,6 +122,14 @@ Redundant compliance surfaces:
 
 Specc has been invaluable to pipeline quality. Skipping Specc between sprints has caused real problems — this gate exists because of that history.
 
+### Sub-sprint close-out invariant
+
+The audit-gate is also a **close-out invariant**, not just a loop precondition. A sub-sprint N.M is NOT considered closed until the following has landed:
+
+- [ ] **Audit landed on `studio-audits/main`** at `audits/<project>/v2-sprint-<N.M>.md`. A sub-sprint is NOT considered closed without this file merged. (Earned S16.1→S16.3; see `v2-sprint-16-arc-complete.md`.)
+
+**Why this is mandatory:** three consecutive sub-sprints (S16.1, S16.2, S16.3) closed without their audit file landing on `studio-audits/main`; each was flagged by the next sprint's audit. Treating audit-file-on-main as a hard gate — enforced at close-out, not just at next-sprint-start — prevents the drift.
+
 ## Pipeline Completion Rule
 
 Never notify HCD for playtesting until the FULL pipeline has completed (Design → Plan → Build → Review → Verify → Audit). No shortcuts.
