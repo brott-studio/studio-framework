@@ -63,7 +63,11 @@ jobs:
           fi
 
           git add README.md
-          git commit -m "${TITLE} [skip ci]"
+          # Note: no CI-skip marker in the commit message. Loop prevention
+          # is handled structurally by `paths-ignore: [README.md]` on the
+          # push trigger above. A CI-skip marker here would starve any
+          # required status checks on this auto-PR and deadlock auto-merge.
+          git commit -m "${TITLE}"
           git push --force-with-lease origin "$BRANCH"
 
           existing_pr="$(gh pr list --head "$BRANCH" --base "$BASE" --state open --json number --jq '.[0].number' || true)"
