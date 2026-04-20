@@ -75,7 +75,11 @@ Required reads before deciding:
 - Specc's audit for sprint-<N.M-1> — REQUIRED (unless first sprint in arc).
   Audit lives at: brott-studio/studio-audits → audits/<project>/sprint-<prev>.md
   If missing, FLAG and escalate to Riv before proceeding.
-- Backlog / current issues in <project-repo>
+- Current backlog via GitHub Issues API:
+  `gh api "/repos/brott-studio/<project>/issues?state=open&labels=backlog&per_page=100"`
+  Filter / sort by `prio:*` labels as needed.
+- Cross-reference: every carry-forward item in the prior audit should be an open issue.
+  Gaps go in your output's `BACKLOG HYGIENE` section.
 - Infra needs (ask Patch if uncertain)
 
 Step A — continue-or-complete check first. If complete, emit arc-complete
@@ -83,8 +87,9 @@ marker and stop (no plan).
 
 Step B (if continuing) — deliverable: sprint plan at
 <project>/sprints/sprint-<N.M>.md.
-Include: goals, task breakdown with [SN.M-XXX] IDs, acceptance criteria,
-risks, and which agents are needed for which tasks.
+Include: goals, task breakdown with `[#<issue>]` references (or `new this sprint`),
+[SN.M-XXX] IDs, acceptance criteria, risks, which agents handle which tasks,
+and a `BACKLOG HYGIENE` block.
 ```
 
 ### 💻 Nutts (Developer)
@@ -98,7 +103,7 @@ Your task: implement [SN.M-XXX] as specified in sprint plan.
 
 Rules:
 - Code + tests together. No "I'll add tests in a follow-up PR."
-- Branch: sprint-<N.M>-<short-slug>
+- Branch: sprint-<N.M>-<short-slug> (per CONVENTIONS.md)
 - PR title: [SN.M-XXX] <short description>
 - Open PR when ready for Boltz review. Push early if you want visibility.
 - Reversible design calls: make them, note them in PR description.
@@ -160,15 +165,22 @@ Required reads:
 - Verification report in <project>/verification/sprint-<N.M>.md
 - Git history for sprint-<N.M> branch(es)
 - Agent transcripts for this sprint (extraction source)
+- Open backlog issues on the project repo (to dedupe before filing new ones)
 
-Deliverable (HARD RULE):
-Commit audit to brott-studio/studio-audits at:
-  audits/<project>/sprint-<N.M>.md
+Deliverables (HARD RULES):
 
-This file's existence is the gate for sprint-<N.M+1>. Do not skip.
+1. Commit audit to brott-studio/studio-audits at:
+     audits/<project>/sprint-<N.M>.md
+   This file's existence is the gate for sprint-<N.M+1>. Do not skip.
 
-Also: write KB entries to <project>/kb/ for any reusable patterns or
-troubleshooting notes extracted from transcripts.
+2. File GitHub Issues on brott-studio/<project> for every carry-forward
+   item in the audit (technical residuals, non-blocking nits, follow-ups).
+   Required labels: `backlog` + one `area:*` + one `prio:*`.
+   Link the issue number inline in the audit text (e.g. `(#123)`).
+   Dedupe against open issues before filing.
+
+3. Write KB entries to <project>/kb/ for any reusable patterns or
+   troubleshooting notes extracted from transcripts.
 ```
 
 ### 🔧 Patch (DevOps)

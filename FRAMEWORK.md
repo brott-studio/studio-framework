@@ -72,7 +72,7 @@ Agents are one-shot tools, spawned per pipeline stage by Riv. They don't persist
 | **Review** | 👨‍💻 Boltz | Lead Dev — PR review via GitHub App | Approved + merged, or changes requested |
 | **Verify** | 🎮 Optic | Verifier — headless tests, Playwright smoke tests, visual regression, combat sims, mocked gameplay checks | Verification report + screenshots |
 | **Deploy** | ⚙️ CI/CD | Automated — no agent needed | Live build at URL |
-| **Audit** | 🕵️ Specc | Inspector — audit, learning extraction, KB entries | Audit report (committed to `studio-audits`) + KB updates |
+| **Audit** | 🕵️ Specc | Inspector — audit, learning extraction, KB entries, files backlog issues for carry-forward | Audit report (committed to `studio-audits`) + KB updates + GitHub Issues |
 
 **On-demand:** 🔧 Patch (DevOps) — called only when infrastructure breaks.
 

@@ -57,11 +57,11 @@ REPORT → Riv → The Bott (fires only when Ett's Phase 2 Step A returns the ar
 - The arc brief (goal, priorities, max-sprints fuse, hard constraints)
 - Gizmo's design assessment (spec-delta, scope-rethink, or "no drift") **and** arc-intent verdict when arc context is provided
 - The prior Specc audit report (or "first sprint in arc, no audit yet")
-- The current backlog (including carry-forward from the arc's prior sprints)
+- **Current backlog** pulled via GitHub Issues (`GET /repos/<project>/issues?state=open&labels=backlog`, priority-sorted). Cross-referenced against the prior audit's carry-forward section to catch items Specc flagged but didn't file as issues. Gaps reported as `BACKLOG HYGIENE` in the output.
 - Any HCD escalations surfaced since the arc started
 
 **Ett's outputs — one of two things:**
-- **(a) Sprint plan** (continue) — the plan for this sprint's execution phase (design tasks + build + infra + cleanup), incorporating Gizmo's output. Riv proceeds to Nutts.
+- **(a) Sprint plan** (continue) — the plan for this sprint's execution phase (design tasks + build + infra + cleanup), incorporating Gizmo's output. Every task references its source issue (`[#NNN]`) or is marked `new this sprint`. Includes a `BACKLOG HYGIENE` block reporting whether all prior-audit carry-forward items are filed as issues. Riv proceeds to Nutts.
 - **(b) Arc-complete marker** (complete) — explicit "the arc has converged" signal with one-line rationale (citing Gizmo's arc-intent verdict, audit trend, or fuse). Riv exits the loop and produces its final report to The Bott.
 
 Do not return both. Do not leave the decision implicit.
