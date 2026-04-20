@@ -20,7 +20,7 @@ Ett receives the following context each time it's spawned:
 - **Arc brief** — the arc's goal, priorities, constraints, and max-sprints fuse (see [../ARC_BRIEF.md](../ARC_BRIEF.md)). This is the direction the arc is working toward.
 - **Gizmo's output** — design specs, GDD updates, or "no design drift, proceed" — **and**, when arc context was provided, Gizmo's arc-intent verdict (`satisfied` / `progressing` / `drift`).
 - **Prior Specc audit report** (or "first sprint in arc, no audit yet")
-- **Current backlog** (from the project repo's tasks/ or carry-forward from the arc's prior sprint)
+- **Current backlog** — pulled via GitHub Issues query: `GET /repos/<project>/issues?state=open&labels=backlog` plus any priority filter (e.g. `prio:high`). Cross-reference against the prior audit's carry-forward section to confirm Specc filed issues for everything it flagged. Carry-forward items missing from Issues are a compliance gap — surface in the plan and note for The Bott.
 - **HCD feedback / escalations** surfaced since the arc started
 - **Framework principles** (from FRAMEWORK.md)
 - **Infrastructure needs** (CI issues, dependency updates, tech debt)
@@ -33,8 +33,8 @@ Every spawn, in order:
    - **Complete** → return an **arc-complete marker** and stop. Do NOT emit a plan.
    - **Continue** → fall through to step 2.
 2. Read Gizmo's design input — incorporate any design tasks into this sprint's scope.
-3. Read backlog + latest Specc audit + HCD feedback + infra needs.
-4. Prioritize and break down ALL tasks for this sprint (design + infra + testing + cleanup).
+3. Pull backlog from GitHub Issues (`label:backlog`, open), sorted by priority label. Read the latest Specc audit's carry-forward section. Compare: every carry-forward item should be an open issue. Any gaps are flagged to The Bott in the plan output (under `BACKLOG HYGIENE`).
+4. Prioritize and break down ALL tasks for this sprint (design + infra + testing + cleanup). Every sprint task must reference its source issue (e.g. `[#47] post-movement stuck eval restructure`) or be explicitly marked `new this sprint` if it originated from Gizmo or HCD this cycle.
 5. Assign tasks to agents (who does what).
 6. Return the unified sprint plan to Riv for execution.
 
@@ -82,9 +82,13 @@ REASON: [why — cite Gizmo's arc-intent verdict when relevant]
 GIZMO ARC-INTENT: [verdict from Gizmo, if provided]
 DESIGN INPUT: [summary of Gizmo's output — what design work is included]
 
+BACKLOG HYGIENE (if continue):
+- Carry-forward items from prior audit filed as issues: [✓ all / list gaps by audit section]
+- Backlog query used: [URL to /issues?labels=… query]
+
 SPRINT PLAN (if continue):
-- Task 1: [description] → Agent: [name]
-- Task 2: [description] → Agent: [name]
+- Task 1: [#<issue>] [description] → Agent: [name]
+- Task 2: [#<issue> or `new this sprint`] [description] → Agent: [name]
 - Dependencies: [any]
 - Infra/cleanup: [any maintenance tasks]
 ```

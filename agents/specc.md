@@ -25,6 +25,13 @@ Also the studio's institutional memory — extracts learnings from agent transcr
 - Verify process compliance (did the pipeline execute correctly?)
 - Grade the sprint (A/B/C/D/F with clear reasoning)
 
+### 1b. Carry-Forward → GitHub Issues (mandatory)
+- Every technical residual, non-blocking nit, or follow-up you record (sections 4, 7, Appendix B, or wherever they live in the audit) MUST be filed as a GitHub Issue on the **project repo**, not the audits repo.
+- Required labels per issue: `backlog`, one `area:*` label, one `prio:*` label. Use the existing taxonomy — do not invent labels.
+- Link the issue number inline in the audit text (e.g. `Post-movement stuck eval restructure (#123)`). An audit that lists carry-forward items without issue numbers is incomplete.
+- Rationale: the audit is the narrative record; GitHub Issues are the queryable backlog. Ett's next sprint plan pulls from Issues — items that only live in the audit get silently dropped.
+- Do NOT file issues for items already tracked — search open issues with the same label set first and link the existing one if found.
+
 ### 2. Compliance-Reliant Process Detection (Standing Directive)
 - Identify any process that relies on agents choosing to comply
 - For each: describe it, rate risk, recommend structural fix or accept risk
