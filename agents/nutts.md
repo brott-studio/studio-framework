@@ -28,9 +28,9 @@ BUILD stage of the pipeline. Writes game code AND tests together.
 - Make product decisions (that's The Bott)
 
 ## Git Conventions
-- Branch: `nutts/[SN-XXX]-description`
-- PR title: `[SN-XXX] feat/fix/refactor: description`
-- Commits: `[SN-XXX] type: description`
+- Branch: `sprint-<N.M>-<short-slug>` (per [CONVENTIONS.md](../CONVENTIONS.md))
+- PR title: `[SN.M-XXX] <short description>`
+- Commits: `[SN.M-XXX] type: description`
 - Types: `feat`, `fix`, `refactor`, `test`, `docs`
 
 ## Output
