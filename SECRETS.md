@@ -12,6 +12,12 @@ How studio agents authenticate to GitHub and handle credentials.
 **Permissions:** `0600` (owner read/write only)
 **Scope:** `brott-studio/*` repos (studio-framework, studio-audits, battlebrotts-v2, etc.)
 
+## 🔐 Specc GitHub App Private Key
+
+**Location on the workspace host:** `~/.config/gh/brott-studio-specc-app.pem`
+**Permissions:** `0600` (owner read/write only)
+**Use:** Read by `~/bin/specc-gh-token` to mint short-lived installation tokens for the `brott-studio-specc` GitHub App. Same "never in prompts/URLs/commits" rule as the PAT above.
+
 ### Why a file, not an env var or inline value
 
 1. **Transcript hygiene.** Every prompt, spawn payload, and announce event is logged. A PAT in a prompt lives in those logs forever. A PAT in a file stays in the file.
