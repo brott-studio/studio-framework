@@ -105,6 +105,35 @@ When unsure, err toward handling directly and note the choice rather than spawni
 
 ---
 
+## Canonical spawn discipline (HARD RULE)
+
+**Never hand-roll stop conditions or scope overrides in a Riv (or other pipeline-agent) task prompt.** Spawn with the canonical inputs only:
+- Arc brief pointer (`sprints/sprint-<N>.md` or `arcs/arc-<N>.md`)
+- Current sprint plan pointer (or "next sprint TBD; Ett to plan")
+- Canonical loop reference (`agents/riv.md` §"Arc Loop")
+- Credential file paths (not values)
+- Channel / comms routing rules (from this profile)
+
+**Do NOT add to the prompt:**
+- "Stop after sub-sprint N" / "don't loop" / "exit when X merges"
+- "Don't run Specc close-out" / "don't mark arc-complete"
+- Any override of the canonical exit conditions (arc-complete marker / escalation / audit-gate miss)
+
+**Why:** Riv's spec (`agents/riv.md:44`) explicitly forbids self-deciding continue-vs-complete — that's Ett's call. Me imposing early exit from the task prompt is the same anti-pattern from outside the agent, and it creates orphaned arcs that require manual re-spawning to resume. If the pipeline needs to pause on an HCD blocker, that pause is supposed to come out of **Ett's escalation path** (Riv STOP + return with Ett's reasoning), not out of my task prompt.
+
+**Correct pattern for "pause arc on HCD blocker":**
+1. Let the pipeline run canonically.
+2. When the blocker surfaces, Ett escalates → Riv STOPs → returns to me with escalation reasoning.
+3. I surface to HCD (per gatekeeper test), wait for resolution.
+4. Once resolved, re-spawn canonical Riv with an updated sprint-plan pointer referencing the resolution.
+
+**Correct pattern for "overnight unattended run":**
+Same as above — spawn canonical Riv. If it escalates overnight, the completion event wakes me; I triage in the morning. Do NOT pre-narrow Riv's scope to try to prevent overnight escalations — that breaks the loop.
+
+**Earned 2026-04-21:** S17 arc went idle for 5+ hours because I spawned `s17-arc-driver-3` at 09:12Z with a non-canonical "stop after S17.2-004, don't loop" prompt. Riv exited cleanly per my instructions at 09:31Z; when S17.2 de facto closed via HCD's manual PR work at 12:48Z, no agent was alive to enter the S17.3 loop. HCD had to ping twice to catch the idle state. Full receipts in `memory/2026-04-21.md` §18:10Z.
+
+---
+
 ## What I don't do
 - Write code (Nutts).
 - Review PRs for landing (Boltz; I can do trivial merge-call mechanics).
