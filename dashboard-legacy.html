@@ -1,0 +1,1170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Brott Studio — 100100 Productions</title>
+<link rel="icon" type="image/png" href="favicon.png">
+<style>
+  :root {
+    --bg: #0d1117; --surface: #161b22; --border: #30363d;
+    --text: #e6edf3; --muted: #8b949e; --accent: #58a6ff;
+    --green: #3fb950; --yellow: #d29922; --red: #f85149;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); padding: 1rem; max-width: 960px; margin: 0 auto; line-height: 1.5; }
+  
+  .header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.15rem; }
+  .header img { width: 40px; height: 40px; border-radius: 6px; }
+  h1 { font-size: 1.4rem; }
+  .mission { color: var(--accent); font-size: 0.8rem; font-style: italic; margin-bottom: 0.75rem; }
+  
+  .section-header { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 0.25rem; margin: 1.2rem 0 0.5rem; }
+  .section-header h2 { font-size: 1.05rem; color: var(--accent); margin: 0; border: none; padding: 0; }
+  .section-links { display: flex; gap: 0.3rem; }
+  .section-links a { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 0.25rem 0.5rem; color: var(--accent); text-decoration: none; font-size: 0.75rem; }
+  .section-links a:hover { border-color: var(--accent); background: #1c2129; }
+
+  details { margin-bottom: 0.5rem; }
+  details summary { cursor: pointer; background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 0.4rem 0.7rem; font-size: 0.85rem; font-weight: 600; color: var(--accent); list-style: none; display: flex; align-items: center; gap: 0.4rem; }
+  details summary::-webkit-details-marker { display: none; }
+  details summary::before { content: '▶'; font-size: 0.6rem; transition: transform 0.2s; }
+  details[open] summary::before { transform: rotate(90deg); }
+  details .inner { background: var(--surface); border: 1px solid var(--border); border-top: none; border-radius: 0 0 4px 4px; padding: 0.6rem; overflow-x: auto; }
+
+  .md-content { font-size: 0.82rem; line-height: 1.6; }
+  .md-content h1, .md-content h2, .md-content h3 { color: var(--accent); margin: 0.6rem 0 0.25rem; }
+  .md-content h1 { font-size: 1.05rem; } .md-content h2 { font-size: 0.92rem; } .md-content h3 { font-size: 0.84rem; }
+  .md-content p { margin-bottom: 0.4rem; }
+  .md-content ul, .md-content ol { margin: 0.25rem 0 0.4rem 1.2rem; }
+  .md-content li { margin-bottom: 0.15rem; }
+  .md-content table { border-collapse: collapse; width: 100%; margin: 0.4rem 0; font-size: 0.75rem; }
+  .md-content th, .md-content td { border: 1px solid var(--border); padding: 0.2rem 0.4rem; text-align: left; }
+  .md-content th { background: var(--surface); font-weight: 600; }
+  .md-content code { background: var(--bg); padding: 0.1rem 0.3rem; border-radius: 3px; font-size: 0.8em; }
+  .md-content pre { background: var(--bg); padding: 0.5rem; border-radius: 4px; overflow-x: auto; font-size: 0.78rem; margin: 0.4rem 0; white-space: pre-wrap; }
+  .md-content hr { border: none; border-top: 1px solid var(--border); margin: 0.5rem 0; }
+  .md-content strong { color: var(--text); }
+  .md-content em { color: var(--muted); }
+  .md-content blockquote { border-left: 3px solid var(--accent); padding: 0.3rem 0.6rem; color: var(--muted); margin: 0.4rem 0; background: rgba(88,166,255,0.05); border-radius: 0 4px 4px 0; }
+  .md-content a { color: var(--accent); }
+
+  .pipeline { display: flex; flex-wrap: wrap; align-items: center; gap: 0.2rem; font-size: 0.8rem; margin-bottom: 0.4rem; }
+  .pipe-step { background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: 0.2rem 0.5rem; white-space: nowrap; }
+  .pipe-arrow { color: var(--muted); font-size: 0.7rem; }
+  .role { font-size: 0.8rem; padding: 0.15rem 0; }
+
+  .pr { padding: 0.3rem 0; border-bottom: 1px solid var(--border); font-size: 0.8rem; }
+  .pr:last-child { border-bottom: none; }
+  .pr a { color: var(--text); text-decoration: none; }
+  .pr a:hover { color: var(--accent); }
+  .pr-num { color: var(--muted); margin-right: 0.3rem; }
+  .pr-date { color: var(--muted); font-size: 0.7rem; }
+  .pr-merged { color: var(--green); } .pr-open { color: var(--yellow); } .pr-closed { color: var(--red); }
+  .scroll { max-height: 500px; overflow-y: auto; }
+
+  .audit-card { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; margin-bottom: 0.5rem; overflow: hidden; }
+  .audit-header { padding: 0.6rem 0.75rem; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+  .audit-header:hover { background: #1c2129; }
+  .audit-left { display: flex; flex-direction: column; gap: 0.1rem; flex: 1; min-width: 0; }
+  .audit-name { font-size: 0.95rem; font-weight: 600; }
+  .audit-meta { font-size: 0.72rem; color: var(--muted); }
+  .audit-grade { font-size: 1.1rem; font-weight: 700; padding: 0.15rem 0.5rem; border-radius: 4px; flex-shrink: 0; margin-left: 0.5rem; }
+  .grade-a { background: #0d2818; color: var(--green); border: 1px solid var(--green); }
+  .grade-b { background: #1a1d04; color: var(--yellow); border: 1px solid var(--yellow); }
+  .grade-c { background: #2a1a04; color: #e3b341; border: 1px solid #e3b341; }
+  .grade-d { background: #2d0b0b; color: var(--red); border: 1px solid var(--red); }
+  .grade-unknown { background: var(--surface); color: var(--muted); border: 1px solid var(--border); }
+  .audit-body { display: none; border-top: 1px solid var(--border); }
+  .audit-body.open { display: block; }
+  .audit-body .md-content { padding: 0.75rem; background: var(--bg); }
+
+  .loading { color: var(--muted); font-style: italic; font-size: 0.8rem; }
+  .error { color: var(--red); font-size: 0.8rem; }
+
+  details.section-group { margin: 1.2rem 0 0.5rem; border-bottom: 1px solid var(--border); padding-bottom: 0.4rem; }
+  details.section-group > summary.section-summary { cursor: pointer; background: transparent; border: none; border-radius: 0; padding: 0.25rem 0; font-size: 1.05rem; font-weight: 600; color: var(--accent); list-style: none; display: flex; align-items: center; gap: 0.5rem; }
+  details.section-group > summary.section-summary::-webkit-details-marker { display: none; }
+  details.section-group > summary.section-summary::before { content: '▶'; font-size: 0.7rem; transition: transform 0.2s; color: var(--accent); }
+  details.section-group[open] > summary.section-summary::before { transform: rotate(90deg); }
+  details.section-group > .section-body { margin-top: 0.5rem; }
+  .section-count { font-weight: normal; color: var(--muted); font-size: 0.8rem; }
+  .pinned-badge { font-size: 0.65rem; background: var(--accent); color: var(--bg); padding: 0.1rem 0.35rem; border-radius: 3px; font-weight: 700; margin-left: 0.4rem; vertical-align: middle; }
+
+  /* Project Pulse */
+  .pulse { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 0.55rem 0.75rem; margin: 0.75rem 0 0.5rem; display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem 1.1rem; font-size: 0.8rem; }
+  .pulse-title { font-weight: 700; color: var(--accent); font-size: 0.85rem; margin-right: 0.2rem; white-space: nowrap; }
+  .pulse-item { display: flex; align-items: center; gap: 0.35rem; white-space: nowrap; }
+  .pulse-label { color: var(--muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.03em; }
+  .pulse-value { color: var(--text); font-weight: 600; }
+  .pulse-dim { color: var(--muted); font-weight: 400; }
+  .pulse-trend { display: inline-flex; gap: 0.2rem; align-items: center; }
+  .pulse-pill { display: inline-block; min-width: 1.4rem; text-align: center; padding: 0.05rem 0.3rem; border-radius: 3px; font-size: 0.7rem; font-weight: 700; border: 1px solid transparent; line-height: 1.2; }
+  .pulse-pill.p-green  { background: #0d2818; color: var(--green);   border-color: var(--green); }
+  .pulse-pill.p-lime   { background: #152611; color: #8ddb5a;         border-color: #8ddb5a; }
+  .pulse-pill.p-yellow { background: #1a1d04; color: var(--yellow);  border-color: var(--yellow); }
+  .pulse-pill.p-orange { background: #2a1a04; color: #e3a341;         border-color: #e3a341; }
+  .pulse-pill.p-red    { background: #2d0b0b; color: var(--red);     border-color: var(--red); }
+  .pulse-pill.p-unknown{ background: var(--bg); color: var(--muted);  border-color: var(--border); }
+  .pulse-commit-msg { color: var(--text); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.75rem; max-width: 32ch; overflow: hidden; text-overflow: ellipsis; }
+  .pulse-loading { color: var(--muted); font-style: italic; }
+  .pulse-trend-wrap { display: inline-flex; flex-direction: column; gap: 0.1rem; align-items: stretch; }
+  .pulse-trend-pills { display: inline-flex; gap: 0.2rem; align-items: flex-end; }
+  .pulse-trend-cell { display: inline-flex; flex-direction: column; align-items: center; gap: 0.05rem; }
+  .pulse-trend-sprint { font-size: 0.58rem; color: var(--muted); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; line-height: 1; }
+  .pulse-trend-axis { font-size: 0.6rem; color: var(--muted); display: flex; justify-content: space-between; margin-top: 0.05rem; letter-spacing: 0.02em; }
+  @media (max-width: 640px) { .pulse-commit-msg { max-width: 20ch; } }
+
+  /* Rate-limit banner (top strip, muted, non-modal) */
+  #rate-limit-banner { display: none; background: var(--surface); border-bottom: 1px solid var(--yellow); color: var(--yellow); padding: 0.4rem 0.75rem; font-size: 0.8rem; text-align: center; position: sticky; top: 0; z-index: 100; }
+  #rate-limit-banner .rlb-close { float: right; cursor: pointer; color: var(--muted); background: none; border: none; font-size: 0.95rem; line-height: 1; padding: 0 0.3rem; font-family: inherit; }
+  #rate-limit-banner .rlb-close:hover { color: var(--text); }
+
+  /* Empty state (distinct from error red) */
+  .empty-state { color: var(--muted); font-size: 0.8rem; font-style: italic; }
+
+  /* Focus ring for keyboard-accessible cards */
+  .audit-header:focus { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .audit-header:focus:not(:focus-visible) { outline: none; }
+
+  /* Refresh button */
+  #btn-refresh { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 0.3rem 0.55rem; color: var(--accent); font-size: 0.8rem; cursor: pointer; font-family: inherit; }
+  #btn-refresh:hover { border-color: var(--accent); background: #1c2129; }
+
+  /* Audit provenance line */
+  .audit-provenance { font-size: 0.68rem; color: var(--muted); margin-top: 0.1rem; }
+  .audit-provenance a { color: var(--muted); text-decoration: underline; text-decoration-color: var(--border); }
+  .audit-provenance a:hover { color: var(--accent); text-decoration-color: var(--accent); }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+<div id="rate-limit-banner" role="status" aria-live="polite"><span id="rlb-text"></span><button class="rlb-close" type="button" aria-label="Dismiss" onclick="hideRateLimitBanner()">×</button></div>
+
+<div class="header">
+  <img src="icon.png" alt="Brott Studio">
+  <h1>Brott Studio</h1>
+  <div style="flex:1"></div>
+  <select id="project-picker" style="background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:4px;padding:0.3rem 0.5rem;font-size:0.85rem;display:none">
+    <option>Loading…</option>
+  </select>
+  <button id="btn-refresh" type="button" title="Refresh" aria-label="Refresh">↻</button>
+  <a id="link-live" href="#" target="_blank" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:0.3rem 0.55rem;color:var(--accent);text-decoration:none;font-size:0.8rem">▶ Live Build</a>
+</div>
+
+<p class="subtitle">100100 Productions <span style="color:var(--border);margin:0 0.4rem">│</span> AI Agent Studio</p>
+<p class="mission">Mission: Quality over speed. Ship it right, not just fast.</p>
+
+<!-- SECTION: Project (moved above Studio — executive summary first) -->
+<div class="section-header">
+  <h2>📊 Project</h2>
+  <div class="section-links">
+    <a href="" id="link-repo" target="_blank">repo</a>
+    <a href="" id="link-game" target="_blank">play</a>
+    <a href="https://github.com/brott-studio/studio-audits" target="_blank">audits</a>
+  </div>
+</div>
+
+<!-- Project Pulse: at-a-glance executive summary -->
+<div class="pulse" id="project-pulse">
+  <span class="pulse-title">📊 Project Pulse</span>
+  <span class="pulse-loading" id="pulse-loading">Loading…</span>
+</div>
+
+<details>
+  <summary>📄 Game Design Document</summary>
+  <div class="inner md-content" id="gdd-content">
+    <p class="loading">Loading...</p>
+  </div>
+</details>
+
+<details>
+  <summary>🔀 Pull Requests <span id="pr-count" style="font-weight:normal;color:var(--muted);font-size:0.8rem;margin-left:0.3rem"></span></summary>
+  <div class="inner scroll" id="pr-list">
+    <p class="loading">Loading PRs...</p>
+  </div>
+</details>
+
+<details>
+  <summary>⚙️ CI/CD Runs <span id="ci-count" style="font-weight:normal;color:var(--muted);font-size:0.8rem;margin-left:0.3rem"></span></summary>
+  <div class="inner scroll" id="ci-list">
+    <p class="loading">Loading runs...</p>
+  </div>
+</details>
+
+<details class="section-group">
+  <summary class="section-summary">🕵️ Sprint Audits <span id="audit-count" class="section-count"></span></summary>
+  <div id="audit-list" class="section-body">
+    <p class="loading">Loading audits...</p>
+  </div>
+</details>
+
+<details class="section-group">
+  <summary class="section-summary">📐 Design Docs <span id="design-count" class="section-count"></span></summary>
+  <div id="design-list" class="section-body">
+    <p class="loading">Loading design docs...</p>
+  </div>
+</details>
+
+<details class="section-group">
+  <summary class="section-summary">📚 Knowledge Base <span id="kb-count" class="section-count"></span></summary>
+  <div id="kb-list" class="section-body">
+    <p class="loading">Loading KB entries...</p>
+  </div>
+</details>
+
+<!-- SECTION: Studio (moved below Project — reference material, not executive summary) -->
+<div class="section-header">
+  <h2>🏭 Studio</h2>
+  <div class="section-links">
+    <a href="https://github.com/brott-studio/studio-framework" target="_blank">repo</a>
+    <a href="https://github.com/brott-studio/studio-framework/blob/main/PIPELINE.md" target="_blank">pipeline</a>
+  </div>
+</div>
+
+<details>
+  <summary>📖 Framework</summary>
+  <div class="inner md-content" id="framework-content">
+    <p class="loading">Loading...</p>
+  </div>
+</details>
+
+<details>
+  <summary>📋 Pipeline & Roles</summary>
+  <div class="inner md-content" id="pipeline-content">
+    <p class="loading">Loading...</p>
+  </div>
+</details>
+
+<script>
+const ORG = 'brott-studio';
+const FRAMEWORK_REPO = 'studio-framework';
+const API = 'https://api.github.com';
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes (default)
+const AUDIT_CACHE_TTL = 2 * 60 * 1000; // 2 minutes (audit lists update frequently)
+const DISCOVERY_TTL = 5 * 60 * 1000; // org-project discovery
+const NO_CACHE = new URLSearchParams(window.location.search).has('nocache') || new URLSearchParams(window.location.search).has('refresh');
+
+// Hard-coded defaults preserve today's dashboard behavior for projects
+// without a .studio/project.json manifest.
+const DEFAULTS = {
+  auditRepo: 'studio-audits',
+  paths: { gdd: 'docs/gdd.md', designDocs: 'docs/design', kb: 'docs/kb' },
+  ciWorkflows: null,  // null = show all
+  liveUrl: null,
+};
+
+// CFG is populated by loadManifest() before any loaders run.
+// All fetches below read from CFG, not top-level constants.
+let CFG = {
+  project: null,
+  displayName: null,
+  org: ORG,
+  auditRepo: DEFAULTS.auditRepo,
+  auditFolder: null,  // defaults to project name
+  paths: { ...DEFAULTS.paths },
+  ciWorkflows: DEFAULTS.ciWorkflows,
+  liveUrl: DEFAULTS.liveUrl,
+};
+
+// Escape user-controlled strings before injecting into innerHTML.
+// Use this for any raw string that isn't already rendered HTML (marked() output is fine).
+function escapeHtml(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// Sentinel for 404 responses so callers can distinguish "empty folder" from "real error".
+const NOT_FOUND = Symbol('notFound');
+
+// --- Rate-limit banner (session-only state; shows on 403 + X-RateLimit-Remaining: 0) ---
+let _rlbResetEpoch = 0;
+let _rlbTimer = null;
+function showRateLimitBanner(resetEpoch) {
+  _rlbResetEpoch = resetEpoch || 0;
+  const banner = document.getElementById('rate-limit-banner');
+  const text = document.getElementById('rlb-text');
+  if (!banner || !text) return;
+  const resetStr = _rlbResetEpoch ? new Date(_rlbResetEpoch * 1000).toLocaleTimeString() : 'soon';
+  text.textContent = `⚠️ GitHub API rate limit reached. Resets at ${resetStr} local. Dashboard data may be stale.`;
+  banner.style.display = '';
+  if (!_rlbTimer) {
+    _rlbTimer = setInterval(() => {
+      if (_rlbResetEpoch && Date.now() >= _rlbResetEpoch * 1000) hideRateLimitBanner();
+    }, 30000);
+  }
+}
+function hideRateLimitBanner() {
+  const banner = document.getElementById('rate-limit-banner');
+  if (banner) banner.style.display = 'none';
+  if (_rlbTimer) { clearInterval(_rlbTimer); _rlbTimer = null; }
+  _rlbResetEpoch = 0;
+}
+
+// cachedFetch
+// - In-TTL: serves from localStorage, no network hit.
+// - TTL expired but we have an ETag: sends If-None-Match. 304 → serve cached body and refresh ts
+//   (304s don't count against GitHub's anonymous rate limit). 200 → update body + etag in cache.
+// - Old cache entries without an etag field are handled gracefully (treated as no-etag).
+function cachedFetch(url, opts) {
+  const key = 'ghcache:' + url;
+  if (NO_CACHE) { try { localStorage.removeItem(key); } catch(e) {} }
+  const ttl = url.includes('/contents/audits/') ? AUDIT_CACHE_TTL : CACHE_TTL;
+  let cachedEntry = null;
+  try {
+    if (!NO_CACHE) {
+      const raw = localStorage.getItem(key);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        // Backwards compat: old entries are { ts, data }; new entries add optional { etag }.
+        if (parsed && typeof parsed === 'object' && 'ts' in parsed && 'data' in parsed) {
+          cachedEntry = parsed;
+          if (Date.now() - cachedEntry.ts < ttl) {
+            const data = cachedEntry.data;
+            return Promise.resolve({ ok: true, notFound: false, json: () => Promise.resolve(data), text: () => Promise.resolve(data) });
+          }
+        }
+      }
+    }
+  } catch(e) { cachedEntry = null; }
+
+  // TTL expired (or no cache). If we have an etag, send conditional request.
+  const fetchOpts = Object.assign({}, opts || {});
+  if (cachedEntry && cachedEntry.etag) {
+    const headers = Object.assign({}, fetchOpts.headers || {});
+    headers['If-None-Match'] = cachedEntry.etag;
+    fetchOpts.headers = headers;
+  }
+
+  return fetch(url, fetchOpts).then(res => {
+    // Rate-limit: 403 with x-ratelimit-remaining: 0 → banner, signal failure to caller.
+    if (res.status === 403 && res.headers.get('x-ratelimit-remaining') === '0') {
+      const reset = parseInt(res.headers.get('x-ratelimit-reset') || '0', 10) || 0;
+      showRateLimitBanner(reset);
+      return { ok: false, rateLimited: true, status: 403, json: () => Promise.resolve({}), text: () => Promise.resolve('') };
+    }
+    // Any successful response → clear banner (covers recovery, even if user dismissed).
+    if (res.ok || res.status === 304) hideRateLimitBanner();
+    // 304 Not Modified → cached body is still valid; refresh ts so TTL restarts.
+    if (res.status === 304 && cachedEntry) {
+      try { localStorage.setItem(key, JSON.stringify({ ts: Date.now(), etag: cachedEntry.etag, data: cachedEntry.data })); } catch(e) {}
+      const data = cachedEntry.data;
+      return { ok: true, notFound: false, json: () => Promise.resolve(data), text: () => Promise.resolve(data) };
+    }
+    // 404 → sentinel so callers render "empty" instead of red "HTTP 404" error.
+    if (res.status === 404) {
+      return { ok: false, notFound: true, status: 404, json: () => Promise.resolve({ notFound: true }), text: () => Promise.resolve('') };
+    }
+    if (!res.ok) return res;
+    const etag = res.headers.get('etag') || null;
+    const ct = res.headers.get('content-type') || '';
+    const isJson = ct.includes('json');
+    return (isJson ? res.json() : res.text()).then(body => {
+      try {
+        const entry = { ts: Date.now(), data: body };
+        if (etag) entry.etag = etag;
+        localStorage.setItem(key, JSON.stringify(entry));
+      } catch(e) {}
+      return { ok: true, notFound: false, json: () => Promise.resolve(body), text: () => Promise.resolve(body) };
+    });
+  });
+}
+const params = new URLSearchParams(window.location.search);
+const PROJECT = params.get('project') || 'battlebrotts-v2';
+const AUDIT_FOLDER_OVERRIDE = params.get('audit_folder');
+
+// ---------- Manifest + project discovery ----------
+async function loadManifest(project) {
+  // Try to fetch .studio/project.json from the project repo.
+  // Missing fields fall back to DEFAULTS; a 404 means "legacy project" and we use all defaults.
+  let manifest = null;
+  try {
+    const r = await fetch(`https://raw.githubusercontent.com/${ORG}/${project}/main/.studio/project.json`);
+    if (r.ok) manifest = await r.json();
+  } catch(e) { /* ignore, use defaults */ }
+
+  const m = manifest || {};
+  const paths = Object.assign({}, DEFAULTS.paths, m.paths || {});
+  CFG = {
+    project,
+    displayName: m.displayName || project,
+    org: m.org || ORG,
+    auditRepo: m.auditRepo || DEFAULTS.auditRepo,
+    auditFolder: AUDIT_FOLDER_OVERRIDE || m.auditFolder || project,
+    paths,
+    ciWorkflows: Array.isArray(m.ciWorkflows) && m.ciWorkflows.length ? m.ciWorkflows : DEFAULTS.ciWorkflows,
+    liveUrl: m.liveUrl || null,
+  };
+  return CFG;
+}
+
+async function discoverProjects() {
+  // Returns [{name, displayName}]. Uses GitHub code search to find repos with .studio/project.json,
+  // replacing the old approach of probing up to 60 repos individually.
+  // Fallback: if search API fails or rate-limits, use a hardcoded minimal list so the dashboard
+  // still works. Discovery is non-critical background work; never surface errors to the user.
+  const discKey = 'ghcache:discover:' + ORG;
+  if (!NO_CACHE) {
+    try {
+      const cached = localStorage.getItem(discKey);
+      if (cached) {
+        const { ts, data } = JSON.parse(cached);
+        if (Date.now() - ts < DISCOVERY_TTL && Array.isArray(data)) return data;
+      }
+    } catch(e) {}
+  } else {
+    try { localStorage.removeItem(discKey); } catch(e) {}
+  }
+
+  const FALLBACK = [{ name: 'battlebrotts-v2', displayName: 'battlebrotts-v2' }];
+
+  // 1. Single search call to locate project.json manifests across the org.
+  let repoNames = [];
+  try {
+    const q = encodeURIComponent(`filename:project.json path:.studio org:${ORG}`);
+    const r = await fetch(`${API}/search/code?q=${q}`);
+    if (!r.ok) {
+      console.warn('[discoverProjects] search API returned', r.status, '— falling back to hardcoded list');
+      return FALLBACK;
+    }
+    const body = await r.json();
+    const items = Array.isArray(body && body.items) ? body.items : [];
+    const seen = new Set();
+    for (const it of items) {
+      const name = it && it.repository && it.repository.name;
+      if (name && !seen.has(name)) { seen.add(name); repoNames.push(name); }
+    }
+  } catch(e) {
+    console.warn('[discoverProjects] search API threw', e, '— falling back to hardcoded list');
+    return FALLBACK;
+  }
+
+  if (repoNames.length === 0) {
+    // Empty results is a legitimate outcome (no projects registered yet); cache and return empty.
+    try { localStorage.setItem(discKey, JSON.stringify({ ts: Date.now(), data: [] })); } catch(e) {}
+    return [];
+  }
+
+  // 2. Fetch each manifest's raw content to pick up displayName (typically 1-2 requests).
+  const results = await Promise.all(repoNames.map(async (name) => {
+    try {
+      const resp = await fetch(`https://raw.githubusercontent.com/${ORG}/${name}/main/.studio/project.json`);
+      if (!resp.ok) return { name, displayName: name };
+      const m = await resp.json().catch(() => ({}));
+      return { name, displayName: (m && m.displayName) || name };
+    } catch(e) { return { name, displayName: name }; }
+  }));
+  const found = results.sort((a, b) => a.name.localeCompare(b.name));
+  try { localStorage.setItem(discKey, JSON.stringify({ ts: Date.now(), data: found })); } catch(e) {}
+  return found;
+}
+
+function applyHeaderLinks() {
+  document.getElementById('link-game').href = `https://${ORG}.github.io/${CFG.project}/game/`;
+  document.getElementById('link-repo').href = `https://github.com/${ORG}/${CFG.project}`;
+  const live = document.getElementById('link-live');
+  if (CFG.liveUrl) { live.href = CFG.liveUrl; live.style.display = ''; }
+  else { live.style.display = 'none'; }
+}
+
+async function populateProjectPicker() {
+  const sel = document.getElementById('project-picker');
+  const projects = await discoverProjects();
+  // If discovery returned nothing, include the current project so user isn't stuck on empty.
+  if (!projects.find(p => p.name === CFG.project)) {
+    projects.unshift({ name: CFG.project, displayName: CFG.displayName || CFG.project });
+  }
+  sel.innerHTML = projects.map(p =>
+    `<option value="${p.name}"${p.name === CFG.project ? ' selected' : ''}>${p.displayName}</option>`
+  ).join('');
+  sel.style.display = '';
+  sel.addEventListener('change', () => {
+    const next = new URLSearchParams(window.location.search);
+    next.set('project', sel.value);
+    window.location.search = next.toString();
+  });
+}
+
+function md2html(md) {
+  const renderer = new marked.Renderer();
+  const origLink = renderer.link.bind(renderer);
+  renderer.link = function(href, title, text) {
+    // Handle both old and new marked.js API
+    if (typeof href === 'object') {
+      const token = href;
+      return `<a href="${escapeHtml(token.href)}" target="_blank"${token.title ? ' title="'+escapeHtml(token.title)+'"' : ''}>${token.text}</a>`;
+    }
+    return `<a href="${escapeHtml(href)}" target="_blank"${title ? ' title="'+escapeHtml(title)+'"' : ''}>${text}</a>`;
+  };
+  marked.setOptions({ breaks: false, gfm: true, headerIds: false, mangle: false, renderer: renderer });
+  return marked.parse(md);
+}
+
+function extractGrade(text) {
+  // Normalize unicode minus (U+2212) and en-dash (U+2013) to ASCII hyphen
+  // so audits written with "A−" (typographic minus) parse correctly.
+  const norm = text.replace(/[\u2212\u2013]/g, '-');
+  const m = norm.match(/Grade[:\s*]*([A-F][+-]?)/i) || norm.match(/Overall[^A-F\n]*([A-F][+-]?)/i);
+  return m ? m[1].toUpperCase() : null;
+}
+
+function extractTitle(text) {
+  const m = text.match(/^#+\s+(.+)/m);
+  if (m) {
+    let t = m[1].replace(/^Sprint \d+\s*/i, '').replace(/^Audit[:\s—-]*/i, '').replace(/^\(v2\)\s*/i,'').trim();
+    if (t && t.length > 3) return t;
+  }
+  return null;
+}
+
+function extractDate(text) {
+  const m = text.match(/\d{4}-\d{2}-\d{2}T[\d:]+Z/) || text.match(/\d{4}-\d{2}-\d{2}/);
+  return m ? m[0] : null;
+}
+
+function gradeClass(g) {
+  if (!g) return 'grade-unknown';
+  if (g.startsWith('A')) return 'grade-a';
+  if (g.startsWith('B')) return 'grade-b';
+  if (g.startsWith('C')) return 'grade-c';
+  return 'grade-d';
+}
+
+function extractHeading(md) {
+  const match = md.match(/^#\s+(.+)$/m);
+  return match ? match[1].trim() : null;
+}
+
+async function loadFramework() {
+  const el = document.getElementById('framework-content');
+  try {
+    const r = await fetch(`https://raw.githubusercontent.com/${ORG}/${FRAMEWORK_REPO}/main/FRAMEWORK.md`);
+    el.innerHTML = md2html(await r.text());
+  } catch(e) { el.innerHTML = `<p class="error">Failed to load</p>`; }
+}
+
+async function loadPipeline() {
+  const el = document.getElementById('pipeline-content');
+  try {
+    const r = await fetch(`https://raw.githubusercontent.com/${ORG}/${FRAMEWORK_REPO}/main/PIPELINE.md`);
+    el.innerHTML = md2html(await r.text());
+  } catch(e) { el.innerHTML = `<p class="error">Failed to load</p>`; }
+}
+
+async function loadGDD() {
+  const el = document.getElementById('gdd-content');
+  try {
+    const r = await fetch(`https://raw.githubusercontent.com/${ORG}/${CFG.project}/main/${CFG.paths.gdd}`);
+    if (r.status === 404) { el.innerHTML = '<p class="empty-state">No GDD yet</p>'; return; }
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    el.innerHTML = md2html(await r.text());
+  } catch(e) { el.innerHTML = `<p class="error">Failed to load</p>`; }
+}
+
+
+async function loadCI() {
+  const el = document.getElementById('ci-list');
+  const countEl = document.getElementById('ci-count');
+  try {
+    const res = await cachedFetch(`${API}/repos/${ORG}/${CFG.project}/actions/runs?per_page=50`);
+    const data = await res.json();
+    let runs = data.workflow_runs;
+    if (!Array.isArray(runs)) throw new Error(data.message || 'API error');
+    // If manifest pins a ciWorkflows list, filter to those workflow files.
+    if (Array.isArray(CFG.ciWorkflows) && CFG.ciWorkflows.length) {
+      const wanted = new Set(CFG.ciWorkflows);
+      runs = runs.filter(r => {
+        const p = (r.path || '').split('/').pop();
+        return wanted.has(p);
+      });
+    }
+    countEl.textContent = `(${runs.length})`;
+    if (runs.length === 0) { el.innerHTML = '<p style="color:var(--muted)">No CI runs yet</p>'; return; }
+    el.innerHTML = runs.map(r => {
+      const icon = r.conclusion === 'success' ? '✅' : r.conclusion === 'failure' ? '❌' : r.status === 'in_progress' ? '🔄' : r.conclusion === 'skipped' ? '⏭️' : '⚪';
+      const d = new Date(r.created_at);
+      const date = `${d.getMonth()+1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}`;
+      const name = r.name.length > 30 ? r.name.substring(0,30) + '…' : r.name;
+      return `<div class="pr"><span class="pr-date" style="float:none;margin-right:0.4rem">${date}</span>${icon} <a href="${escapeHtml(r.html_url)}" target="_blank">${escapeHtml(name)}</a></div>`;
+    }).join('');
+  } catch(e) { el.innerHTML = `<p class="error">${escapeHtml(e.message)}</p>`; }
+}
+
+
+async function loadKB() {
+  const el = document.getElementById('kb-list');
+  const kbCountEl = document.getElementById('kb-count');
+  try {
+    // Flat fetch: <paths.kb>/*.md (no subfolders)
+    const res = await cachedFetch(`${API}/repos/${ORG}/${CFG.project}/contents/${CFG.paths.kb}`);
+    if (res.notFound) {
+      el.innerHTML = '<p class="empty-state">No KB entries yet</p>';
+      if (kbCountEl) kbCountEl.textContent = '(0)';
+      return;
+    }
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const files = await res.json();
+    if (!Array.isArray(files)) throw new Error(files.message || 'API error');
+
+    const allEntries = files
+      .filter(f => f.type === 'file' && f.name.endsWith('.md') && f.name !== '.gitkeep')
+      .map(f => ({ name: f.name, url: f.html_url, download: f.download_url }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+
+    if (kbCountEl) kbCountEl.textContent = `(${allEntries.length})`;
+    if (allEntries.length === 0) {
+      el.innerHTML = '<p class="empty-state">No KB entries yet</p>';
+      return;
+    }
+
+    el.innerHTML = allEntries.map((entry, i) => {
+      const title = entry.name.replace(/\.md$/, '').split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+      return `<div class="audit-card">
+        <div class="audit-header" role="button" tabindex="0" aria-expanded="false" data-toggle="kb" data-idx="${i}">
+          <div class="audit-left">
+            <div class="audit-name">📚 ${escapeHtml(title)}</div>
+            <div class="audit-meta">${escapeHtml(entry.name)}</div>
+          </div>
+        </div>
+        <div class="audit-body" id="kb-${i}"></div>
+      </div>`;
+    }).join('');
+
+    // Store download URLs for lazy loading
+    window._kbEntries = allEntries;
+  } catch(e) { el.innerHTML = `<p class="error">${escapeHtml(e.message)}</p>`; }
+}
+
+async function toggleKB(i) {
+  const el = document.getElementById(`kb-${i}`);
+  if (el.classList.contains('open')) { el.classList.remove('open'); return; }
+  if (!el.dataset.loaded) {
+    el.innerHTML = '<div class="md-content"><p class="loading">Loading...</p></div>';
+    el.classList.add('open');
+    try {
+      const r = await fetch(window._kbEntries[i].download);
+      const md = await r.text();
+      el.innerHTML = `<div class="md-content">${md2html(md)}</div>`;
+      el.dataset.loaded = 'true';
+    } catch(e) { el.innerHTML = '<div class="md-content"><p class="error">Failed to load</p></div>'; }
+  } else { el.classList.add('open'); }
+}
+
+async function loadPRs() {
+  const el = document.getElementById('pr-list');
+  const countEl = document.getElementById('pr-count');
+  try {
+    const res = await cachedFetch(`${API}/repos/${ORG}/${CFG.project}/pulls?state=all&sort=created&direction=desc&per_page=100`);
+    const prs = await res.json();
+    if (!Array.isArray(prs)) throw new Error(prs.message || 'API error');
+    countEl.textContent = `(${prs.length})`;
+    if (prs.length === 0) { el.innerHTML = '<p style="color:var(--muted)">No PRs yet</p>'; return; }
+    el.innerHTML = prs.map(pr => {
+      const state = pr.merged_at ? 'merged' : pr.state;
+      const cls = state === 'merged' ? 'pr-merged' : state === 'open' ? 'pr-open' : 'pr-closed';
+      const icon = state === 'merged' ? '✅' : state === 'open' ? '🟡' : '❌';
+      const d = new Date(pr.merged_at || pr.closed_at || pr.created_at);
+      const date = `${d.getMonth()+1}/${d.getDate()}`;
+      return `<div class="pr"><span class="pr-num">#${pr.number}</span><span class="${cls}">${icon}</span> <a href="${escapeHtml(pr.html_url)}" target="_blank">${escapeHtml(pr.title)}</a> <span class="pr-date">${date}</span></div>`;
+    }).join('');
+  } catch(e) { el.innerHTML = `<p class="error">${escapeHtml(e.message)}</p>`; }
+}
+
+async function loadAudits() {
+  const el = document.getElementById('audit-list');
+  try {
+    const res = await cachedFetch(`${API}/repos/${ORG}/${CFG.auditRepo}/contents/audits/${CFG.auditFolder}`);
+    if (res.notFound) {
+      const auditCountEl = document.getElementById('audit-count');
+      if (auditCountEl) auditCountEl.textContent = '(0)';
+      el.innerHTML = '<p class="empty-state">No audits yet</p>';
+      window._auditModel = [];
+      window._auditModelReady && window._auditModelReady([]);
+      return [];
+    }
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const files = await res.json();
+    if (!Array.isArray(files)) throw new Error(files.message || 'No audits');
+    const audits = files.filter(f => f.name.endsWith('.md'));
+    const auditCountEl = document.getElementById('audit-count');
+    if (auditCountEl) auditCountEl.textContent = `(${audits.length})`;
+    if (audits.length === 0) {
+      el.innerHTML = '<p class="empty-state">No audits yet</p>';
+      window._auditModel = [];
+      window._auditModelReady && window._auditModelReady([]);
+      return [];
+    }
+
+    el.innerHTML = '<p class="loading">Loading audit details...</p>';
+
+    // Single source of truth: fetch markdown + commit once per audit, store
+    // everything (markdown, grade, commit metadata) on a shared model that
+    // Project Pulse reads from (no re-fetch).
+    let cardData = await Promise.all(audits.map(async (a) => {
+      try {
+        const [mdRes, commitRes] = await Promise.all([
+          fetch(a.download_url).then(r => r.text()),
+          cachedFetch(`${API}/repos/${ORG}/${CFG.auditRepo}/commits?path=audits/${CFG.auditFolder}/${encodeURIComponent(a.name)}&per_page=1`)
+            .then(r => r.ok ? r.json() : []).catch(() => []),
+        ]);
+        const md = mdRes;
+        const grade = extractGrade(md);
+        const heading = extractHeading(md) || a.name.replace('.md','');
+        const contentDate = extractDate(md);
+        const dateStr = contentDate ? new Date(contentDate).toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'}) : '\u2014';
+        const commit = Array.isArray(commitRes) && commitRes[0] ? commitRes[0] : null;
+        const commitDateStr = commit && commit.commit
+          ? (commit.commit.committer && commit.commit.committer.date) || (commit.commit.author && commit.commit.author.date)
+          : null;
+        const sortTime = commitDateStr ? new Date(commitDateStr).getTime() : 0;
+        const key = parseSprintKey(a.name);
+        const sprintShort = formatSprintShort(key);
+        return {
+          sortTime, contentDate, dateStr, name: a.name, key, sprintShort,
+          grade, heading, markdown: md, commit,
+          html_url: a.html_url, download_url: a.download_url,
+        };
+      } catch(e) {
+        const key = parseSprintKey(a.name);
+        return {
+          sortTime: 0, contentDate: null, dateStr: '\u2014', name: a.name, key, sprintShort: formatSprintShort(key),
+          grade: null, heading: a.name, markdown: '', commit: null,
+          html_url: a.html_url, download_url: a.download_url, error: true,
+        };
+      }
+    }));
+    cardData.sort(compareAuditsDesc);
+    // Expose shared model for Project Pulse (reads, never re-fetches).
+    window._auditModel = cardData;
+    window._auditsSorted = cardData; // legacy alias
+
+    el.innerHTML = cardData.map((c, i) => {
+      const gradeHtml = c.grade
+        ? `<span class="audit-grade ${gradeClass(c.grade)}">${escapeHtml(c.grade)}</span>`
+        : `<span class="audit-grade grade-unknown" title="No grade found in audit markdown (source missing)">—</span>`;
+      // Provenance: committer + relative time + short SHA link to GitHub
+      let provenance = '';
+      if (c.commit) {
+        const authorName = (c.commit.author && c.commit.author.login)
+          || (c.commit.commit && c.commit.commit.author && c.commit.commit.author.name)
+          || (c.commit.commit && c.commit.commit.committer && c.commit.commit.committer.name)
+          || 'unknown';
+        const commitDate = (c.commit.commit && c.commit.commit.committer && c.commit.commit.committer.date)
+          || (c.commit.commit && c.commit.commit.author && c.commit.commit.author.date);
+        const when = relTime(commitDate);
+        const sha = (c.commit.sha || '').slice(0, 7);
+        const cUrl = c.commit.html_url || c.html_url || '#';
+        provenance = `<div class="audit-provenance">↳ committed by ${escapeHtml(authorName)} · ${escapeHtml(when)} · <a href="${escapeHtml(cUrl)}" target="_blank" rel="noopener">${escapeHtml(sha)}</a></div>`;
+      } else if (c.html_url) {
+        provenance = `<div class="audit-provenance">↳ <a href="${escapeHtml(c.html_url)}" target="_blank" rel="noopener">view on GitHub</a></div>`;
+      }
+      return `<div class="audit-card">
+        <div class="audit-header" role="button" tabindex="0" aria-expanded="false" data-toggle="audit" data-idx="${i}">
+          <div class="audit-left">
+            <div class="audit-name">${escapeHtml(c.heading)}</div>
+            <div class="audit-meta">${escapeHtml(c.sprintShort)} · ${escapeHtml(c.dateStr)}</div>
+            ${provenance}
+          </div>
+          ${gradeHtml}
+        </div>
+        <div class="audit-body" id="audit-${i}"><div class="md-content">${md2html(c.markdown || '')}</div></div>
+      </div>`;
+    }).join('');
+    window._auditModelReady && window._auditModelReady(cardData);
+    return cardData;
+  } catch(e) {
+    el.innerHTML = `<p class="error">${escapeHtml(e.message)}</p>`;
+    window._auditModelReady && window._auditModelReady([]);
+    return [];
+  }
+}
+
+// ---------- Keyboard-accessible card toggles ----------
+// Cards use data-toggle="audit|kb|design" + data-idx. One delegated handler
+// wires click + Enter/Space so keyboard users can expand any card.
+function _dispatchToggle(kind, idx) {
+  if (kind === 'audit') return toggleAudit(idx);
+  if (kind === 'kb') return toggleKB(idx);
+  if (kind === 'design') return toggleDesignDoc(idx);
+}
+function _updateAriaExpanded(el) {
+  const idx = el.getAttribute('data-idx');
+  const kind = el.getAttribute('data-toggle');
+  if (!idx || !kind) return;
+  const body = document.getElementById(`${kind === 'design' ? 'design' : kind === 'kb' ? 'kb' : 'audit'}-${idx}`);
+  if (body) el.setAttribute('aria-expanded', body.classList.contains('open') ? 'true' : 'false');
+}
+document.addEventListener('click', (e) => {
+  const hdr = e.target.closest('.audit-header[data-toggle]');
+  if (!hdr) return;
+  const kind = hdr.getAttribute('data-toggle');
+  const idx = parseInt(hdr.getAttribute('data-idx'), 10);
+  Promise.resolve(_dispatchToggle(kind, idx)).then(() => _updateAriaExpanded(hdr));
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Enter' && e.key !== ' ') return;
+  const hdr = e.target.closest && e.target.closest('.audit-header[data-toggle]');
+  if (!hdr) return;
+  e.preventDefault();
+  const kind = hdr.getAttribute('data-toggle');
+  const idx = parseInt(hdr.getAttribute('data-idx'), 10);
+  Promise.resolve(_dispatchToggle(kind, idx)).then(() => _updateAriaExpanded(hdr));
+});
+
+function toggleAudit(i) {
+  document.getElementById(`audit-${i}`).classList.toggle('open');
+}
+
+// Wire up lazy-loading for the three original <details> that load remote markdown.
+// Use id-based hooks so section-group <details> don't trigger doc fetches.
+(function wireLazyLoad() {
+  const bindings = [
+    { id: 'framework-content', fn: loadFramework },
+    { id: 'pipeline-content', fn: loadPipeline },
+    { id: 'gdd-content', fn: loadGDD },
+  ];
+  for (const b of bindings) {
+    const inner = document.getElementById(b.id);
+    if (!inner) continue;
+    const d = inner.closest('details');
+    if (!d) continue;
+    d.addEventListener('toggle', function() {
+      if (!this.open || this.dataset.loaded) return;
+      this.dataset.loaded = '1';
+      b.fn();
+    });
+  }
+})();
+
+async function loadDesignDocs() {
+  const el = document.getElementById('design-list');
+  const countEl = document.getElementById('design-count');
+  try {
+    const docs = [];
+
+    // 1) GDD (pinned)
+    docs.push({
+      name: (CFG.paths.gdd.split('/').pop()) || 'gdd.md',
+      path: CFG.paths.gdd,
+      download_url: `https://raw.githubusercontent.com/${ORG}/${CFG.project}/main/${CFG.paths.gdd}`,
+      html_url: `https://github.com/${ORG}/${CFG.project}/blob/main/${CFG.paths.gdd}`,
+      pinned: true,
+      sprint: Infinity,
+    });
+
+    // 2) <paths.designDocs>/ directory
+    try {
+      const res = await cachedFetch(`${API}/repos/${ORG}/${CFG.project}/contents/${CFG.paths.designDocs}`);
+      if (res.ok) {
+        const files = await res.json();
+        if (Array.isArray(files)) {
+          for (const f of files) {
+            if (f.name.endsWith('.md')) {
+              docs.push({
+                name: f.name,
+                path: f.path,
+                download_url: f.download_url,
+                html_url: f.html_url,
+                pinned: false,
+                sprint: extractSprintNumber(f.name),
+              });
+            }
+          }
+        }
+      }
+      // 404 for designDocs dir → treated as "empty, no design folder" (not an error).
+    } catch(e) {}
+
+    // 3) docs/ root level sprint*.md / sprint*-design*.md
+    // Scan the parent of paths.gdd (defaults to 'docs') for sprint docs.
+    const docsRoot = CFG.paths.gdd.includes('/') ? CFG.paths.gdd.split('/').slice(0,-1).join('/') : '';
+    const gddFile = CFG.paths.gdd.split('/').pop();
+    try {
+      const res = await cachedFetch(`${API}/repos/${ORG}/${CFG.project}/contents/${docsRoot}`);
+      if (res.ok) {
+        const files = await res.json();
+        if (Array.isArray(files)) {
+          for (const f of files) {
+            if (f.type !== 'file' || !f.name.endsWith('.md')) continue;
+            if (f.name === gddFile) continue;
+            if (/^sprint.*\.md$/i.test(f.name)) {
+              docs.push({
+                name: f.name,
+                path: f.path,
+                download_url: f.download_url,
+                html_url: f.html_url,
+                pinned: false,
+                sprint: extractSprintNumber(f.name),
+              });
+            }
+          }
+        }
+      }
+    } catch(e) {}
+
+    if (docs.length === 0) {
+      el.innerHTML = '<p class="empty-state">No design docs yet</p>';
+      countEl.textContent = '(0)';
+      return;
+    }
+
+    // Sort: pinned first, then by sprint number desc, then by name
+    docs.sort((a, b) => {
+      if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
+      if (b.sprint !== a.sprint) return b.sprint - a.sprint;
+      return a.name.localeCompare(b.name);
+    });
+
+    countEl.textContent = `(${docs.length})`;
+    window._designDocs = docs;
+
+    el.innerHTML = docs.map((d, i) => {
+      const icon = d.pinned ? '📘' : '📐';
+      const title = d.pinned ? 'Game Design Document' :
+        d.name.replace('.md','')
+          .replace(/[-_]/g, ' ')
+          .replace(/\b\w/g, c => c.toUpperCase());
+      const sprintMeta = d.pinned ? 'Pinned' :
+        (d.sprint && isFinite(d.sprint) ? `Sprint ${d.sprint}` : d.path);
+      const pinnedBadge = d.pinned ? '<span class="pinned-badge">PINNED</span>' : '';
+      return `<div class="audit-card">
+        <div class="audit-header" role="button" tabindex="0" aria-expanded="false" data-toggle="design" data-idx="${i}">
+          <div class="audit-left">
+            <div class="audit-name">${icon} ${escapeHtml(title)}${pinnedBadge}</div>
+            <div class="audit-meta">${escapeHtml(sprintMeta)} · ${escapeHtml(d.path)}</div>
+          </div>
+        </div>
+        <div class="audit-body" id="design-${i}"></div>
+      </div>`;
+    }).join('');
+  } catch(e) { el.innerHTML = `<p class="error">${escapeHtml(e.message)}</p>`; }
+}
+
+function extractSprintNumber(name) {
+  const m = name.match(/sprint[- ]?(\d+(?:\.\d+)?)/i);
+  return m ? parseFloat(m[1]) : 0;
+}
+
+async function toggleDesignDoc(i) {
+  const el = document.getElementById(`design-${i}`);
+  if (el.classList.contains('open')) { el.classList.remove('open'); return; }
+  if (!el.dataset.loaded) {
+    el.innerHTML = '<div class="md-content"><p class="loading">Loading...</p></div>';
+    el.classList.add('open');
+    try {
+      const r = await fetch(window._designDocs[i].download_url);
+      const md = await r.text();
+      el.innerHTML = `<div class="md-content">${md2html(md)}</div>`;
+      el.dataset.loaded = 'true';
+    } catch(e) { el.innerHTML = '<div class="md-content"><p class="error">Failed to load</p></div>'; }
+  } else { el.classList.add('open'); }
+}
+
+// ---------- Bootstrap ----------
+// Load manifest FIRST; every loader reads CFG so we must populate it
+// before kicking them off. Project picker is async + non-blocking.
+(async function bootstrap() {
+  await loadManifest(PROJECT);
+  applyHeaderLinks();
+  // Update page title with displayName for clarity across projects.
+  if (CFG.displayName) {
+    document.title = `Brott Studio — ${CFG.displayName}`;
+  }
+  // Wire refresh button: reload with ?refresh=1, preserving existing params.
+  const refreshBtn = document.getElementById('btn-refresh');
+  if (refreshBtn) {
+    refreshBtn.addEventListener('click', () => {
+      const next = new URLSearchParams(window.location.search);
+      next.set('refresh', '1');
+      window.location.search = next.toString();
+    });
+  }
+  // Fire off loaders (parallel, same as before).
+  loadPRs();
+  loadCI();
+  loadAudits();
+  loadKB();
+  loadDesignDocs();
+  loadProjectPulse();
+  // Project picker is independent; failures shouldn't block dashboard.
+  populateProjectPicker().catch(() => {});
+})();
+
+// ---------- Project Pulse ----------
+function relTime(iso) {
+  if (!iso) return '\u2014';
+  const then = new Date(iso).getTime();
+  if (!then) return '\u2014';
+  const diff = Math.max(0, Date.now() - then);
+  const s = Math.floor(diff / 1000);
+  if (s < 45) return 'just now';
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  const d = Math.floor(h / 24);
+  return `${d}d ago`;
+}
+
+function pulseGradeClass(g) {
+  if (!g) return 'p-unknown';
+  const up = g.toUpperCase();
+  if (up === 'A' || up === 'A+') return 'p-green';
+  if (up === 'A-' || up === 'B+') return 'p-lime';
+  if (up === 'B' || up === 'B-') return 'p-yellow';
+  if (up.startsWith('C')) return 'p-orange';
+  if (up.startsWith('D') || up.startsWith('F')) return 'p-red';
+  return 'p-unknown';
+}
+
+// Parse sort keys from audit filename. Returns { major, minor, isRollup }.
+// Major/minor are numeric (so S13.10 > S13.2). Rollups sort inside their arc
+// but get pushed to the end of that arc (lowest minor) for readability.
+function parseSprintKey(name) {
+  // Rollups: e.g. v2-arc-13.x-rollup.md
+  const rollup = name.match(/arc[- ]?(\d+)(?:\.x)?[- ]?rollup/i);
+  if (rollup) return { major: parseInt(rollup[1], 10), minor: -1, isRollup: true };
+  // Standard: v2-sprint-13.10.md, v2-sprint-9.md, v2-sprint-9-riv-test.md
+  const m = name.match(/sprint[- ]?(\d+)(?:\.(\d+))?/i);
+  if (m) {
+    return {
+      major: parseInt(m[1], 10),
+      minor: m[2] != null ? parseInt(m[2], 10) : 0,
+      isRollup: false,
+    };
+  }
+  return { major: -1, minor: -1, isRollup: false };
+}
+
+// Compare for newest-first (desc). Rollups pinned to end of their arc (sort
+// immediately below minor=0 for that major). Audit commit time is tiebreaker.
+function compareAuditsDesc(a, b) {
+  const ka = a.key || parseSprintKey(a.name);
+  const kb = b.key || parseSprintKey(b.name);
+  if (kb.major !== ka.major) return kb.major - ka.major;
+  // Within same major: rollups sink below all sprint minors of that arc.
+  if (ka.isRollup !== kb.isRollup) return ka.isRollup ? 1 : -1;
+  if (kb.minor !== ka.minor) return kb.minor - ka.minor;
+  return (b.sortTime || 0) - (a.sortTime || 0);
+}
+
+function formatSprintShort(key) {
+  if (!key || key.major < 0) return '?';
+  if (key.isRollup) return `S${key.major}.x`;
+  if (key.minor === 0) return `S${key.major}`;
+  return `S${key.major}.${key.minor}`;
+}
+
+function extractSprintLabel(name) {
+  // e.g. sprint-13.3-audit.md -> "Sprint 13.3"
+  const m = name.match(/sprint[- ]?(\d+(?:\.\d+)?)/i);
+  return m ? `Sprint ${m[1]}` : name.replace(/\.md$/,'');
+}
+
+// Promise exposed so Project Pulse can await loadAudits() completion
+// (avoiding the double-fetch of markdown + commit data).
+window._auditModelPromise = new Promise(resolve => {
+  window._auditModelReady = resolve;
+});
+
+async function loadProjectPulse() {
+  const root = document.getElementById('project-pulse');
+  const loadingEl = document.getElementById('pulse-loading');
+  try {
+    // Read from the shared audit model (populated by loadAudits).
+    // No independent fetch of markdown / per-file commits — halves API cost.
+    const model = await window._auditModelPromise;
+    const auditsSorted = Array.isArray(model) ? model : [];
+
+    // Latest audit = top of sorted list (newest sprint, excluding rollups if non-rollup exists)
+    let latestSprintLabel = '\u2014';
+    let latestGrade = null;
+    const latestNonRollup = auditsSorted.find(x => !x.key.isRollup) || auditsSorted[0];
+    if (latestNonRollup) {
+      latestSprintLabel = extractSprintLabel(latestNonRollup.name);
+      latestGrade = latestNonRollup.grade;
+    }
+
+    // Grade trend: last 5 sprint audits (skip rollups). Newest-first → reverse.
+    const trendSource = auditsSorted.filter(x => !x.key.isRollup).slice(0, 5);
+    const trendEntries = trendSource.map(x => ({
+      grade: x.grade, sprintShort: formatSprintShort(x.key), name: x.name,
+    }));
+    const trendOrdered = trendEntries.slice().reverse(); // left = oldest, right = newest
+
+    // 4) Last commit on project repo (default branch) — still a separate call,
+    //    not part of the audit pipeline.
+    let projCommit = null;
+    try {
+      const r = await cachedFetch(`${API}/repos/${ORG}/${CFG.project}/commits?per_page=1`);
+      if (r.ok) {
+        const j = await r.json();
+        if (Array.isArray(j) && j[0]) projCommit = j[0];
+      }
+    } catch(e) {}
+
+    // 5) Last audit commit: reuse most-recent sortTime from the model instead of
+    //    making another /commits?path= call.
+    const latestAuditEntry = auditsSorted.slice().sort((a,b) => (b.sortTime||0) - (a.sortTime||0))[0];
+    const auditCommit = latestAuditEntry && latestAuditEntry.commit ? latestAuditEntry.commit : null;
+
+    // --- Render ---
+    const parts = [];
+
+    // Latest Sprint
+    const gradeHtml = latestGrade
+      ? ` <span class="pulse-pill ${pulseGradeClass(latestGrade)}">${escapeHtml(latestGrade)}</span>`
+      : '';
+    parts.push(`<span class="pulse-item"><span class="pulse-label">Latest</span><span class="pulse-value">${escapeHtml(latestSprintLabel)}</span>${gradeHtml}</span>`);
+
+    // Audits complete
+    parts.push(`<span class="pulse-item"><span class="pulse-label">Audits</span><span class="pulse-value">${auditsSorted.length} sprint${auditsSorted.length===1?'':'s'}</span></span>`);
+
+    // Trend
+    if (trendOrdered.length) {
+      const cells = trendOrdered.map(e => {
+        const gText = e.grade || '\u2014';
+        const title = e.grade
+          ? `${e.sprintShort} · Grade ${e.grade}`
+          : `${e.sprintShort} · ungraded (no grade found in audit source)`;
+        return `<span class="pulse-trend-cell" title="${escapeHtml(title)}">`
+          + `<span class="pulse-pill ${pulseGradeClass(e.grade)}">${escapeHtml(gText)}</span>`
+          + `<span class="pulse-trend-sprint">${escapeHtml(e.sprintShort)}</span>`
+          + `</span>`;
+      }).join('');
+      const trendHtml = `<span class="pulse-trend-wrap">`
+        + `<span class="pulse-trend-pills">${cells}</span>`
+        + `<span class="pulse-trend-axis"><span>← older</span><span>newer →</span></span>`
+        + `</span>`;
+      parts.push(`<span class="pulse-item"><span class="pulse-label">Trend</span>${trendHtml}</span>`);
+    }
+
+    // Last commit
+    if (projCommit) {
+      const when = relTime(projCommit.commit && projCommit.commit.author && projCommit.commit.author.date);
+      let msg = (projCommit.commit && projCommit.commit.message || '').split('\n')[0];
+      if (msg.length > 60) msg = msg.slice(0, 57) + '…';
+      const url = projCommit.html_url || '#';
+      parts.push(`<span class="pulse-item"><span class="pulse-label">Commit</span><span class="pulse-value">${escapeHtml(when)}</span><span class="pulse-dim">·</span><a href="${escapeHtml(url)}" target="_blank" class="pulse-commit-msg" title="${escapeHtml(msg)}">${escapeHtml(msg)}</a></span>`);
+    } else {
+      parts.push(`<span class="pulse-item"><span class="pulse-label">Commit</span><span class="pulse-dim">\u2014</span></span>`);
+    }
+
+    // Last audit
+    if (auditCommit) {
+      const when = relTime((auditCommit.commit && auditCommit.commit.author && auditCommit.commit.author.date) || (auditCommit.commit && auditCommit.commit.committer && auditCommit.commit.committer.date));
+      const url = auditCommit.html_url || '#';
+      parts.push(`<span class="pulse-item"><span class="pulse-label">Audit</span><a href="${escapeHtml(url)}" target="_blank" class="pulse-value" style="text-decoration:none;color:var(--text)">${escapeHtml(when)}</a></span>`);
+    } else {
+      parts.push(`<span class="pulse-item"><span class="pulse-label">Audit</span><span class="pulse-dim">\u2014</span></span>`);
+    }
+
+    if (loadingEl) loadingEl.remove();
+    root.innerHTML = `<span class="pulse-title">📊 Project Pulse</span>` + parts.join('');
+  } catch(e) {
+    if (loadingEl) loadingEl.innerHTML = `<span class="error">Pulse failed: ${escapeHtml(e.message)}</span>`;
+  }
+}
+</script>
+
+</body>
+</html>
