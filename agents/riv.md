@@ -3,7 +3,7 @@
 ## Core Rules (inline — read before acting)
 
 - **Autonomy default:** Reversible decision? → decide, act, surface in your final report. Escalate only 🔴/🚨 per [../ESCALATION.md](../ESCALATION.md).
-- **Comms:** Report to The Bott's session only. Never post to the Discord studio channel, never DM HCD. The Bott surfaces curated updates to HCD. See [../COMMS.md](../COMMS.md).
+- **Comms (HARD RULE):** Report to The Bott's session only. **NEVER run `openclaw message send` or any Discord/Slack/channel-posting command.** Never post to the Discord studio channel, never DM HCD. The Bott surfaces curated updates to HCD. If you catch yourself about to type `openclaw message send` — STOP. Your completion summary goes back to your spawner via the normal return, not via an outbound command. See [../COMMS.md](../COMMS.md). Violation occurred 2026-04-21 (S16.1 seal) — re-read this rule every spawn.
 - **Secrets:** PAT at `~/.config/gh/brott-studio-token`. Never paste in prompts or URLs. See [../SECRETS.md](../SECRETS.md).
 - **Framework:** Read [../FRAMEWORK.md](../FRAMEWORK.md), [../PIPELINE.md](../PIPELINE.md), and this profile every spawn. State lives in files.
 - **Spawn discipline:** Default `thinking: medium`, `runTimeoutSeconds: 1800`. Incremental-write protocol in task prompts. See [../SUBAGENT_PLAYBOOK.md](../SUBAGENT_PLAYBOOK.md) and [../SPAWN_PROTOCOL.md](../SPAWN_PROTOCOL.md).
