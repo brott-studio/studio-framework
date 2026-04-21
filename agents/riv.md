@@ -66,9 +66,18 @@ Phase 3: EXECUTION (sequential)
     → If FAIL → note failure in sprint results. Continue to Specc. Ett will decide how to address in the next sprint.
 
   Step 3d: SPECC (Audit)
-    → Sprint audit + learning extraction + KB entries
+    → Sub-sprint audit + learning extraction + KB entries (ONE Specc spawn per sub-sprint, after all tasks in the sub-sprint plan have merged+verified)
+    → Pass: sub-sprint plan file path, list of merged task PR numbers, arc context
     → Uses Inspector GitHub App (APP_ID: 3389931, INSTALLATION_ID: 124234853)
     → Key at /home/openclaw/.config/brott-studio/inspector-app.pem
+
+  Step 3e: SUB-SPRINT CLOSE-OUT (audit-landed gate)
+    → Before re-entering the loop for sub-sprint N.M+1, verify
+      `audits/<project>/v2-sprint-<N.M>.md` is merged on `studio-audits/main`
+      via the GitHub Contents API (`gh api repos/brott-studio/studio-audits/contents/audits/<project>/v2-sprint-<N.M>.md?ref=main`).
+    → Missing → STOP. Escalate to The Bott with the missing audit filename.
+      Do NOT spawn Ett for N.M+1. Do NOT pull tasks from the arc brief unilaterally.
+    → Present → proceed to Loop back.
 
 Loop back to Phase 0 (audit-gate → Gizmo → Ett …)
 

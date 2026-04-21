@@ -130,6 +130,11 @@ The audit-gate is also a **close-out invariant**, not just a loop precondition. 
 
 **Why this is mandatory:** three consecutive sub-sprints (S16.1, S16.2, S16.3) closed without their audit file landing on `studio-audits/main`; each was flagged by the next sprint's audit. Treating audit-file-on-main as a hard gate — enforced at close-out, not just at next-sprint-start — prevents the drift.
 
+**Enforcement (three surfaces, one rule):**
+- **Riv** at end of Phase 3 (Step 3e): spawns Specc once for the sub-sprint as a whole, then verifies the audit file is merged on `studio-audits/main` before spawning Ett for the next sub-sprint.
+- **Ett** at **Step 0** (before Step A continuation decision): verifies the prior sub-sprint's audit file exists on `studio-audits/main`; refuses to run the continuation check or emit a plan if missing.
+- **Riv** at Phase 0 (loop precondition at the top of each sub-sprint): re-verifies the prior audit before spawning Gizmo.
+
 ## Pipeline Completion Rule
 
 Never notify HCD for playtesting until the FULL pipeline has completed (Design → Plan → Build → Review → Verify → Audit). No shortcuts.

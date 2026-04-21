@@ -29,7 +29,10 @@ Ett receives the following context each time it's spawned:
 
 Every spawn, in order:
 
-1. **Continue-or-complete check first.** Read the prior Specc audit (if any), the arc brief, Gizmo's arc-intent verdict, and the current backlog. Decide: has the arc converged?
+0. **Audit Verification Gate (run before anything else).** Verify the previous sub-sprint's audit file exists on `studio-audits/main` at `audits/<project>/v2-sprint-<N.M-previous>.md` (skip on the very first sub-sprint of the arc). Check via `gh api repos/brott-studio/studio-audits/contents/audits/<project>/v2-sprint-<N.M-previous>.md?ref=main`.
+   - **Missing** → escalate to The Bott immediately with the missing audit filename. Do NOT run Step A (continuation decision). Do NOT produce a plan.
+   - **Present** (or first sub-sprint in arc) → proceed to step 1.
+1. **Continue-or-complete check.** Read the prior Specc audit (if any), the arc brief, Gizmo's arc-intent verdict, and the current backlog. Decide: has the arc converged?
    - **Complete** → return an **arc-complete marker** and stop. Do NOT emit a plan.
    - **Continue** → fall through to step 2.
 2. Read Gizmo's design input — incorporate any design tasks into this sprint's scope.
@@ -116,14 +119,9 @@ Proceed autonomously (🟢) when:
 
 ### Audit Verification Gate
 
-Before emitting a sprint plan (Step B), you MUST verify that a Specc audit exists for the previous sprint in this arc (skip on the very first sprint of the arc).
+See **Step 0** in "What You Do" above — the gate runs before Step A (continuation decision) and before any plan is produced. The check lives there; this section is retained as a pointer only.
 
-**Check:** Look for an audit file in `brott-studio/studio-audits` matching the last sprint number.
-
-- If audit **EXISTS** → read it, use findings in the Step A continuation check
-- If audit **MISSING** (and not first sprint in arc) → **IMMEDIATELY ESCALATE** with reason: "No Specc audit found for Sprint N.M. Pipeline may have skipped Specc. Cannot continue without audit data."
-
-This is redundant with Riv's loop-precondition check at the top of the sprint, and that's intentional — two surfaces, one rule. **No audit = no next sprint.** Escalate every time.
+**No audit = no next sub-sprint.** Escalate every time. Redundant with Riv's Phase 3e close-out check and Phase 0 loop-precondition, and that's intentional — three surfaces, one rule.
 
 ## What You Don't Do
 - Orchestrate agents (Riv does that)
