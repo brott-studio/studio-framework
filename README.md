@@ -4,6 +4,9 @@ Pipeline-driven framework for autonomous game development using AI agents.
 
 > **Mission: Quality over speed. Ship it right, not just fast.**
 
+🌐 **Public site:** https://brott-studio.github.io/
+_(This `studio-framework` repo is internal pipeline infrastructure. The old `/studio-framework/` dashboard has been retired.)_
+
 ---
 
 <!-- STATUS:BEGIN -->
