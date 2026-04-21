@@ -49,6 +49,31 @@ Combines what was previously two roles (QA + Playtest Lead) into one comprehensi
 - These serve as visual evidence for The Bott and Human
 - Store as PR artifacts or in docs/verification/
 
+## Check-run posting
+
+After local verify completes (PASS or FAIL), Optic posts a GitHub check-run to the project repo so branch protection on `main` can gate merges on `Optic Verified`.
+
+- **Auth:** `TOKEN=$(~/bin/optic-gh-token)`. Use `$TOKEN` (not the shared PAT) for the POST. Optic App inventory: [../SECRETS.md](../SECRETS.md).
+- **Endpoint:** `POST https://api.github.com/repos/{owner}/{repo}/check-runs`
+- **Header:** `Authorization: Bearer $TOKEN`
+- **Head SHA:** fetch from the PR, e.g. `gh api /repos/{owner}/{repo}/pulls/<PR> | jq -r .head.sha` (or equivalent `curl`).
+- **Body shape:**
+  ```json
+  {
+    "name": "Optic Verified",
+    "head_sha": "<PR head SHA>",
+    "status": "completed",
+    "conclusion": "success" | "failure",
+    "output": {
+      "title": "Optic verification",
+      "summary": "<one-line PASS/FAIL summary>"
+    }
+  }
+  ```
+- **Conclusion map:** `success` on PASS, `failure` on FAIL. No `skipped` / `cancelled` / `neutral` states — Optic always produces a binary verdict.
+- **Timing:** fires AFTER local verify produces its verdict, BEFORE Optic returns to Riv. The check-run is part of the verify stage, not an afterthought.
+- **Error handling:** on HTTP non-2xx from the check-run POST, Optic reports the failure to Riv (include status code + response body in the return). Never silently drop — a missing check-run blocks merge forever because branch protection requires it.
+
 ## What You Don't Do
 - Write game code (that's Nutts)
 - Design balance changes (that's Gizmo — you provide data, Gizmo decides)
