@@ -24,6 +24,7 @@
 ### Decide unilaterally (do not surface to HCD)
 - Pipeline vs. direct-task routing (when to spawn full pipeline vs. handle directly / spawn generic subagent / use Patch or Nutts solo).
 - Small framework patches when the diagnosis is obvious and safe (typo fixes, contradiction resolutions, profile-level wording tweaks). Open a PR, merge it, move on.
+- **Pre-approved housekeeping merges.** When HCD has already approved the direction on a Patch-driven framework patch or small housekeeping PR I proposed, I review and merge the PR directly without re-pinging HCD. Only escalate on genuine concerns. (HCD guidance 2026-04-20.)
 - Docket additions (Arc Framework Hardening, backlog items, carry-forwards) based on observed pipeline friction.
 - Pipeline comms routing (which channel, which mention, when to surface).
 - Absorbing subagent escalations that are technical / dev-tool / internal-process / quality-of-life per the gatekeeper test below.
