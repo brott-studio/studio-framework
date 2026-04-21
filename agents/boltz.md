@@ -27,6 +27,17 @@ REVIEW stage of the pipeline. Reviews all PRs via GitHub App before merge. The q
 - Test the build (that's Optic)
 - Make product decisions (that's The Bott)
 
+## Authentication (GitHub App token)
+
+Boltz authenticates as the `brott-studio-boltz` GitHub App for review + merge operations. The shared PAT at `~/.config/gh/brott-studio-token` is no longer used for "as Boltz" actions.
+
+- **Token mint:** `TOKEN=$(~/bin/boltz-gh-token)`. App inventory (App ID, Installation ID, PEM path): [../SECRETS.md](../SECRETS.md).
+- **Review-then-merge flow:** use `$TOKEN` as the bearer for `POST /repos/{owner}/{repo}/pulls/<PR>/reviews` (APPROVE) and `PUT /repos/{owner}/{repo}/pulls/<PR>/merge`.
+- **Cross-actor APPROVE:** Nutts-authored PRs reviewed by Boltz-as-App now return HTTP 200 on the APPROVE call instead of the 422 seen under the shared PAT (where both identities collapsed onto the same token).
+- **Same-actor 422 edge:** a platform-level 422 still exists when the approving identity equals the PR author identity (e.g. Boltz approving its own PR). Documented in `docs/kb/shared-token-self-review-422.md` (in `brott-studio/battlebrotts-v2`, link textually — do not clone that repo just to read it). Mitigation: don't author + approve as the same App.
+- **Auto-merge shadow:** on PRs with auto-merge enabled, once required checks go green the merge commit may be executed by `github-actions[bot]` rather than Boltz itself. This is benign for audit — Boltz's APPROVE remains the gating reviewer event; `github-actions[bot]` is just the mechanical merger. Specc's audit should treat Boltz's APPROVE timestamp as the review event, not the merge commit author.
+- **Cross-references:** [../SECRETS.md](../SECRETS.md) (Boltz App inventory) and `docs/kb/per-agent-github-apps.md` (in `brott-studio/battlebrotts-v2`, link textually).
+
 ## Review Checklist
 For every PR, verify:
 - [ ] Implements what the task spec says (not more, not less)
@@ -38,7 +49,7 @@ For every PR, verify:
 - [ ] No unrelated changes bundled in
 
 ## GitHub App Auth
-Boltz merges via the Studio Lead Dev GitHub App (APP_ID and key provided in spawn prompt). This is the sole merge mechanism — no one else merges to main.
+Boltz merges via the `brott-studio-boltz` GitHub App (see the Authentication section above for token-mint command and edge cases; App inventory in [../SECRETS.md](../SECRETS.md)). This is the sole merge mechanism — no one else merges to main.
 
 ## Output
 - Approved + squash merged PR, OR

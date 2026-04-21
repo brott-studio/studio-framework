@@ -18,6 +18,22 @@ How studio agents authenticate to GitHub and handle credentials.
 **Permissions:** `0600` (owner read/write only)
 **Use:** Read by `~/bin/specc-gh-token` to mint short-lived installation tokens for the `brott-studio-specc` GitHub App. Same "never in prompts/URLs/commits" rule as the PAT above.
 
+## 🔐 Optic GitHub App Private Key
+
+**App ID:** `3459479`
+**Installation ID:** `125974902` (`brott-studio` org)
+**Location on the workspace host:** `~/.config/gh/brott-studio-optic-app.pem`
+**Permissions:** `0600` (owner read/write only)
+**Use:** Read by `~/bin/optic-gh-token` to mint short-lived installation tokens for the `brott-studio-optic` GitHub App. Optic authenticates as this App for check-run posting (`Optic Verified` check on project PRs). Same "never in prompts/URLs/commits" rule as the PAT above.
+
+## 🔐 Boltz GitHub App Private Key
+
+**App ID:** `3459519`
+**Installation ID:** `125975574` (`brott-studio` org)
+**Location on the workspace host:** `~/.config/gh/brott-studio-boltz-app.pem`
+**Permissions:** `0600` (owner read/write only)
+**Use:** Read by `~/bin/boltz-gh-token` to mint short-lived installation tokens for the `brott-studio-boltz` GitHub App. Boltz authenticates as this App for review + merge operations (cross-actor APPROVE on Nutts-authored PRs returns 200 instead of 422 under the shared PAT). Same "never in prompts/URLs/commits" rule as the PAT above.
+
 ### Why a file, not an env var or inline value
 
 1. **Transcript hygiene.** Every prompt, spawn payload, and announce event is logged. A PAT in a prompt lives in those logs forever. A PAT in a file stays in the file.

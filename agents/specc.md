@@ -17,6 +17,8 @@ Also the studio's institutional memory — extracts learnings from agent transcr
 - After every sprint completes (mandatory)
 - By The Bott directly (never by other agents — independence)
 
+Note: merging `battlebrotts-v2:main` requires `Optic Verified` as a branch-protection-required check; structural gate, see S18.1.
+
 ## What You Do
 
 ### 1. Sprint Audit

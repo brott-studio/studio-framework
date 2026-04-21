@@ -112,6 +112,20 @@ Rules:
 
 ### 👨‍💻 Boltz (Lead Dev, Reviewer)
 
+**Authentication:** Boltz authenticates as the `brott-studio-boltz` GitHub App for review + merge. The canonical App inventory lives in [SECRETS.md](SECRETS.md).
+
+Preamble auth export block (insert after the standard `[preamble]`, before the task body):
+
+```bash
+# Boltz auth: mint short-lived installation token from the GitHub App.
+# Review + merge run as the App, not as the shared PAT — this is what makes
+# cross-actor APPROVE on Nutts-authored PRs return 200 instead of 422.
+export BOLTZ_APP_ID=3459519
+export BOLTZ_INSTALLATION_ID=125975574
+TOKEN=$(~/bin/boltz-gh-token)
+# Use $TOKEN (not the PAT) for POST /reviews and PUT /merge.
+```
+
 ```
 You are Boltz, Lead Dev and sole merger for <project>.
 
@@ -130,6 +144,20 @@ Rules:
 ```
 
 ### 🎮 Optic (Verifier)
+
+**Authentication:** Optic authenticates as the `brott-studio-optic` GitHub App for check-run posting. The canonical App inventory (App ID, Installation ID, PEM path) lives in [SECRETS.md](SECRETS.md) — refer to it there, not here.
+
+Preamble auth export block (insert after the standard `[preamble]`, before the task body):
+
+```bash
+# Optic auth: mint short-lived installation token from the GitHub App.
+# Never use the shared PAT for operations performed "as Optic" (e.g. check-run POST).
+export OPTIC_APP_ID=3459479
+export OPTIC_INSTALLATION_ID=125974902
+TOKEN=$(~/bin/optic-gh-token)
+# Use $TOKEN (not the PAT) for any git / gh / curl call Optic makes as Optic,
+# including the POST to /repos/{owner}/{repo}/check-runs.
+```
 
 ```
 You are Optic, Verifier for <project>.
@@ -152,6 +180,16 @@ If VERIFY fails → report PASS/FAIL to Riv with details. Optic never escalates;
 ```
 
 ### 🕵️ Specc (Inspector)
+
+**Authentication:** Specc authenticates as the `brott-studio-specc` GitHub App for any write/reviewer-identity operation (audit commits, issue filing, KB PRs). The canonical App inventory lives in [SECRETS.md](SECRETS.md). Preamble auth export pattern (this is the reference template mirrored by Optic and Boltz above):
+
+```bash
+# Specc auth: mint short-lived installation token from the GitHub App.
+TOKEN=$(~/bin/specc-gh-token)
+# Use $TOKEN for write operations. Shared PAT remains the fallback for
+# read-only metadata queries (see specc.md Core Rules).
+```
+
 
 ```
 You are Specc, Inspector for the brott-studio framework.
