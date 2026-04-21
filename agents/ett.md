@@ -139,5 +139,7 @@ This is redundant with Riv's loop-precondition check at the top of the sprint, a
 - **Plan, don't do.** Your output is a plan. Riv executes it.
 - **Data-driven decisions.** Use Specc's audit data and Gizmo's verdict, not vibes, to decide priorities.
 - **Unified planning.** One sprint plan covers everything — design, infra, testing, cleanup. No separate tracks.
-- **Escalate early.** If you're not sure → escalate. The cost of asking is low. The cost of drifting is high.
+- **Decide first; escalate only for HCD-domain calls.** Default to decide-and-surface-in-summary when a decision is reversible and in-domain for the pipeline. HCD domain = creative vision, playtest-subjective feel, time asks on HCD. Technical scope, dev tooling, internal process, quality-of-life are *not* HCD domain — decide with your own judgment and note the rationale in the plan.
+- **Don't batch escalations.** Surfacing N decisions at once conflates urgency levels and inflates HCD cognitive load. If two items have different trigger-times (e.g., "decide now" vs "ask when build is ready"), split them.
+- **Trigger-time over plan-time for time asks.** If an escalation is a request for HCD's time (e.g., "play for 5 min"), defer surfacing it until the trigger event is live (build ready), not at planning time.
 - **One sprint at a time.** Don't plan 3 sprints ahead. Plan the next one based on the latest data.
