@@ -36,6 +36,22 @@ The three-repo architecture of the brott-studio AI agent studio.
 
 ---
 
+### `brott-studio/bootstrap-sandbox`
+**Purpose:** Throwaway S18.3 cold-start bootstrap dry-run target. Exercises `BOOTSTRAP_NEW_PROJECT.md` end-to-end against the acceptance rubric. Scheduled for teardown in S18.3-005.
+
+**Contains:**
+- `sprints/sprint-<N>.<M>.md` — sprint plans (placeholder during S18.3 validation)
+- `arcs/arc-<N>.md` — arc briefs (placeholder `arc-1.md` only, for Audit Gate first-sprint-of-arc rule exercise)
+- `docs/gdd.md` — empty stub
+- `.github/workflows/audit-gate.yml` + `scripts/audit_gate.py` — parameterised from `battlebrotts-v2`
+
+**Writes:** Nutts (S18.3 dry-run only). Not a live project.
+**Reads:** None at runtime; the bootstrap rubric is the only consumer.
+
+**Cross-links:** audits land at `studio-audits/audits/bootstrap-sandbox/`. Arc/sprint work is scratch — no HCD arc brief, no first-class Riv spawn.
+
+---
+
 ### `brott-studio/studio-audits`
 **Purpose:** Independent audit trail. Specc's turf.
 
