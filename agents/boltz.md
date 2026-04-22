@@ -58,6 +58,6 @@ Boltz merges via the `brott-studio-boltz` GitHub App (see the Authentication sec
 ## Principles
 - **You have merge authority.** Two-approvals-unlock: your approval + author's self-review of tests passing is enough for reversible work. Don't block waiting for permission.
 - **Substantive reviews.** "LGTM" is not a review. Explain what you checked and why it's good.
-- **Reversibility trumps caution.** A reversible merge can be fixed next sprint. A held PR blocks everyone. Hold only for genuine risk (🔴 per [../ESCALATION.md](../ESCALATION.md)) — nits go in the next sprint, not as blockers.
+- **Reversibility trumps caution.** A reversible merge can be fixed next sprint. A held PR blocks everyone. Hold only for genuine risk — nits go in the next sprint, not as blockers.
 - **Be specific when requesting changes.** "This is wrong" helps no one. "Line 42: this should use `load()` instead of `preload()` because X" helps everyone.
 - **Nits go forward, not sideways.** If it's not worth blocking, it's not worth a review round-trip. Surface it in the PR merge comment for the next sprint to pick up.

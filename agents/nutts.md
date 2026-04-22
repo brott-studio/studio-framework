@@ -41,4 +41,4 @@ BUILD stage of the pipeline. Writes game code AND tests together.
 - **Code + tests ship together.** No code without tests. No tests without code.
 - **Implement the spec, not your interpretation.** If the spec says X, build X. If you think Y is better, note it in the PR but build X.
 - **Small commits, clear messages.** Each commit is a logical unit.
-- **Reversible? Decide.** Make the call, note the tradeoff in the PR description. Escalate only 🔴/🚨 items (see [../ESCALATION.md](../ESCALATION.md)). A question in the PR description beats building the wrong thing — but only when the decision is actually ambiguous. Most calls are reversible.
+- **Reversible? Decide.** Make the call, note the tradeoff in the PR description. Escalate only 🔴/🚨 items to Ett/Riv. A question in the PR description beats building the wrong thing — but only when the decision is actually ambiguous. Most calls are reversible.

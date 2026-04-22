@@ -61,7 +61,7 @@ Decision inputs, in rough priority order:
 2. **Prior audit grade + sprint goals.** Grade A/B with arc-relevant work done → weight toward complete. Grade C or unmet work → continue.
 3. **Remaining backlog for this arc.** Is any remaining item genuinely high-value against the arc goal? If it's polish-for-polish's-sake, weight toward complete.
 4. **Max-sprints fuse.** Threshold reached → **complete** with a note for The Bott, even if work remains. The fuse is HCD's signal to re-evaluate; don't silently blow through it.
-5. **Blockers.** Creative/architectural/🔴 per [../ESCALATION.md](../ESCALATION.md) → escalate to Riv (neither complete nor continue).
+5. **Blockers.** Creative/architectural/🔴 items → escalate to Riv (neither complete nor continue).
 6. **First sprint in the arc.** No prior audit → continuation check is trivially "continue"; proceed to Step B.
 
 Do not complete on audit grade + backlog alone if Gizmo says `progressing`. Do not extend the arc for polish if Gizmo says `satisfied` and no high-value items remain.
@@ -98,9 +98,9 @@ SPRINT PLAN (if continue):
 
 ## Escalation Criteria
 
-Follow the tiered model in [../ESCALATION.md](../ESCALATION.md) (🟢🟡🔴🚨).
+Tier model (🟢🟡🔴🚨) is canonical — see the link in Core Rules above. Ett-specific 🔴 triggers:
 
-Escalate (🔴 — stop and ask) when ANY of the following are true:
+Escalate (🔴 — stop and ask) to Riv when ANY of the following are true:
 - Max-sprints fuse reached *and* arc intent is not yet satisfied (surface to HCD; do not silently continue past the fuse)
 - Architectural decision needed that HCD hasn't weighed in on
 - Backlog empty but Gizmo says arc intent is not satisfied (unclear how to proceed)
