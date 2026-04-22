@@ -126,9 +126,9 @@ Specc has been invaluable to pipeline quality. Skipping Specc between sprints ha
 
 The audit-gate is also a **close-out invariant**, not just a loop precondition. A sub-sprint N.M is NOT considered closed until the following has landed:
 
-- [ ] **Audit landed on `studio-audits/main`** at `audits/<project>/v2-sprint-<N.M>.md`. A sub-sprint is NOT considered closed without this file merged. (Earned S16.1→S16.3; see `v2-sprint-16-arc-complete.md`.)
+- [ ] **Audit landed on `studio-audits/main`** at `audits/<project>/v2-sprint-<N.M>.md`. A sub-sprint is NOT considered closed without this file merged. (Earned S16.1→S16.3; see `v2-sprint-16-arc-complete.md`.) **[Structural — enforced by audit-presence CI check.]** `Audit Gate` CI check on `battlebrotts-v2` (and on future projects wired per [BOOTSTRAP_NEW_PROJECT.md](BOOTSTRAP_NEW_PROJECT.md)) fails any planning PR that touches `sprints/sprint-<N>.<M>.md` when `audits/<project>/v2-sprint-<N>.<M-1>.md` is absent from `studio-audits/main`. Added in S18.2; wired into branch protection in S18.2 post-merge. First-sprint-of-arc (`M==1`) is exempt and instead requires `arcs/arc-<N>.md` in the PR tree.
 
-**Why this is mandatory:** three consecutive sub-sprints (S16.1, S16.2, S16.3) closed without their audit file landing on `studio-audits/main`; each was flagged by the next sprint's audit. Treating audit-file-on-main as a hard gate — enforced at close-out, not just at next-sprint-start — prevents the drift.
+**Why this is mandatory (history — originally compliance-reliant):** three consecutive sub-sprints (S16.1, S16.2, S16.3) closed without their audit file landing on `studio-audits/main`; each was flagged by the next sprint's audit. The Riv/Ett/Bott three-surface compliance belt below was introduced to catch the drift. S18.2's `Audit Gate` CI check makes the rule structural — the three compliance surfaces remain as defense-in-depth, but the primary enforcement is now a required status check that cannot be silently skipped.
 
 **Enforcement (three surfaces, one rule):**
 - **Riv** at end of Phase 3 (Step 3e): spawns Specc once for the sub-sprint as a whole, then verifies the audit file is merged on `studio-audits/main` before spawning Ett for the next sub-sprint.
