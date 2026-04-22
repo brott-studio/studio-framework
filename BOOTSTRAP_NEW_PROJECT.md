@@ -8,6 +8,11 @@ blocking questions.
 framework itself. The framework and the audits repo already exist.
 **Status this sprint (S18.2):** docs only — no validation pass this sprint
 (cold-start validation runs in S18.3).
+**Acceptance rubric:** a cold-start agent walking these 5 steps should
+self-score against [`BOOTSTRAP_ACCEPTANCE.md`](BOOTSTRAP_ACCEPTANCE.md) —
+one section per step, with literal verification commands and patch-back
+pointers. Any FAIL is patched back into this doc (or the cross-referenced
+doc named in the rubric) per S18.3 Workstream C.
 
 Throughout, `<project>` is the new project's repo name (e.g. `battlebrotts-v2`
 for the canonical precedent). Nothing in the pipeline hardcodes a specific
