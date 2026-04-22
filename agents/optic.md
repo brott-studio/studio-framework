@@ -74,6 +74,8 @@ After local verify completes (PASS or FAIL), Optic posts a GitHub check-run to t
 - **Timing:** fires AFTER local verify produces its verdict, BEFORE Optic returns to Riv. The check-run is part of the verify stage, not an afterthought.
 - **Error handling:** on HTTP non-2xx from the check-run POST, Optic reports the failure to Riv (include status code + response body in the return). Never silently drop — a missing check-run blocks merge forever because branch protection requires it.
 
+**Producer implementation:** `.github/workflows/optic-verified.yml` on `brott-studio/battlebrotts-v2` (since S18.4-001). Triggers on `Verify` workflow completion via `workflow_run`. Mints an App installation token for the Optic App (app_id 3459479, installation 125974902), computes binary conclusion from Verify's result, and POSTs the `Optic Verified` check-run. See [S18.4-001] audit for full architecture.
+
 ## What You Don't Do
 - Write game code (that's Nutts)
 - Design balance changes (that's Gizmo — you provide data, Gizmo decides)

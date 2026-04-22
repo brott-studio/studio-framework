@@ -241,6 +241,8 @@ Every rule in this framework is tagged **[Structural]** or **[Compliance-reliant
 | Tests must pass | CI gate on PR | [Structural] |
 | PR review required | Branch protection | [Structural] |
 | Visual verification | Playwright in pipeline | [Structural] |
+| `Optic Verified` check-run on PRs | `optic-verified.yml` producer workflow (S18.4-001) posts binary success/failure check-run from the Optic App; required status check on `main` | [Structural — enforced] |
+| Admin-PAT bypass closure | `enforce_admins: true` on `brott-studio/battlebrotts-v2:main` (S18.4-002); admin-override path removed — every PR must pass all required contexts + reviews | [Structural — enforced] |
 | Agent logging | Git history IS the log (no separate log files needed) | [Structural] |
 | Dashboard freshness | Generated after sprint, not maintained live | [Structural] |
 | Sprint Specc gate | Riv + Ett + The Bott all check | [Compliance-reliant] |
