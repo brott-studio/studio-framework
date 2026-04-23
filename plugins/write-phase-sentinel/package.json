@@ -1,0 +1,12 @@
+{
+  "name": "@brott-studio/write-phase-sentinel",
+  "version": "0.1.0",
+  "description": "OpenClaw plugin: harness-level write-phase sentinel for subagent interrupt safety.",
+  "type": "module",
+  "main": "index.js",
+  "openclaw": {
+    "plugin": "./openclaw.plugin.json"
+  },
+  "license": "UNLICENSED",
+  "private": true
+}
