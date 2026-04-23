@@ -163,6 +163,41 @@ Write-phase subagents (**Specc**, **Nutts**, **Boltz**) MUST include the canonic
 
 ---
 
+## Sprint-scoped idempotency keys (Nutts + Boltz)
+
+**Mandatory for Nutts (PR creation) and Boltz (PR merge).** Prevents duplicate PRs / re-merges on orphan-resume, OOM-respawn, or double-spawn.
+
+**Key format:** `sprint-<N>.<M>` (literal ASCII, lowercase, no whitespace). Derived directly from the sub-sprint ID in the task prompt. No hashing, no suffix.
+
+**Where the key appears:**
+- **PR title** — bracketed prefix: `[sprint-<N>.<M>] <subject>`. Required. Case-sensitive on emit.
+- **PR body** — first line, exact format: `idempotency-key: sprint-<N>.<M>`. Required. Regex-scannable by Optic §B: `^idempotency-key: sprint-\d+\.\d+(\.\d+)?$`.
+
+**Nutts — pre-`gh pr create` lookup (mandatory):**
+```
+KEY="sprint-<N>.<M>"
+gh pr list --repo <owner/repo> --search "in:title ${KEY}" --state all --json number,url,state,title --limit 5
+```
+- Match found (any state — OPEN, MERGED, CLOSED) → exit `{"status":"already-filed", ...}`, no-op, no second PR.
+- No match → proceed with `gh pr create`, title + body per the conventions above.
+
+**Boltz — pre-`gh pr merge` lookup (mandatory):**
+```
+gh pr view <PR> --repo <owner/repo> --json state,mergeCommit,url
+```
+- `state == MERGED` and `mergeCommit.oid` non-empty → exit `{"status":"already-merged", "mergeCommit.oid":"<sha>", ...}`, no-op. Forward SHA to Specc.
+- Else → APPROVE + `gh pr merge`, then re-query `gh pr view` to capture the fresh `mergeCommit.oid` and forward that SHA to Specc.
+
+**Forward-passing:** Boltz's final task output always contains the canonical `mergeCommit.oid` (pre-existing or newly-created). Specc audits off this SHA.
+
+**Match semantics:** title-substring match via `in:title` for Nutts; `state + mergeCommit.oid` pair for Boltz. Never scan PR body at lookup time (body marker is for after-the-fact Optic verification, not lookup).
+
+**Scope:** per-sub-sprint. Sub-sprint IDs are allocated by Ett and unique by construction. No content-hash needed — retries are expected to collide, and collision is the intended no-op signal.
+
+**When Optic §B scans:** every Nutts-opened PR from S20.1 onward must carry a parseable body-marker line. Absence = fail.
+
+---
+
 ## Verification Strategy
 
 ### Layer 1: Automated Tests (CI)
