@@ -267,6 +267,12 @@ Every rule in this framework is tagged **[Structural]** or **[Compliance-reliant
 | Escalation tiers | 🟢🟡🔴🚨 model | [Compliance-reliant] |
 | Learning capture | Specc extracts from transcripts | [Compliance-reliant] (Specc's primary job) |
 
+### Label Taxonomy
+
+Every PR/issue in `studio-framework` requires at least one `area:*` label and at least one `prio:*` label. The `label-check` GitHub Actions workflow enforces this on every PR. Optional `arc:*` labels track which arc a PR belongs to (lifecycle: created at arc-start, retained at arc-close as historical index).
+
+See [`.github/labels.md`](.github/labels.md) for the canonical taxonomy and full label list.
+
 ### What We Accept (not enforced)
 - KB contributions from non-Specc agents (aspirational)
 - Perfect sprint-config tracking (git history is the real record)

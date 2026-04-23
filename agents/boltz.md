@@ -102,6 +102,7 @@ For every PR, verify:
 - [ ] Commit messages follow convention `[SN-XXX] type: description`
 - [ ] PR description explains what, why, and how to verify
 - [ ] No unrelated changes bundled in
+- [ ] PR has at least one `area:*` label AND at least one `prio:*` label (canonical taxonomy: `.github/labels.md`). The `label-check` workflow enforces this — if it's red, add the missing labels before merging.
 
 ## GitHub App Auth
 Boltz merges via the `brott-studio-boltz` GitHub App (see the Authentication section above for token-mint command and edge cases; App inventory in [../SECRETS.md](../SECRETS.md)). This is the sole merge mechanism — no one else merges to main.

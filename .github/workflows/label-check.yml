@@ -1,0 +1,36 @@
+name: label-check
+
+on:
+  pull_request:
+    types: [opened, edited, labeled, unlabeled, synchronize, reopened, ready_for_review]
+
+permissions:
+  pull-requests: read
+
+jobs:
+  verify-required-labels:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify required label namespaces present
+        env:
+          LABELS_JSON: ${{ toJson(github.event.pull_request.labels) }}
+        run: |
+          set -euo pipefail
+          echo "PR labels: $LABELS_JSON"
+
+          HAS_AREA=$(echo "$LABELS_JSON" | jq -r '[.[] | select(.name | startswith("area:"))] | length')
+          HAS_PRIO=$(echo "$LABELS_JSON" | jq -r '[.[] | select(.name | startswith("prio:"))] | length')
+
+          MISSING=()
+          [[ "$HAS_AREA" -ge 1 ]] || MISSING+=("area:* (e.g. area:framework, area:pipeline, area:compliance, area:runtime)")
+          [[ "$HAS_PRIO" -ge 1 ]] || MISSING+=("prio:* (e.g. prio:P0, prio:P1, prio:P2, prio:P3)")
+
+          if (( ${#MISSING[@]} > 0 )); then
+            echo "::error::PR is missing required label namespace(s):"
+            for m in "${MISSING[@]}"; do echo "::error::  - $m"; done
+            echo "::error::Add the missing labels via the PR sidebar or 'gh pr edit <N> --add-label <name>'."
+            echo "::error::Canonical taxonomy: brott-studio/studio-framework/.github/labels.md"
+            exit 1
+          fi
+
+          echo "✓ Required label namespaces present (area:*, prio:*)"
