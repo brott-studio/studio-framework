@@ -12,6 +12,7 @@ mode: "run"
 thinking: "medium"
 runTimeoutSeconds: 1800  (30 minutes)
 model: <inherit from parent, or explicit if needed>
+writePhase: <true|false>  (role-aware; see SPAWN_PROTOCOL.md § Spawn-Config Flags)
 ```
 
 ### Thinking Level

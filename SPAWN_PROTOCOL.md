@@ -34,6 +34,24 @@ PR titles must include [SN-XXX] task ID.
 
 ---
 
+## Spawn-Config Flags
+
+In addition to the standard OpenClaw spawn knobs (see `SUBAGENT_PLAYBOOK.md § Default Spawn Knobs`), the studio framework declares these **role-aware config keys** that the harness plugin layer reads:
+
+- **`writePhase: true`** — role performs irreversible write operations (git push, `gh` merge/write, audit commit, ICS write, SMTP send). Required on **Nutts, Boltz, Specc**. Forbidden on **Riv, Ett, Gizmo, Optic, Patch**. The `write-phase-sentinel` plugin (`plugins/write-phase-sentinel/`) keys off this flag to (a) latch first-write on the subagent session and (b) decline orphan-resume attempts that would re-execute the write phase.
+
+Every write-phase role template below carries an explicit `writePhase: true` line in its `spawn-config` block. When spawning programmatically via `sessions_spawn`, include the flag alongside the standard knobs:
+
+```yaml
+role: nutts
+spawn-config:
+  runtime: subagent
+  mode: run
+  thinking: medium
+  runTimeoutSeconds: 1800
+  writePhase: true   # <-- required for Nutts / Boltz / Specc
+```
+
 ## Per-Agent Templates
 
 ### 🎯 Gizmo (Game Designer)
@@ -94,6 +112,8 @@ and a `BACKLOG HYGIENE` block.
 
 ### 💻 Nutts (Developer)
 
+**Spawn-config:** `writePhase: true` (required — see `## Spawn-Config Flags`).
+
 ```
 You are Nutts, Developer for <project>.
 
@@ -111,6 +131,8 @@ Rules:
 ```
 
 ### 👨‍💻 Boltz (Lead Dev, Reviewer)
+
+**Spawn-config:** `writePhase: true` (required — see `## Spawn-Config Flags`).
 
 **Authentication:** Boltz authenticates as the `brott-studio-boltz` GitHub App for review + merge. The canonical App inventory lives in [SECRETS.md](SECRETS.md).
 
@@ -180,6 +202,8 @@ If VERIFY fails → report PASS/FAIL to Riv with details. Optic never escalates;
 ```
 
 ### 🕵️ Specc (Inspector)
+
+**Spawn-config:** `writePhase: true` (required — see `## Spawn-Config Flags`).
 
 **Authentication:** Specc authenticates as the `brott-studio-specc` GitHub App for any write/reviewer-identity operation (audit commits, issue filing, KB PRs). The canonical App inventory lives in [SECRETS.md](SECRETS.md). Preamble auth export pattern (this is the reference template mirrored by Optic and Boltz above):
 

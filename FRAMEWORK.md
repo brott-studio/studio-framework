@@ -148,18 +148,20 @@ Secrets handling (PAT authentication) is configured via a credential helper — 
 
 ---
 
-## Interrupt Safety — Write-Phase Sentinel
+## Interrupt Safety — Write-Phase Sentinel (harness-owned, S20.3+)
 
-Write-phase subagents (**Specc**, **Nutts**, **Boltz**) MUST include the canonical write-phase sentinel block in their role profile and execute it as the first tool call of every spawn. The sentinel latches per-session first-entry and causes resumed sessions (OpenClaw `subagent-orphan-recovery`) to exit cleanly without re-executing write operations.
+Write-phase subagents (**Specc**, **Nutts**, **Boltz**) are latched against orphan-resume re-execution by a **harness-level plugin** at `~/.openclaw/plugins/write-phase-sentinel/` (canonical source: `plugins/write-phase-sentinel/` in this repo). The plugin writes `~/.openclaw/subagents/<session-id>/write-phase-entered.sentinel` on the subagent's first write-tool call and declines any subsequent orphan-resume with a `resumeDeclined` event back to the parent.
 
-**Roles required to include it:** Specc, Nutts, Boltz.
-**Roles forbidden from including it:** Riv, Ett, Gizmo, Optic. Orchestration and verification roles are re-executable on resume by design — latching them would block legitimate continuation.
+**Enforcement trigger:** the subagent's spawn config must set `writePhase: true`. Nutts, Boltz, and Specc templates in `SPAWN_PROTOCOL.md` already declare this flag; no other roles carry it.
 
-**Verification:** Optic's role-profile-integrity check verifies the sentinel block is present in all write-phase profiles and absent in orchestrator/verifier profiles. See `agents/optic.md`.
+**Roles with `writePhase: true`:** Specc, Nutts, Boltz.
+**Roles without `writePhase: true`:** Riv, Ett, Gizmo, Optic, Patch. Orchestration and verification roles are re-executable on resume by design — latching them would block legitimate continuation.
 
-**Origin:** Proposal 3.1 (`memory/2026-04-22-phase2-phase3-proposals.md`), implemented in S19.3 (`audits/battlebrotts-v2/v2-sprint-19.3.md`).
+**Verification:** Optic's role-profile-integrity check verifies (a) no write-phase-role carries the legacy sentinel bash block, (b) each write-phase role carries the harness-owned reference section, (c) `writePhase: true` is declared in the matching `SPAWN_PROTOCOL.md` template. See `agents/optic.md`.
 
-**Contract details:** see the boilerplate in `agents/specc.md`, `agents/nutts.md`, or `agents/boltz.md`.
+**Origin:** Proposal 3.1 (`memory/2026-04-22-phase2-phase3-proposals.md`) → S19.3 role-profile-text era (`audits/battlebrotts-v2/v2-sprint-19.3.md`) → S20.3 harness plugin era (this commit).
+
+**Contract details:** see `plugins/write-phase-sentinel/README.md`.
 
 ---
 

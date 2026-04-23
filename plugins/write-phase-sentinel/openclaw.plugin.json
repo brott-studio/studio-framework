@@ -1,0 +1,23 @@
+{
+  "id": "write-phase-sentinel",
+  "name": "Write-Phase Sentinel",
+  "version": "0.1.0",
+  "description": "Harness-level interrupt-safety latch for subagent write phases. Replaces the S19.3 role-profile sentinel block with a plugin-owned hook.",
+  "hooks": ["subagent:before-write-tool", "subagent:before-resume"],
+  "spawnConfigKeys": ["writePhase"],
+  "targets": ["subagent"],
+  "entry": "./index.js",
+  "install": {
+    "workspacePath": "~/.openclaw/plugins/write-phase-sentinel",
+    "symlinkFrom": "<studio-framework>/plugins/write-phase-sentinel",
+    "notes": "Canonical source lives in studio-framework repo; workspace path is the OpenClaw plugin load point. Install via the installer script in this directory."
+  },
+  "events": {
+    "emits": ["write-phase-sentinel.first-entry", "write-phase-sentinel.resume-declined", "resumeDeclined"]
+  },
+  "semantics": {
+    "sentinelPath": "~/.openclaw/subagents/<session-id>/write-phase-entered.sentinel",
+    "firstWriteSemantics": "once-per-session",
+    "resumeOnSentinelPresent": "decline-with-event"
+  }
+}
