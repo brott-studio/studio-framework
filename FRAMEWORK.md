@@ -277,6 +277,13 @@ Full detail: [REPO_MAP.md](REPO_MAP.md).
 | `brott-studio/<project-repo>` | The Bott | Game code, GDD, KB, dashboard, sprint history |
 | `brott-studio/studio-audits` | Specc | Audit reports, independent from project |
 
+### Workspace State (runtime, not in git)
+
+Some agents maintain durable runtime state in the workspace, outside any repo. These files are not committed; they are per-host operational state.
+
+- `memory/active-arcs.json` — runtime ledger of in-flight arcs. Written by The Bott and Riv; read by the active-arc reconciler watchdog. See [docs/active-arc-reconciler.md](docs/active-arc-reconciler.md).
+- `memory/sprint-state/<arc>/<sprint>.json` — per-sub-sprint durable task-ledger used by Riv for resume-safe orchestration. Records every task Riv has spawned and its current state so a respawned Riv can resume cleanly after OOM/end. Schema: [schemas/sprint-state-ledger.md](schemas/sprint-state-ledger.md).
+
 ---
 
 ## Enforcement Mechanisms
