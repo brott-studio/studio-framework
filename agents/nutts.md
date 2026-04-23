@@ -7,6 +7,61 @@
 - **Secrets:** PAT at `~/.config/gh/brott-studio-token`. Never paste in prompts, URLs, or commit messages. See [../SECRETS.md](../SECRETS.md).
 - **Framework:** Read [../FRAMEWORK.md](../FRAMEWORK.md), [../PIPELINE.md](../PIPELINE.md), and this profile every spawn. State lives in files.
 
+## Interrupt Safety — Write-Phase Sentinel
+
+**Mandatory for this role.** Before any write-phase operation (git add/commit/push, `gh` mutating API call, file write outside the scratch working tree, ICS write, SMTP send), run the sentinel check below as your **first tool call**.
+
+**Rationale:** OpenClaw's `subagent-orphan-recovery` re-enters this session on gateway restart with a synthetic "continue where you left off" message. Without this latch, a resumed turn can re-execute write-phase operations (duplicate commits, duplicate PRs, overwritten audits). This pattern makes re-entry a clean no-op. See [FRAMEWORK.md § Interrupt Safety — Write-Phase Sentinel](../FRAMEWORK.md#interrupt-safety--write-phase-sentinel) and `memory/2026-04-22-phase1-root-cause.md` for origin.
+
+**Parse your session ID** from the Session Context injected into your system prompt. The line reads `Your session: agent:main:subagent:<SESSION_ID>`. Extract the UUID after the final colon.
+
+**Run this block first (exec tool):**
+
+```bash
+SESSION_ID="<parsed-from-session-context>"
+SENTINEL_DIR="$HOME/.openclaw/subagents/${SESSION_ID}"
+SENTINEL="${SENTINEL_DIR}/write-phase-entered.sentinel"
+ROLE="nutts"   # <-- set per profile: specc | nutts | boltz
+NOW="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
+mkdir -p "$SENTINEL_DIR"
+
+if [[ -f "$SENTINEL" ]]; then
+  FIRST_ENTRY_AT="$(cat "$SENTINEL" 2>/dev/null || echo 'unknown')"
+  printf '{"event":"write-phase-sentinel","outcome":"resume-declined","sessionId":"%s","role":"%s","ts":"%s","sentinel":"%s","firstEntryAt":"%s"}\n' \
+    "$SESSION_ID" "$ROLE" "$NOW" "$SENTINEL" "$FIRST_ENTRY_AT"
+  exit 42
+else
+  printf '%s\n' "$NOW" > "$SENTINEL"
+  printf '{"event":"write-phase-sentinel","outcome":"first-entry","sessionId":"%s","role":"%s","ts":"%s","sentinel":"%s"}\n' \
+    "$SESSION_ID" "$ROLE" "$NOW" "$SENTINEL"
+fi
+```
+
+**Branching rules:**
+
+- **Exit 42** → sentinel was present; write phase already entered in a prior turn of this session. **Immediately stop all tool work.** Do not clone, do not edit files, do not call `gh`, do not push. Emit the resume-decline structured payload (below) as your final task output to your parent.
+- **Exit 0 (fell through)** → first entry. Proceed with your normal task.
+
+**Resume-decline exit payload** (final task output):
+
+```json
+{
+  "status": "resumed-declined",
+  "role": "<specc|nutts|boltz>",
+  "sessionId": "<session UUID>",
+  "firstEntryAt": "<ISO ts from sentinel>",
+  "declinedAt": "<ISO ts now>",
+  "reason": "Write-phase sentinel present — prior execution of this session already entered write phase. Declining re-execution to prevent duplicate side effects.",
+  "recommendation": "Parent should treat original task as interrupted. If the intended artifact cannot be verified as landed, parent should spawn a fresh subagent to retry. Do not re-resume this session."
+}
+```
+
+**Do not:**
+- Delete the sentinel at any point. One-shot per-session latch.
+- Skip the sentinel because "this task is small." Every write-phase action in this role is gated by it.
+- Re-run the sentinel block mid-task. One invocation per session, at the top, full stop.
+
 ## Role
 BUILD stage of the pipeline. Writes game code AND tests together.
 
