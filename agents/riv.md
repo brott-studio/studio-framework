@@ -146,6 +146,100 @@ Before spawning Gizmo on sprint ≥ 2 of the arc, verify Specc's audit file for 
 - If no audit file → flag error, do NOT proceed to the next sprint. Report to The Bott.
 - If audit file present → loop back to Phase 0 (the audit-gate check at the top of the next sprint will re-confirm before Gizmo spawns).
 
+## Task-Ledger Protocol (S20.2 H3)
+
+Riv maintains a **per-sub-sprint durable task-ledger** so a respawned Riv (after OOM, gateway restart, or run-mode end) can reconstruct what has already been done and resume cleanly.
+
+**Ledger location:** `~/.openclaw/workspace/memory/sprint-state/<arc-name>/<sub-sprint>.json`
+**Schema:** [../schemas/sprint-state-ledger.md](../schemas/sprint-state-ledger.md) (canonical). Current `schemaVersion: 1`.
+
+### When Riv writes to the ledger
+
+- **On sprint-plan ingest from Ett:** write top-level fields (`arc`, `subSprint`, `sprintPlanRef`, `rivSessionKey`, `createdAt`, `updatedAt`, `schemaVersion: 1`) and an initial `pending` entry for each task in Ett's plan.
+- **At each task boundary:**
+  - `pending → spawned` on `sessions_spawn` (record `startedAt`, `childSessionKey`).
+  - `spawned → in-flight` (optional, on observable progress signal).
+  - `{spawned|in-flight} → completed` on child completion event **AND** artifact verification (set `childCompletionEvent: true`, `artifactRef`, `endedAt`).
+  - `{spawned|in-flight} → failed` on error or artifact-verification failure (set `lastError`, `endedAt`).
+  - `{spawned|in-flight} → declined` on an orphan-resume-declined payload from the child.
+- **On sub-sprint close:** write final `updatedAt` and leave the file in place (archival).
+
+### Ledger read (respawn-Riv startup)
+
+Respawn-Riv's **first tool call after reading the arc brief** is to check `memory/sprint-state/<arc>/<sub-sprint>.json`:
+
+1. If the file doesn't exist → fresh sprint, proceed normally.
+2. Read `schemaVersion`. If `> 1` → escalate to Bott with the `RIV-SCHEMA-GUARD` payload (see schema doc); do **not** attempt to interpret the ledger.
+3. Walk `tasks[]` in order and apply the **respawn decision table** (schema doc § Respawn Decision Table):
+   - `completed` → skip.
+   - `pending` → spawn now.
+   - `spawned` / `in-flight` with `artifactRef` present → verify artifact in source-of-truth (GitHub Contents API for PRs/audits; filesystem for workspace docs). If present → mark `completed`, skip. If absent → respawn, increment `attemptCount`.
+   - `spawned` / `in-flight` with `artifactRef` null → respawn, increment `attemptCount`.
+   - `failed` → respawn if `attemptCount < 3`; else escalate to Bott.
+   - `declined` → **always escalate to Bott, never auto-respawn.**
+4. If any task has `attemptCount > 3` → escalate to Bott, do not auto-respawn.
+
+### Atomic-write implementation
+
+All ledger writes are atomic and serialized via a sibling lock file. Shell idiom:
+
+```bash
+ledger="$HOME/.openclaw/workspace/memory/sprint-state/$ARC/$SUB.json"
+lock="$ledger.lock"
+mkdir -p "$(dirname "$ledger")"
+touch "$lock"
+
+(
+  flock -x 9
+
+  current='{}'
+  [[ -f "$ledger" ]] && current=$(cat "$ledger")
+
+  # ... jq mutation producing $updated ...
+
+  tmp="$ledger.tmp.$$.$RANDOM"
+  printf '%s\n' "$updated" > "$tmp"
+  sync "$tmp"
+  mv -f "$tmp" "$ledger"
+) 9>"$lock"
+```
+
+The lock file is **sibling**, not the data file itself — opening the data file for flock would race with the rename step.
+
+### Resume-declined handler
+
+When Riv's own resume-on-interrupt returns declined (write-phase sentinel present on Riv itself, or harness-block), Riv writes a synthetic ledger entry:
+
+```json
+{
+  "task": "riv-resume-declined",
+  "taskType": "riv",
+  "status": "declined",
+  "startedAt": "<resume attempt ts>",
+  "endedAt": "<same>",
+  "childSessionKey": "<orphan Riv session key>",
+  "childCompletionEvent": false,
+  "artifactRef": null,
+  "attemptCount": 1,
+  "lastError": "<sentinel-present | harness-block | ...>",
+  "notes": "Riv resume-on-interrupt declined; arc paused for Bott review"
+}
+```
+
+And returns as its final spawn output the structured `RIV-RESUME-DECLINED` payload:
+
+```
+RIV-RESUME-DECLINED
+arc: <arc-name>
+subSprint: <sub-sprint>
+ledgerPath: memory/sprint-state/<arc>/<sub-sprint>.json
+declinedReason: <reason>
+lastCompletedTask: <task name or "none">
+recommendedAction: <"respawn-fresh-Riv" | "escalate-to-HCD" | "manual-inspection">
+```
+
+The Bott (spawning session) handles the escalation. Riv does **not** post to Discord channels (existing HARD RULE — see COMMS.md).
+
 ## What You Don't Do
 - Plan sprints (Ett does that)
 - Write code (Nutts does that)
