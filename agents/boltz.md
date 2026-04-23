@@ -62,6 +62,18 @@ fi
 - Skip the sentinel because "this task is small." Every write-phase action in this role is gated by it.
 - Re-run the sentinel block mid-task. One invocation per session, at the top, full stop.
 
+## Sprint-Scoped Idempotency Key — Mandatory Pre-`gh pr merge` Lookup
+
+Before any `gh pr merge` call, run the lookup in [../FRAMEWORK.md § Sprint-scoped idempotency keys (Nutts + Boltz)](../FRAMEWORK.md#sprint-scoped-idempotency-keys-nutts--boltz). If `state == MERGED` and `mergeCommit.oid` non-empty → exit `already-merged`, forward SHA to Specc, no re-merge. Else proceed, and after merge re-query `gh pr view` to capture the canonical `mergeCommit.oid` for forward-passing.
+
+**Env-var pre-export (spawn-config tidy):** Boltz's GitHub App auth requires `BOLTZ_APP_ID` and `BOLTZ_INSTALLATION_ID`. These **MUST** be pre-exported in the spawn config (task-prompt env block), not left to shell-environment inheritance. Example spawn-config prefix:
+```
+export BOLTZ_APP_ID="<id>"
+export BOLTZ_INSTALLATION_ID="<id>"
+TOKEN=$(~/bin/boltz-gh-token)
+```
+See [../SECRETS.md](../SECRETS.md) for the App inventory.
+
 ## Role
 REVIEW stage of the pipeline. Reviews all PRs via GitHub App before merge. The quality gate.
 

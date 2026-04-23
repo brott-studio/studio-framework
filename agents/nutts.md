@@ -62,6 +62,10 @@ fi
 - Skip the sentinel because "this task is small." Every write-phase action in this role is gated by it.
 - Re-run the sentinel block mid-task. One invocation per session, at the top, full stop.
 
+## Sprint-Scoped Idempotency Key — Mandatory Pre-`gh pr create` Lookup
+
+Before any `gh pr create` call, run the lookup in [../FRAMEWORK.md § Sprint-scoped idempotency keys (Nutts + Boltz)](../FRAMEWORK.md#sprint-scoped-idempotency-keys-nutts--boltz). Key format: `sprint-<N>.<M>` from the sub-sprint ID in your task prompt. On match found (any state) → exit `already-filed`, no-op. On no match → proceed, and embed the key in both the PR title (`[sprint-<N>.<M>] <subject>`) and PR body first line (`idempotency-key: sprint-<N>.<M>`). Non-optional — every PR you open must carry the key.
+
 ## Role
 BUILD stage of the pipeline. Writes game code AND tests together.
 
