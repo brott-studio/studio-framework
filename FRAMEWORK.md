@@ -148,6 +148,21 @@ Secrets handling (PAT authentication) is configured via a credential helper — 
 
 ---
 
+## Interrupt Safety — Write-Phase Sentinel
+
+Write-phase subagents (**Specc**, **Nutts**, **Boltz**) MUST include the canonical write-phase sentinel block in their role profile and execute it as the first tool call of every spawn. The sentinel latches per-session first-entry and causes resumed sessions (OpenClaw `subagent-orphan-recovery`) to exit cleanly without re-executing write operations.
+
+**Roles required to include it:** Specc, Nutts, Boltz.
+**Roles forbidden from including it:** Riv, Ett, Gizmo, Optic. Orchestration and verification roles are re-executable on resume by design — latching them would block legitimate continuation.
+
+**Verification:** Optic's role-profile-integrity check verifies the sentinel block is present in all write-phase profiles and absent in orchestrator/verifier profiles. See `agents/optic.md`.
+
+**Origin:** Proposal 3.1 (`memory/2026-04-22-phase2-phase3-proposals.md`), implemented in S19.3 (`audits/battlebrotts-v2/v2-sprint-19.3.md`).
+
+**Contract details:** see the boilerplate in `agents/specc.md`, `agents/nutts.md`, or `agents/boltz.md`.
+
+---
+
 ## Verification Strategy
 
 ### Layer 1: Automated Tests (CI)
