@@ -87,7 +87,9 @@ Riv's final report to The Bott fires on **arc-complete**, not on audit-commit.
 
 ## Model Assignments (standing rules)
 
-Model substitution policy — derived from Arc B S21.2 (2026-04-23) + Arc D S23.1 + Arc E framing (2026-04-24):
+Model substitution policy — derived from Arc B S21.2 (2026-04-23) + Arc D S23.1 + Arc E framing (2026-04-24) + Arc E S24.2 planning (2026-04-24):
+
+**Shape-based rule (takes precedence over role defaults):** Any spawn whose deliverable is **>1200 words of structured prose AND reads ≥3 source files upfront** runs on Sonnet 4.6 regardless of role. This is the Arc D S23.1 "tool-call-during-emit" stimulus shape; it has now fired on Gizmo (arc-brief writes) and Ett (planning with upfront file reads). Word-count alone is a lagging indicator; it's the combination of upfront tool-call density + long-write emit that truncates.
 
 | Role | Default model | Rationale |
 |---|---|---|
@@ -96,9 +98,10 @@ Model substitution policy — derived from Arc B S21.2 (2026-04-23) + Arc D S23.
 | **Specc** | Sonnet 4.6 | Same class (long-write audit docs). |
 | **Gizmo — long-write deliverables** (arc briefs, specs >1200 words with embedded multi-file reads) | Sonnet 4.6 | Opus 4.7 truncation on tool-call-during-emit pattern (Arc E framing 2026-04-24: two 30min/0-token timeouts on Opus; Sonnet completed in 2m21s). |
 | **Gizmo — short framings** (sub-sprint framings, <800 words, few reads) | Opus 4.7 | No evidence of pattern at this size/shape. |
-| **Ett** | Opus 4.7 | Planning work; no evidence of pattern (S23.4, S23.5 ran clean). |
-| **Boltz** | Opus 4.7 | Review work; no evidence of pattern. |
-| **Riv** | Opus 4.7 | Orchestration; no evidence of pattern. |
+| **Ett — long-write planning** (plans >1200 words with ≥3 upfront file reads) | Sonnet 4.6 | Opus 4.7 truncation on Arc E S24.2 plan: 25min/0-tokens-out with ~1800-word target + 5 upfront reads; only placeholder written. Same stimulus shape as Gizmo long-write. |
+| **Ett — short planning** (plans <1200 words OR ≤2 upfront reads; e.g. S23.4/S23.5) | Opus 4.7 | Clean runs measured. |
+| **Boltz** | Opus 4.7 | Review work; short emits; no evidence of pattern. |
+| **Riv** | Opus 4.7 | Orchestration; short emits; no evidence of pattern. |
 | **The Bott (main session)** | Opus 4.7 | HCD-interface; no evidence of pattern at this role's output shape. |
 
 **Re-entry criteria for restoring Opus 4.7 to Sonnet-4.6-assigned roles:** 30 consecutive days of clean runs on Opus 4.7 across all pipeline roles under the expanded policy. Tracked via `battlebrotts-v2#246` + `studio-framework#57`.
