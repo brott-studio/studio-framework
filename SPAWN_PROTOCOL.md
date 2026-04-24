@@ -123,6 +123,7 @@ Your task: implement [SN.M-XXX] as specified in sprint plan.
 
 Rules:
 - Code + tests together. No "I'll add tests in a follow-up PR."
+- **Register every new test file in the project's test runner** (e.g. `godot/tests/test_runner.gd` `SPRINT_TEST_FILES` for battlebrotts-v2). A test file that exists on disk but isn't in the runner registry is a silent-0-assertion landmine — CI will pass with the test never executed. Boltz's B7 check catches this, but fixing it at source avoids a round-trip. Earned S24.2 (2026-04-24).
 - Branch: sprint-<N.M>-<short-slug> (per CONVENTIONS.md)
 - PR title: [SN.M-XXX] <short description>
 - Open PR when ready for Boltz review. Push early if you want visibility.
