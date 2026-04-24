@@ -107,6 +107,8 @@ When unsure, err toward handling directly and note the choice rather than spawni
 
 ## Canonical spawn discipline (HARD RULE)
 
+**Model selection per role:** see `PIPELINE.md` §Model Assignments. Summary: Nutts/Optic/Specc on Sonnet 4.6; Gizmo on Sonnet 4.6 **only for long-write deliverables** (arc briefs, specs >1200 words with embedded multi-file reads); Ett/Boltz/Riv/short-Gizmo on Opus 4.7. When spawning, set `model` explicitly based on the role’s output shape — don't rely on defaults.
+
 **Never hand-roll stop conditions or scope overrides in a Riv (or other pipeline-agent) task prompt.** Spawn with the canonical inputs only:
 - Arc brief pointer (`sprints/sprint-<N>.md` or `arcs/arc-<N>.md`)
 - Current sprint plan pointer (or "next sprint TBD; Ett to plan")
