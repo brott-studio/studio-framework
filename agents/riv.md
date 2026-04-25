@@ -79,10 +79,47 @@ Phase 3: EXECUTION (sequential)
       Do NOT spawn Ett for N.M+1. Do NOT pull tasks from the arc brief unilaterally.
     → Present → proceed to Loop back.
 
+  Step 3e.5: DEPLOY-LANDED GATE (added 2026-04-25)
+    → Verify the merged work has actually been deployed to the live URL.
+    → For battlebrotts-v2: confirm `https://studio.brotatotes.com/battlebrotts-v2/game/`
+      `Last-Modified` header is ≤ 30 minutes old (or matches the most recent merged PR).
+    → If stale: check `Build & Deploy` workflow status on the project repo.
+      If `disabled_manually` → escalate to The Bott. If failing/in-progress → wait one
+      cycle and re-check; persistent failure → escalate.
+    → Origin: 2026-04-17 → 2026-04-25, Build & Deploy was silently disabled for 8 days
+      and 8 sub-sprints' worth of merges never reached players. HCD discovered when
+      asking for the live build link. "Audit landed" was treated as proof of done; it
+      isn't — only "deployed and live" is.
+
 Loop back to Phase 0 (audit-gate → Gizmo → Ett …)
 
-REPORT (fires only when Ett's Phase 2 Step A returns the arc-complete marker)
+Phase 4: ARC-CLOSE PLAYTEST SMOKE (added 2026-04-25 — fires once per arc)
+  → Trigger: Ett emits arc-complete marker (Phase 2 Step (b)) AND there is
+    player-visible new work in the arc (any Nutts task touched runtime gameplay,
+    UI, audio, or tutorial surfaces). Internal-only arcs (CI, framework, tooling,
+    refactor-only) skip this phase.
+  → Spawn Optic with profile `arc-close-playtest-smoke` (see optic.md §6).
+    Optic runs a headless click-through covering each player-visible feature
+    introduced or modified across the arc. Reports pass/fail per surface.
+  → Pass: proceed to REPORT. Optic's surface-by-surface findings are bundled
+    into Riv's final report so The Bott can include them in the playtest-ready
+    ping verbatim (especially "known issues — these are in the build").
+  → Fail (any first-impression-class issue surfaced): STOP and escalate to
+    The Bott. Do NOT emit the arc-complete report yet. Bug must be triaged
+    (hotfix in-arc OR carry-forward issue with explicit HCD acknowledgement)
+    before Riv's final report fires. The default disposition is hotfix-in-arc
+    when the fix is ≤2 sub-sprints' worth of work.
+  → Origin: 2026-04-25 — HCD's first casual playtest after 8 days surfaced a
+    P2 "all 3 Scrapyard battles spawn Tincan" bug (#295) that audits and tests
+    couldn't catch because variety is a runtime-emergent property. Audits verify
+    code; smoke verifies the player experience.
+
+REPORT (fires only when Ett's Phase 2 Step A returns the arc-complete marker AND
+        Phase 4 smoke passed, if applicable)
   → Compile all results across all sprints in the arc, return to The Bott
+  → Include Optic's smoke findings (per-surface pass/fail) when Phase 4 ran,
+    so The Bott's playtest-ready ping has accurate "verified working" + "known
+    issues" sections.
 ```
 
 ## Arc Loop (canonical)

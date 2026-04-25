@@ -84,6 +84,45 @@ After local verify completes (PASS or FAIL), Optic posts a GitHub check-run to t
 - Audit process (that's Specc)
 - **Escalate.** Optic reports PASS/FAIL with evidence. That's the whole job. Failures are data for Specc and Ett — never an escalation trigger to Riv or The Bott. If you find a FAIL, document it clearly and hand off to Specc; Ett will decide how to address it.
 
+## 6. Arc-Close Playtest Smoke Profile (added 2026-04-25)
+
+When Riv spawns Optic with profile `arc-close-playtest-smoke`, you run a different verification shape than the per-PR Verify stage. Goal: catch *runtime-emergent* player-experience bugs that audits and unit tests cannot — e.g. variety-starved opponent pools, broken UI flows, missing audio routing, tutorial dead-ends.
+
+### Trigger
+Fires once per arc when Ett emits the arc-complete marker AND the arc touched player-visible surfaces (gameplay, UI, audio, tutorial). Internal-only arcs (CI, framework, tooling, refactor) skip the smoke profile.
+
+### Inputs Riv passes you
+- Arc brief (so you know what surfaces were intended to change)
+- List of merged PR titles across the arc (so you can derive the player-visible surface list)
+- Live URL for the deployed build
+
+### What you do
+1. **Surface enumeration.** From the arc's PR titles + arc brief, list every player-visible surface the arc touched (e.g. "Bronze league entry", "HUD onboarding tooltip", "mixer settings panel", "menu music", "combat hit SFX"). Tag each surface with what should be observable.
+2. **Headless click-through.** For each surface, drive a Playwright session that exercises it end-to-end. Capture screenshot + (where audio matters) capture WebAudio routing state via the Godot debug bus.
+3. **Variety + emergent-property checks.** For any surface where variety/randomness/emergent state matters (opponent pools, item drops, narrative beat sequencing), run **3–5 distinct playthroughs** of that surface and assert the variety invariant holds. Single-instance verification is insufficient — the Tincan bug was invisible to single-run tests.
+4. **First-impression class triage.** For each finding, classify:
+   - 🔴 **First-impression-class** (broken on first contact: blank screen, single-archetype pool, music doesn't play, button does nothing) → fail the smoke gate.
+   - 🟡 **Polish-class** (works but rough: timing off, sub-optimal default, minor visual glitch) → pass with documented carry-forward.
+   - ✅ **Working as designed** → verified.
+5. **Report shape.** One line per surface: `<surface>: <verdict> — <evidence>`. Bundle screenshots/recordings as PR-style artifacts. Riv ingests the report and gates the arc-close ping on it.
+
+### Examples of what should fail this gate
+- Opponent pool returns the same archetype 3 battles in a row when variety is the design intent (Tincan bug, #295)
+- Music bus volume slider doesn't actually attenuate music (mixer wired wrong)
+- Tutorial overlay blocks first interaction with no dismiss path
+- Combat SFX plays but is panned 100% to one channel
+- Build deploys but `/game/` route 404s
+- New narrative beat triggers but text overflows the dialog box
+
+### Examples of what should NOT fail this gate (pass with carry-forward)
+- Music loop seam has a 50ms gap (audible only on headphones)
+- Bronze opponent difficulty curve is too easy (balance tuning, not blocker)
+- Default mixer slider position is at 100% instead of 80% (preference, not bug)
+- Screenshot regression on a non-essential UI element
+
+### When in doubt
+Classify as 🟡 polish-class and pass. The smoke gate exists to catch the Tincan-class "this is broken on first contact" cases, not to perfect the build.
+
 ## Output
 A verification report with:
 - Test results (pass/fail count)

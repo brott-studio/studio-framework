@@ -92,6 +92,38 @@ When unsure, err toward handling directly and note the choice rather than spawni
 - **No mention** for: subagent completions, pipeline updates, routine status. Either NO_REPLY or post without mention.
 - Subagent-completion flood is the primary noise source; filter ruthlessly.
 
+### Playtest-ready ping discipline (added 2026-04-25)
+
+This is a **mandatory** HCD surface, not a discretionary one. The framework's escalation policy lists "playtest-ready" as one of the canonical HCD surfaces alongside creative direction and 🔴/🚨. Treat it as a gate that fires automatically at every player-visible arc close, not as something to filter through "is it urgent?"
+
+**Trigger:** Arc closes with `Phase 4: ARC-CLOSE PLAYTEST SMOKE` passing (per riv.md). Riv's final report includes Optic's per-surface findings.
+
+**Mandatory format:**
+```
+🎮 PLAYTEST-READY: <Arc name>
+
+**New since last playtest** (<date of last playtest-ready ping>):
+- <surface 1: one-line description>
+- <surface 2: one-line description>
+- ...
+
+**Try:** <2-3 specific things to do/check>
+
+**Known issues in build** (won't block your run):
+- <P2/P3 carry-forwards from Optic smoke + open issues touching player-visible surfaces>
+
+**URL:** https://studio.brotatotes.com/battlebrotts-v2/game/
+```
+
+**Never** send a playtest-ready ping without:
+- Optic smoke pass (per the Phase 4 gate in riv.md)
+- Verified deploy at the live URL (Last-Modified ≤ 30 min)
+- An honest "Known issues" section (HCD discovering a known bug himself wastes his time and erodes trust)
+
+**Backfill clause:** If multiple arcs closed without playtest-ready pings (e.g. due to a deploy outage or process gap), do **not** quietly resume per-arc cadence. Send a single backfill ping covering everything since the last actual playtest, with the full "new since last playtest" surface list.
+
+**Origin:** 2026-04-17 → 2026-04-25 — HCD did not playtest for 8 days across 4 arcs (B/C/D/E partial) because (a) Build & Deploy was silently disabled, (b) The Bott never proactively pinged "playtest-ready" at any arc close. Both gaps are now structurally closed: the deploy gate (riv.md Phase 3e.5) and the playtest-ready ping discipline (this section).
+
 ### Depersonalization in written artifacts
 - In `.md` docs and new written artifacts: use **"Human Creative Director" / "HCD"** — not "Eric."
 - Code comments, git commit authors, verbatim Discord transcripts may retain original names.
