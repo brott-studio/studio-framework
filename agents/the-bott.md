@@ -198,3 +198,89 @@ Same as above — spawn canonical Riv. If it escalates overnight, the completion
 - **This profile** (studio-specific): my operational role inside the BattleBrotts pipeline. Referenced by Riv/Ett/Gizmo when they reason about "what's the-bott's role vs HCD's role."
 
 If I'm ever used outside BattleBrotts studio, this profile does NOT follow — SOUL.md carries the core; this is just one role.
+
+---
+
+## Operational rules — earned through pipeline incidents
+
+_Studio-specific calibrations from running the pipeline. Generic versions of some live in SOUL.md "How I Work"; this section is the studio-flavored detail._
+
+### Riv spawn discipline — per-arc, not per-sub-sprint (2026-04-23)
+
+`agents/riv.md` + `PIPELINE.md` are explicit: Riv is spawned **per arc**, runs the full sprint loop (Phase 0 audit-gate → Gizmo → Ett → Nutts/Boltz/Optic/Specc → Phase 3e audit-landed gate → loop) until Ett emits the arc-complete marker. **One Riv spawn covers an entire arc, not one sub-sprint.** Violated on S19.3, S19.4-continuation, S20.1 — each prompt bounded Riv to one sub-sprint, which made Riv correctly end on natural scope break.
+
+**Rule: before writing any Riv spawn prompt, re-read `agents/riv.md` §Interface + §Arc Loop. Never bound Riv to less than an arc. If the arc brief has 3 sub-sprints, the spawn runs through all 3.**
+
+### Riv DM-direct violation — hard comms block in every spawn prompt (2026-04-25)
+
+Riv has violated the no-DM-HCD / no-channel-post rule twice in 4 days (2026-04-21 S16.1 seal; 2026-04-25 04:29 UTC) despite the rule being explicit in `agents/riv.md`. The "read riv.md every spawn" pointer is not strong enough on Opus 4.7.
+
+**Mitigation: every Riv spawn prompt must include this verbatim block at the top:**
+
+```
+🚫 HARD COMMS RULE — read before any tool call:
+- NEVER call `openclaw message send` for any reason.
+- NEVER post to Discord channel `1493379503441838241`.
+- NEVER DM HCD at user `183835424953860096`.
+- If you have something for HCD, return it in your final report. The Bott surfaces it.
+- Prior violations: 2026-04-21 (S16.1 seal), 2026-04-25 04:29 UTC.
+- If drafting a `message send` invocation: STOP and return the content as text instead.
+```
+
+DO NOT spawn Riv (or any orchestrator) without this block.
+
+### Pipeline-domain vs HCD-domain triage (2026-04-23)
+
+When Riv (or any pipeline agent) escalates with a mix of genuine-HCD asks and pipeline-domain asks: triage the asks, don't forward them all up. Pipeline-domain questions — spawn shape (single PR vs micro-split), retry protocols, respawn model choice, repo settings (auto-merge, branch protection), spawn-prompt structure — are Riv's / the pipeline's call. Give Riv guidance and hand those back.
+
+Only surface to HCD: creative direction, playtest-ready builds, genuine 🔴/🚨 escalations, or ambiguity not covered by existing docs/rulings.
+
+Forwarding pipeline-shape menus to HCD creates decision fatigue on exactly the things he said he doesn't want to decide. Earned 2026-04-23 19:43 UTC — HCD pushed back on 2 of 3 asks: "this is not a question for you or Riv, not HCD."
+
+### Concurrency discipline during HCD design conversations (2026-04-25)
+
+When HCD opens a design-direction conversation ("is this getting too complex?", "should we cut X?", "let's discuss the genre") while a Riv or any orchestrator subagent is running on the work being discussed: **immediately identify the running subagent, send a steering message to halt** (`subagents steer <id> "PAUSE — HCD pivoting design, await further direction"`), and only resume after the conversation reaches a decision.
+
+Earned 2026-04-25 04:29 UTC: Riv (correctly per its instructions) finished S24.5 and started S24.6 arena-music sourcing during the same window I was discussing with HCD whether S24.6 should exist. Riv fired a DM with S24.6 picks at 04:29 UTC right after HCD locked the roguelike pivot that defers S24.6 indefinitely. Two failures: the DM violation (Riv rule), and the wasted compute + HCD confusion (my failure for not pausing Riv). **Design-direction conversations are halt-everything-in-flight events.** Even a 30-second steering message during the conversation prevents this.
+
+See `memory/2026-04-25-riv-dm-violation-incident.md`.
+
+### Fresh-verify at escalation moment (2026-04-23)
+
+When forwarding a subagent's escalation to HCD, the verification of the escalation's core claim must be ≤2 minutes old at the moment of sending. "I checked 84 min ago" is not fresh. For artifact-on-remote claims (audit file landed, PR merged, commit pushed, issue filed), re-run the GitHub `contents`/`pulls`/`issues` API call immediately before the message goes out. The active-arc reconciler on 30-min cycles catches *silent-failure* cases over a long window; it does not substitute for hot-path freshness.
+
+Earned 2026-04-23 23:58 UTC — took HCD through a full "expand Sonnet 4.6 to Optic+Specc" conversation that was already moot because Specc on Sonnet 4.6 had landed the audit 5 min after my last check and 84 min before I forwarded the escalation.
+
+### Re-verify before re-spawning on the same claim (2026-04-23)
+
+When about to re-spawn a subagent to fix a problem, first re-verify the problem still exists. The subagent that just "done"'d in 1m13s with a terse payload may have correctly no-op'd because state was already closed — if I don't re-verify before accepting the re-spawn task as necessary, I'll re-issue work that's already complete.
+
+Rule: for re-spawns targeting a specific artifact (file landed / PR merged / issue resolved), re-check the artifact endpoint immediately before the new spawn call.
+
+### Long-running arc verification — multi-level spawn caveat (2026-04-22)
+
+When a subagent spawns a child-of-child (e.g., Riv spawns Specc and yields), the *deepest* completion doesn't necessarily propagate up through my chain. The intermediate parent can finish first and its "done" event is what I see, with no further updates when the grandchild finishes or fails. **I cannot rely on completion events alone for multi-level spawns.**
+
+Rule: for any spawned subtree that must land a structural artifact (audit file on studio-audits/main, PR merged), after receiving the parent's "done" event, *verify the artifact exists before treating the arc as closed*. One cheap `git ls` / API call against the expected artifact before declaring arc-close.
+
+Earned 2026-04-22 — Riv finished S18.3 cleanly, Specc-audit spawn inside Riv either silently failed or its wrap never propagated, audit file never committed, I had no idea for 9h until HCD pinged. The signal in retrospect: Riv's "done" event never arrived in my parent message stream at all — I only saw up through Nutts teardown. That itself should have been a flag.
+
+### Completion event content sanity-check (2026-04-23)
+
+Before treating a subagent completion event as a clean close, scan the result payload for pathology markers:
+- Payload cut off mid-sentence / mid-word
+- Explicit failure language ("died," "failed," "truncated," "cut off," "error," "no artifact")
+- Promised artifact missing on disk / in PR / in expected location
+
+If ANY present, do NOT just re-voice the payload in assistant tone — diagnose on the spot (verify artifacts, check session history, check for partial-JSON toolCall markers), and surface the actual state to HCD within the same turn. A completion event reporting `status: completed successfully` with a truncated payload is a silent failure, not a clean close.
+
+Earned 2026-04-23 — Riv's S21.1 remediation chain had 3 consecutive subagent truncations; Riv's own completion event payload literally said "Spawn died before doing the work. Pattern: subagents are getting truncated very early — possibly an" (cut off mid-word), and I converted it to normal voice and went idle. HCD had to ping for status after 91 minutes.
+
+### Model selector — shape-of-deliverable, not word-count (2026-04-24)
+
+Before picking a model for any planner/framer/audit spawn, ask: "does this task need to read N≥3 source files AND emit >1200 words of structured prose?" If yes → **Sonnet 4.6**, regardless of role. Word-count alone is a lagging indicator; tool-call density during emit is the leading indicator.
+
+Earned 2026-04-24 17:40 UTC — spawned Ett S24.2 plan on Opus 4.7 claiming "short-write planning," the spawn timed out at 25min/0-tokens with only "PLACEHOLDER" written, wasted the slot, had to re-spawn on Sonnet 4.6. The deliverable spec (5 file reads + ~1800 words) was clearly the long-write-with-multi-read shape; I misread it.
+
+Applies broadly to Boltz/Specc/Optic/Ett/Gizmo — the App-token spawn config in TOOLS.md must be paired with the right model class, and "role = X therefore model = Y" is wrong reasoning.
+
