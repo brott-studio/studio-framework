@@ -166,3 +166,47 @@ When a design spec exists for the sprint (e.g., `docs/sprintN-design.md`), verif
 4. For deviations: describe exactly what the spec says vs what you see
 
 This catches cases where the implementation drifts from the design without anyone noticing.
+
+## Visual-Helper Library
+
+Closes the S26.8 P0 framework gap where smoke specs passed on a grey canvas because they only checked "canvas exists OR body has text." Helpers live in `tests/visual-helpers.js` on `brott-studio/battlebrotts-v2` (added in v2-sprint-26.9, PR #321). Other projects bootstrapped per `BOOTSTRAP_NEW_PROJECT.md` should copy the file or vendor equivalent helpers.
+
+### Helpers
+
+1. **`assertCanvasNotMonochrome(page, opts)`** — fails if >95% of sampled canvas pixels are within 5 RGB units of the modal pixel.
+   - Defaults: 1000 random samples, `tolerance=5`, `threshold=0.95`.
+   - Returns `{ status: 'PARTIAL', reason }` on headless WebGL (gl null OR all-zero readback). Never throws on headless; throws only when canvas is genuinely monochrome.
+
+2. **`assertCanvasHasContent(page, opts)`** — fails if canvas has <5% non-background pixels (background = corner pixel).
+   - Same headless-PARTIAL contract as `assertCanvasNotMonochrome`.
+
+3. **`startConsoleCapture(page)` / `assertConsoleNoErrors`** — captures `console.error`, `pageerror`, and unhandled rejections. The returned `check()` throws if any captured event passes the `isRealError` filter (Godot `push_error`, real WebGL errors).
+   - ⚠️ The `isRealError` filter is duplicated verbatim between `tests/visual-helpers.js` and `tests/gameplay-smoke.spec.js` — sync-required comments on both sides.
+
+4. **`assertClickProducesChange(page, selector, opts)`** — clicks element; succeeds if ANY of: URL changed, DOM mutation in subtree, canvas pixel delta >5%, or expected console marker fired within `opts.timeout` (default 3000ms).
+   - Returns `{ signal: 'url'|'dom'|'pixel'|'marker' }`.
+   - Throws `NO_OBSERVABLE_CHANGE` after timeout if nothing fires.
+   - Pixel signal silently unavailable on headless (no throw).
+
+### Mandatory Rule
+
+> **Every smoke spec that captures a `page.screenshot()` of a Godot canvas MUST also call `assertCanvasNotMonochrome(page)` immediately after.**
+
+This closes the S26.8 class of regression where `canvas` exists but the game silently failed to render.
+
+### Headless-WebGL PARTIAL_COVERAGE Pattern
+
+GitHub Actions runners have NO GPU. Godot's WebGL renderer stalls at "Loading…" and the canvas never paints.
+
+- Helpers detect this state (gl null OR all-zero readback) and return `{ status: 'PARTIAL' }` instead of throwing.
+- Specs that need full coverage check the return value and call `testInfo.annotations.push({ type: 'PARTIAL_COVERAGE', description: '...' })`.
+- The `tests/gameplay-smoke.spec.js` spec is the canonical reference implementation (S26.3-001).
+- This is a known limitation closed at the helper layer; full chassis-pick → arena regression-lock requires a GPU runner (Arc I scope).
+
+### Cross-References
+
+- v2 PR: `brott-studio/battlebrotts-v2#321` (merged 2026-04-27)
+- Audit: `audits/battlebrotts-v2/v2-sprint-26.9.md` on studio-audits/main
+- Backlog: `brott-studio/battlebrotts-v2#322` (chassis_pick URL routing — blocks full GPU-runner regression-lock)
+- KB entry: `brott-studio/battlebrotts-v2#323` (graceful-degradation contract for headless-WebGL helpers)
+- Originating P0: S26.8 typed-array bug (`godot/data/opponent_loadouts.gd:749`)
